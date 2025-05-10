@@ -7,14 +7,12 @@ import com.example.fitnessWeb.repository.ExerciseSearchTermRepository;
 import com.example.fitnessWeb.repository.ExerciseTypeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 
 @Service
@@ -41,42 +39,55 @@ public class ExerciseTypeService {
         // 이름의 모든 부분 문자열 ExerciseSearchTerm 테이블에 저장
         name = name.replaceAll("\\s+", ""); // 공백 제거
         int length = name.length();
+        Set<String> uniqueKeywords = new HashSet<>();
 
         for (int i = 0; i < length; i++) {
             for (int j = i + 1; j <= length; j++) {
-                String keyword = name.substring(0, i);
-                ExerciseSearchTerm term = ExerciseSearchTerm.builder()
-                        .keyword(keyword)
-                        .exerciseType(exerciseType)
-                        .build();
-                exerciseSearchTermRepository.save(term);
+                String keyword = name.substring(i, j);
+                uniqueKeywords.add(keyword);
             }
         }
+
+        List<ExerciseSearchTerm> terms = uniqueKeywords.stream()
+                .map(keyword -> ExerciseSearchTerm.builder()
+                        .keyword(keyword)
+                        .exerciseType(exerciseType)
+                        .build())
+                .toList();
+
+
+        // 한꺼번에 저장
+        exerciseSearchTermRepository.saveAll(terms);
     }
 
     public Page<ExerciseType> searchExercise(String name, HashSet<String> muscleGroups, int page, int size) {
         Pageable pageable = PageRequest.of(page, size); // TODO 정렬 로직 추가
+
+
         if (name == null) {
-            if (muscleGroups == null) return exerciseTypeRepository.findAll(pageable);
-            else return exerciseTypeRepository.findByMuscleGroups(muscleGroups, pageable);
-        }
-        else {
-            // 이름을 키워드로 하여 매칭되는 종목의 id값 찾기
-            List<ExerciseSearchTerm> exerciseTerms = exerciseSearchTermRepository.findByKeyword(name);
-
-            // 각 id 저장하기
-            HashSet<Long> exerciseIds = new HashSet<>();
-            for (ExerciseSearchTerm exerciseTerm : exerciseTerms) {
-                exerciseIds.add(exerciseTerm.getExerciseType().getId());
-            }
-
-            // id와 부위로 ExerciseType 조회
             if (muscleGroups == null) {
-                return exerciseTypeRepository.findByIds(exerciseIds, pageable);
+                return exerciseTypeRepository.findAll(pageable);
             }
             else {
-                return exerciseTypeRepository.findByIdsAndMuscleGroups(exerciseIds, muscleGroups, pageable);
+                return exerciseTypeRepository.findByMuscleGroups(muscleGroups, pageable);
             }
         }
+
+        // name 기반 검색
+        List<ExerciseType> foundExercises = exerciseSearchTermRepository.findExerciseTypesByKeyword(name);
+
+        // muscleGroups 조건이 있을 경우 필터링
+        List<ExerciseType> filtered = (muscleGroups == null)
+                ? foundExercises
+                : foundExercises.stream()
+                        .filter(e -> muscleGroups.contains(e.getMuscleGroup()))
+                        .toList();
+
+        int total = filtered.size();
+        int fromIndex = Math.min(page * size, total);
+        int toIndex = Math.min(fromIndex + size, total);
+        List<ExerciseType> pageContent = filtered.subList(fromIndex, toIndex);
+
+        return new PageImpl<>(pageContent, pageable, total);
     }
 }
