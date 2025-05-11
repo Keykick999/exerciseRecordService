@@ -1,77 +1,73 @@
-//package com.example.fitnessWeb.service;
-//
-//import com.example.fitnessWeb.dto.*;
-//import com.example.fitnessWeb.entity.ExerciseRecord;
-//import com.example.fitnessWeb.entity.ExerciseSet;
-//import com.example.fitnessWeb.entity.ExerciseType;
-//import com.example.fitnessWeb.entity.User;
-//import com.example.fitnessWeb.repository.ExerciseRecordRepository;
-//import com.example.fitnessWeb.repository.ExerciseTypeRepository;
-//import com.example.fitnessWeb.repository.UserRepository;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.stereotype.Service;
-//
-//import java.time.DayOfWeek;
-//import java.time.LocalDate;
-//import java.util.Comparator;
-//import java.util.HashMap;
-//import java.util.List;
-//import java.util.Map;
-//import java.util.stream.Collectors;
-//
-//@Service
-//@RequiredArgsConstructor
-//public class ExerciseRecordService {
-//
-//    private final ExerciseTypeRepository exerciseTypeRepository;
-//    private final ExerciseRecordRepository recordRepository;
-//    private final UserRepository userRepository;
-//
-//    public void saveRecord(String username, ExerciseRecordDto dto) {
-//        User user = userRepository.findByUsername(username).orElseThrow();
-//
-//        ExerciseType type = exerciseTypeRepository.findById(dto.getExerciseTypeId())
-//                .orElseThrow(() -> new IllegalArgumentException("운동 종류 없음"));
-//
-//        ExerciseRecord record = ExerciseRecord.builder()
-//                .user(user)
-//                .exerciseType(type)
-//                .date(dto.getDate())
-//                .build();
-//
-//        List<ExerciseSet> sets = dto.getSets().stream().map(s ->
-//                ExerciseSet.builder()
-//                        .setOrder(s.getSetOrder())
-//                        .weight(s.getWeight())
-//                        .reps(s.getReps())
-//                        .exerciseRecord(record)
-//                        .build()
-//        ).toList();
-//
-//        record.setSets(sets);
-//        recordRepository.save(record);
-//    }
-//
-//
-//    public List<ExerciseRecordResponseDto> getRecords(String username, LocalDate date) {
-//        User user = userRepository.findByUsername(username).orElseThrow();
-//
-//        List<ExerciseRecord> records = recordRepository.findByUserAndDate(user, date);
-//
-//        return records.stream().map(record -> ExerciseRecordResponseDto.builder()
-//                .recordId(record.getId())
-//                .exerciseName(record.getExerciseType().getName())
-//                .date(record.getDate())
-//                .sets(record.getSets().stream().map(set ->
-//                        ExerciseSetResponseDto.builder()
-//                                .setOrder(set.getSetOrder())
-//                                .weight(set.getWeight())
-//                                .reps(set.getReps())
-//                                .build()).toList())
-//                .build()).toList();
-//    }
-//
-//
+package com.example.fitnessWeb.service;
+
+import com.example.fitnessWeb.dto.*;
+import com.example.fitnessWeb.entity.ExerciseRecord;
+import com.example.fitnessWeb.entity.ExerciseSet;
+import com.example.fitnessWeb.entity.ExerciseType;
+import com.example.fitnessWeb.entity.User;
+import com.example.fitnessWeb.repository.ExerciseRecordRepository;
+import com.example.fitnessWeb.repository.ExerciseTypeRepository;
+import com.example.fitnessWeb.repository.UserRepository;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class ExerciseRecordService {
+
+    private final ExerciseTypeRepository exerciseTypeRepository;
+    private final ExerciseRecordRepository exerciseRecordRepository;
+    private final UserRepository userRepository;
+
+    // 운동 기록 저장
+    @Transactional
+    public void saveRecord(String username, ExerciseRecordDto dto) {
+        User user = userRepository.findByUsername(username).orElseThrow();
+
+        ExerciseRecord record = ExerciseRecord.builder()
+                .date(dto.getDate())
+                .user(user)
+                .build();
+        exerciseRecordRepository.save(record);
+
+        List<ExerciseSet> sets = dto.getSets().stream().map(s ->
+                ExerciseSet.builder()
+                        .setOrder(s.getSetOrder())
+                        .weight(s.getWeight())
+                        .reps(s.getReps())
+                        .exerciseRecord(record)
+                        .exerciseType(exerciseTypeRepository.findById(s.getExerciseTypeId()).orElseThrow())
+                        .build()
+        ).collect(Collectors.toList());
+
+        record.setSets(sets);
+        exerciseRecordRepository.save(record);
+    }
+
+
+    public List<ExerciseRecordResponseDto> getRecords(String username, ExerciseRecordSearchRequest request) {
+        User user = userRepository.findByUsername(username).orElseThrow();
+
+
+        return exerciseRecordRepository.searchRecords(
+                user.getId(),
+                request.getStartDate(),
+                request.getEndDate(),
+                request.getExerciseName(),
+                request.getMuscleGroup()
+        );
+    }
+
+
 //    public List<WeeklyMuscleStatDto> getWeeklyMuscleVolumeStats(String username, int weekCount) {
 //        User user = userRepository.findByUsername(username).orElseThrow();
 //        LocalDate today = LocalDate.now();
@@ -116,4 +112,4 @@
 //                .sorted(Comparator.comparing(WeeklyMuscleStatDto::getWeekStart).reversed())
 //                .toList();
 //    }
-//}
+}

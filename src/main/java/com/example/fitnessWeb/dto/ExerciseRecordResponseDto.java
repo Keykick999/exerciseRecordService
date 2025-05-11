@@ -1,18 +1,17 @@
 package com.example.fitnessWeb.dto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Getter
-@Setter
-@NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class ExerciseRecordResponseDto {
-    private Long recordId;
-    private String exerciseName;
     private LocalDate date;
-    private List<ExerciseSetResponseDto> sets;
+    private String muscleGroup;
+    private String exerciseName;
+    private int setOrder;
+    private double weight;
+    private int reps;
 }
