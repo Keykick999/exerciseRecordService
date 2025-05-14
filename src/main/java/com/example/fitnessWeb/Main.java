@@ -3,159 +3,68 @@ package com.example.fitnessWeb;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.PriorityQueue;
-
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Queue;
 
 public class Main {
-    static class Node implements Comparable<Node> {
-        int vertex;
-        long weight;
-
-        public Node(int vertex, long weight) {
-            this.vertex = vertex;
-            this.weight = weight;
-        }
-
-        @Override
-        public int compareTo(Node o) {
-            return Long.compare(this.weight, o.weight);
-        }
-    }
-
-
     public static void main(String[] args) throws IOException {
         BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
 
         // 입력
-        String[] NMKS = br.readLine().split(" ");
-        int N = Integer.parseInt(NMKS[0]);  // 정점 수 N
-        int M = Integer.parseInt(NMKS[1]);  // 간선 수 M
-        int K = Integer.parseInt(NMKS[2]);  // 좀비 점령 도시 수 K
-        int S = Integer.parseInt(NMKS[3]);  // 위험한 도시 기준 S
+        String[] NM = br.readLine().split(" ");
+        int N = Integer.parseInt(NM[0]);
+        int M = Integer.parseInt(NM[1]);
+        HashMap<Integer, Integer> map = new HashMap<>();
 
-        String[] pq = br.readLine().split(" ");
-        int p = Integer.parseInt(pq[0]);
-        int q = Integer.parseInt(pq[1]);
-
-
-        // K개의 좀비에게 점령당한 도시
-        ArrayList<Integer> zombieCities = new ArrayList<>();
-        for (int i = 0; i < K; i++) {
-            zombieCities.add(Integer.parseInt(br.readLine()));
+        // x -> y 이동 경로 입력
+        for (int i = 0; i < M + N; i++) {
+            String[] xy = br.readLine().split(" ");
+            int x = Integer.parseInt(xy[0]);
+            int y = Integer.parseInt(xy[1]);
+            map.put(x, y);
         }
 
-
-        // M개의 간선 정보
-        ArrayList<ArrayList<Integer>> adjList = new ArrayList<>();
-        for (int i = 0; i <= N; i++) adjList.add(new ArrayList<>());
-        for (int i = 0; i < M; i++) {
-            String[] connection = br.readLine().split(" ");
-            int v1 = Integer.parseInt(connection[0]);
-            int v2 = Integer.parseInt(connection[1]);
-            adjList.get(v1).add(v2);
-            adjList.get(v2).add(v1);
-        }
-
-
-        // 좀비 도시들로부터 최단 거리 구하기
-        long[] zombieDist = getZombieDist(adjList, zombieCities);
-
-        // 결과 값 구하기
-        long[] result = dijkstra(adjList, 1, p, q, S, zombieDist);
-        System.out.print(result[N]);
+        // 1에서 시작해서 100을 목적지로 bfs
+        System.out.print(bfs(1, 100, map));
     }
 
+    public static int bfs(int start, int end, HashMap<Integer, Integer> map) {
+        // queue 설정
+        Queue<int[]> queue = new LinkedList<>();
+        queue.add(new int[]{start, 0});
 
 
-    public static long[] getZombieDist(ArrayList<ArrayList<Integer>> adjList, ArrayList<Integer> starts) {
-        // dist 배열 초기화
-        int N = adjList.size() - 1;
-        long[] dist = new long[N + 1];
-        Arrays.fill(dist, Long.MAX_VALUE);
-
-        // pq 초기화
-        PriorityQueue<Node> pq = new PriorityQueue<>();
-        for (Integer start : starts) {
-            dist[start] = 0;    // 시작점 가중치 0
-            pq.add(new Node(start, 0)); // 시작점 가중치 0으로 pq에 넣기
-        }
-
-        while (!pq.isEmpty()) {
-            Node curr = pq.poll();
-            int currVertex = curr.vertex;
-            long currWeight = curr.weight;
+        // visited 설정(100개의 칸 가정)
+        boolean[] visited = new boolean[101];
+        visited[1] = true;
 
 
-            // 최적의 경로가 아님
-            if (currWeight > dist[currVertex]) continue;
+        while(!queue.isEmpty()) {
+            int[] curr = queue.poll();
+            int currVertex = curr[0];    // 현재 정점 값
+            int currWeight = curr[1];   // 현재 가중치
+
+            // 목적지 도착
+            if (currVertex == end) return currWeight;
 
 
             // 인접 노드 방문
-            for (Integer neighbor : adjList.get(currVertex)) {
-                int neighborWeight = 1;
-                if (currWeight + neighborWeight < dist[neighbor]) {
-                    dist[neighbor] = currWeight + neighborWeight;
-                    pq.add(new Node(neighbor, dist[neighbor]));
+            for (int i = 1; i <= 6; i++) {
+                int next = currVertex + i;
+                if (next <= 100 && !visited[next]) {
+                    while (map.containsKey(next)) {
+                        next = map.get(next);
+                    }
+
+                    visited[next] = true;
+                    queue.add(new int[]{next, currWeight + 1});
                 }
             }
         }
 
-        return dist;
-    }
-
-
-    public static long[] dijkstra(ArrayList<ArrayList<Integer>> adjList, int start, int p, int q, int S, long[] zombieDist) {
-        // dist 배열 초기화
-        int N = adjList.size() - 1;
-        long[] dist = new long[N + 1];
-        Arrays.fill(dist, Long.MAX_VALUE);
-        dist[start] = 0;    // 시작점 가중치 0
-
-        // pq 초기화
-        PriorityQueue<Node> pq = new PriorityQueue<>();
-        pq.add(new Node(start, 0)); //
-
-
-        while (!pq.isEmpty()) {
-            Node curr = pq.poll();
-            int currVertex = curr.vertex;
-            long currWeight = curr.weight;
-
-
-            // 최적의 경로가 아님
-            if (currWeight > dist[currVertex]) continue;
-
-
-            // 인접 노드 방문
-            for (Integer neighbor : adjList.get(currVertex)) {
-                if (zombieDist[neighbor] == 0) continue;    // 좀비 감염 도시는 이동 불가
-                int neighborWeight = getWeight(zombieDist[neighbor], S, p, q);
-                if (neighbor == N) neighborWeight = 0;  // N번 도시는 숙박비 x
-                if (currWeight + neighborWeight < dist[neighbor]) {
-                    dist[neighbor] = currWeight + neighborWeight;
-                    pq.add(new Node(neighbor, dist[neighbor]));
-                }
-            }
-        }
-
-        return dist;
-    }
-
-    public static int getWeight(long zombieDist, int S, int p, int q) {
-        return (zombieDist <= S) ? q : p;
+        // 목적지 도착 불가
+        return -1;
     }
 }
-
-
-
-
-
-
-
-
-
-
-

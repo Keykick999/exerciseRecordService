@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>운동 검색</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding: 20px;
+        }
+        .search-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .exercise-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .exercise-card:hover {
+            transform: translateY(-2px);
+        }
+        .muscle-tag {
+            background-color: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-right: 5px;
+            font-size: 0.9em;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        .select2-container {
+            width: 100% !important;
+        }
+        .pagination-info {
+            text-align: center;
+            color: #6c757d;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+<div class="search-container">
+    <h2 class="mb-4">운동 검색</h2>
+
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <input type="text" id="exerciseName" class="form-control" placeholder="운동 종목명을 입력하세요">
+        </div>
+        <div class="col-md-6">
+            <select id="muscleGroups" class="form-control" multiple="multiple">
+                <option value="가슴">가슴</option>
+                <option value="등">등</option>
+                <option value="어깨">어깨</option>
+                <option value="이두">이두</option>
+                <option value="삼두">삼두</option>
+                <option value="하체">하체</option>
+                <option value="복부">복부</option>
+            </select>
+        </div>
+    </div>
+
+    <div id="exerciseList"></div>
+    <div id="paginationInfo" class="pagination-info"></div>
+    <div id="loading" class="loading">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    let page = 0;
+    let loading = false;
+    let hasMore = true;
+    let totalElements = 0;
+    let totalPages = 0;
+
+    // JWT 토큰 확인 및 리다이렉트
+    function checkAuth() {
+        const token = localStorage.getItem('jwtToken');
+        if (!token) {
+            window.location.href = '/login';
+            return false;
+        }
+        return true;
+    }
+
+    // API 요청에 JWT 토큰을 포함시키는 함수
+    function getAuthHeader() {
+        const token = localStorage.getItem('jwtToken');
+        return {
+            'Authorization': `Bearer ${token}`
+        };
+    }
+
+    $(document).ready(function() {
+        // 인증 체크
+        if (!checkAuth()) return;
+
+        // Select2 초기화
+        $('#muscleGroups').select2({
+            placeholder: '운동 부위를 선택하세요 (여러 개 선택 가능)',
+            allowClear: true,
+            closeOnSelect: false
+        });
+
+        // 검색 조건 변경 시 검색 실행
+        $('#exerciseName').on('input', function() {
+            resetSearch();
+            searchExercises();
+        });
+
+        $('#muscleGroups').on('change', function() {
+            resetSearch();
+            searchExercises();
+        });
+
+        // 스크롤 이벤트 처리
+        $(window).scroll(function() {
+            if ($(window).scrollTop() + $(window).height() >= $(document).height() - 100) {
+                if (!loading && hasMore) {
+                    searchExercises();
+                }
+            }
+        });
+
+        // 초기 검색 실행
+        searchExercises();
+    });
+
+    function resetSearch() {
+        page = 0;
+        hasMore = true;
+        $('#exerciseList').empty();
+        $('#paginationInfo').empty();
+    }
+
+    function updatePaginationInfo(response) {
+        const currentPage = response.number + 1;
+        const totalPages = response.totalPages;
+        const totalElements = response.totalElements;
+        const pageSize = response.size;
+
+        const start = (currentPage - 1) * pageSize + 1;
+        const end = Math.min(currentPage * pageSize, totalElements);
+
+        $('#paginationInfo').text(
+            `총 ${totalElements}개의 운동 중 ${start}-${end}개 표시 중`
+        );
+    }
+
+    function searchExercises() {
+        if (loading || !hasMore) return;
+
+        loading = true;
+        $('#loading').show();
+
+        const name = $('#exerciseName').val();
+        const muscleGroups = $('#muscleGroups').val() || [];
+
+        $.ajax({
+            url: '/api/exercise-types',
+            method: 'GET',
+            headers: getAuthHeader(),
+            data: {
+                name: name,
+                muscleGroup: muscleGroups,
+                page: page,
+                size: 10
+            },
+            success: function(response) {
+                if (response.content.length === 0) {
+                    hasMore = false;
+                    if (page === 0) {
+                        $('#exerciseList').html('<div class="text-center p-4">검색 결과가 없습니다.</div>');
+                    }
+                } else {
+                    response.content.forEach(exercise => {
+                        const exerciseCard = `
+                                <div class="exercise-card">
+                                    <h5>${exercise.name}</h5>
+                                    <div class="mt-2">
+                                        <span class="muscle-tag">${exercise.muscleGroup}</span>
+                                    </div>
+                                </div>
+                            `;
+                        $('#exerciseList').append(exerciseCard);
+                    });
+
+                    updatePaginationInfo(response);
+
+                    // 다음 페이지가 있는지 확인
+                    hasMore = response.number < response.totalPages - 1;
+                    page++;
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 401) {
+                    // 인증 실패 시 로그인 페이지로 리다이렉트
+                    localStorage.removeItem('jwtToken');
+                    window.location.href = '/login';
+                } else {
+                    console.error('Error:', xhr);
+                    $('#exerciseList').html('<div class="text-center text-danger p-4">검색 중 오류가 발생했습니다.</div>');
+                }
+            },
+            complete: function() {
+                loading = false;
+                $('#loading').hide();
+            }
+        });
+    }
+</script>
+</body>
+</html>

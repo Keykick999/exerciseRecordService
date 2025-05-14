@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>루틴 생성</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+</head>
+<body class="bg-light">
+<div class="container mt-5">
+    <h2 class="mb-4">운동 루틴 생성</h2>
+
+    <div class="mb-3">
+        <label for="routineNameInput" class="form-label">루틴 이름</label>
+        <input type="text" class="form-control" id="routineNameInput" placeholder="예: 상체 루틴">
+    </div>
+
+    <button class="btn btn-secondary mb-3" data-bs-toggle="modal" data-bs-target="#exerciseModal">운동 추가</button>
+    <div id="routineSetsContainer"></div>
+    <button id="saveRoutineBtn" class="btn btn-primary mt-3">루틴 저장</button>
+</div>
+
+<!-- 운동 선택 모달 -->
+<div class="modal fade" id="exerciseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">운동 선택</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <input type="text" class="form-control mb-2" id="exerciseSearchInput" placeholder="운동명 검색">
+                    <div id="muscleGroupCheckboxes" class="d-flex flex-wrap gap-2"></div>
+                    <button id="searchExerciseBtn" class="btn btn-outline-primary mt-2">검색</button>
+                </div>
+                <div class="list-group mt-3" id="exerciseList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const muscleGroupOptions = ["가슴", "등", "어깨", "하체", "복근", "팔", "전신"];
+
+    function createMuscleCheckboxes() {
+        const container = $('#muscleGroupCheckboxes');
+        muscleGroupOptions.forEach(muscle => {
+            container.append(`
+        <div class="form-check">
+          <input class="form-check-input muscle-checkbox" type="checkbox" value="${muscle}" id="muscle-${muscle}">
+          <label class="form-check-label" for="muscle-${muscle}">${muscle}</label>
+        </div>
+      `);
+        });
+    }
+
+    function fetchExercises() {
+        const name = $('#exerciseSearchInput').val();
+        const muscles = $('.muscle-checkbox:checked').map(function () {
+            return $(this).val();
+        }).get();
+
+        $.ajax({
+            url: '/api/exercise-types',
+            method: 'GET',
+            traditional: true,
+            data: {
+                name: name || '',
+                muscleGroup: muscles
+            },
+            success: function (res) {
+                const list = $('#exerciseList');
+                list.empty();
+                res.content.forEach(ex => {
+                    list.append(`
+            <button type="button" class="list-group-item list-group-item-action"
+              data-id="${ex.id}" data-name="${ex.name}">
+              ${ex.name} (${ex.muscleGroup})
+            </button>
+          `);
+                });
+            }
+        });
+    }
+
+    function addExerciseCard(exerciseId, exerciseName) {
+        if ($(`[data-exercise-id="${exerciseId}"]`).length > 0) {
+            alert('이미 추가된 운동입니다.');
+            return;
+        }
+
+        const cardHtml = `
+      <div class="card mb-3 routine-exercise" data-exercise-id="${exerciseId}">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="card-title">${exerciseName}</h5>
+            <button class="btn btn-outline-danger btn-sm remove-exercise">운동 삭제</button>
+          </div>
+          <div class="set-container"></div>
+          <button class="btn btn-sm btn-outline-secondary add-set-btn mt-2">세트 추가</button>
+        </div>
+      </div>
+    `;
+        $('#routineSetsContainer').append(cardHtml);
+    }
+
+    function updateSetNumbers(container) {
+        container.find('.set-row').each(function (index) {
+            $(this).find('.set-number-label').text(`${index + 1}세트`);
+        });
+    }
+
+    function addSetRow(container) {
+        const setCount = container.find('.set-row').length + 1;
+        const setHtml = `
+      <div class="row mb-2 set-row">
+        <div class="col-md-1 d-flex align-items-center">
+          <strong class="set-number-label">${setCount}세트</strong>
+        </div>
+        <div class="col-md-3">
+          <input type="number" class="form-control weight-input" placeholder="중량 (kg)">
+        </div>
+        <div class="col-md-3">
+          <input type="number" class="form-control reps-input" placeholder="반복 수">
+        </div>
+        <div class="col-md-3">
+          <button class="btn btn-outline-danger btn-sm remove-set-btn">세트 삭제</button>
+        </div>
+      </div>
+    `;
+        container.append(setHtml);
+    }
+
+    $(document).ready(function () {
+        createMuscleCheckboxes();
+
+        $('#searchExerciseBtn').on('click', fetchExercises);
+
+        $('#exerciseSearchInput').on('keypress', function (e) {
+            if (e.which === 13) {
+                e.preventDefault();
+                $('#searchExerciseBtn').click();
+            }
+        });
+
+        $('#exerciseList').on('click', 'button', function () {
+            const id = $(this).data('id');
+            const name = $(this).data('name');
+            addExerciseCard(id, name);
+            $('#exerciseModal').modal('hide');
+        });
+
+        $('#routineSetsContainer')
+            .on('click', '.add-set-btn', function () {
+                const container = $(this).siblings('.set-container');
+                addSetRow(container);
+                updateSetNumbers(container);
+            })
+            .on('click', '.remove-set-btn', function () {
+                const container = $(this).closest('.set-container');
+                $(this).closest('.set-row').remove();
+                updateSetNumbers(container);
+            })
+            .on('click', '.remove-exercise', function () {
+                $(this).closest('.routine-exercise').remove();
+            });
+
+        $('#saveRoutineBtn').on('click', function () {
+            const routineName = $('#routineNameInput').val().trim();
+            if (!routineName) {
+                alert('루틴 이름을 입력해주세요.');
+                return;
+            }
+
+            const routineSets = [];
+
+            $('.routine-exercise').each(function () {
+                const exerciseTypeId = $(this).data('exercise-id');
+
+                $(this).find('.set-row').each(function (index) {
+                    const weight = parseFloat($(this).find('.weight-input').val());
+                    const repetitions = parseInt($(this).find('.reps-input').val());
+                    const setNumber = index + 1;
+
+                    if (isNaN(weight) || isNaN(repetitions)) {
+                        alert('모든 세트의 중량/반복 수를 입력해주세요.');
+                        return false;
+                    }
+
+                    console.log('weight: ' + weight);
+                    console.log('repetitions: ' + repetitions);
+                    routineSets.push({ exerciseTypeId, setNumber, weight, repetitions });
+                });
+            });
+
+            if (routineSets.length === 0) {
+                alert('운동을 한 개 이상 추가하고 세트를 입력해주세요.');
+                return;
+            }
+
+            console.log('routineSets as JSON:', JSON.stringify(routineSets, null, 2));
+            const requestBody = {
+                name: routineName,
+                routineSets: routineSets
+            };
+
+            $.ajax({
+                url: '/api/routines',
+                method: 'POST',
+                contentType: 'application/json',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+                },
+                data: JSON.stringify(requestBody),
+                success: function () {
+                    alert('루틴이 성공적으로 저장되었습니다!');
+                    window.location.href = '/routines';
+                },
+                error: function (xhr) {
+                    if (xhr.status === 401) {
+                        alert('로그인이 필요합니다.');
+                        localStorage.removeItem('jwtToken');
+                        window.location.href = '/login';
+                    } else {
+                        alert('루틴 저장 실패');
+                        console.error(xhr);
+                    }
+                }
+            });
+        });
+    });
+</script>
+</body>
+</html>

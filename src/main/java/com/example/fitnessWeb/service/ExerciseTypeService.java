@@ -62,9 +62,11 @@ public class ExerciseTypeService {
 
     public Page<ExerciseType> searchExercise(String name, HashSet<String> muscleGroups, int page, int size) {
         Pageable pageable = PageRequest.of(page, size); // TODO 정렬 로직 추가
+        System.out.println("name = " + name);
+        System.out.println("name.isEmpty() = " + name.isEmpty());
 
 
-        if (name == null) {
+        if (name.isEmpty()) {
             if (muscleGroups == null) {
                 return exerciseTypeRepository.findAll(pageable);
             }
@@ -75,6 +77,7 @@ public class ExerciseTypeService {
 
         // name 기반 검색
         List<ExerciseType> foundExercises = exerciseSearchTermRepository.findExerciseTypesByKeyword(name);
+        System.out.println("foundExercises = " + foundExercises);
 
         // muscleGroups 조건이 있을 경우 필터링
         List<ExerciseType> filtered = (muscleGroups == null)
