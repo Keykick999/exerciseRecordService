@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -30,16 +31,16 @@ public class ExerciseRecordService {
 
     // 운동 기록 저장
     @Transactional
-    public void saveRecord(String username, ExerciseRecordDto dto) {
+    public void saveRecord(String username, List<ExerciseSetDto> dto) {
         User user = userRepository.findByUsername(username).orElseThrow();
 
         ExerciseRecord record = ExerciseRecord.builder()
-                .date(dto.getDate())
+                .createdAt(LocalDateTime.now())
                 .user(user)
                 .build();
         exerciseRecordRepository.save(record);
 
-        List<ExerciseSet> sets = dto.getSets().stream().map(s ->
+        List<ExerciseSet> sets = dto.stream().map(s ->
                 ExerciseSet.builder()
                         .setOrder(s.getSetOrder())
                         .weight(s.getWeight())

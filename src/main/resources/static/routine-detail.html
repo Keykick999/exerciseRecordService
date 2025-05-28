@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Routine Detail</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            padding-bottom: 80px;
+        }
+        .exercise {
+            padding: 20px;
+            margin-bottom: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .fixed-bottom-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            color: #0d6efd !important;
+        }
+    </style>
+</head>
+<body>
+
+<!-- ✅ 네비게이션 바 -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand" href="/routines">🏋️ FitnessWeb</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/routine">루틴 생성</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/routines">내 루틴</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/login">
+                        <i class="bi bi-person-circle" style="font-size: 1.4rem;"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- ✅ 본문 -->
+<div class="container my-5">
+    <h2 id="routineTitle" class="mb-4">루틴 상세 정보</h2>
+    <div id="detailContainer">로딩 중...</div>
+</div>
+
+<!-- ✅ 하단 버튼 -->
+<div class="fixed-bottom-buttons">
+    <button class="btn btn-outline-secondary" id="saveBtn">저장</button>
+    <button class="btn btn-primary" id="startBtn">운동 시작</button>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const routineName = params.get('name');
+    const routineId = params.get('routineId');
+
+    if (!routineName) {
+        alert('루틴을 선택해주세요!');
+        window.location.href = '/routines.html';
+    } else {
+        $('#routineTitle').text(`루틴: ${routineName}`);
+        const token = localStorage.getItem('jwtToken');
+
+        $.ajax({
+            url: `/api/routines/${encodeURIComponent(routineName)}`,
+            type: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            success: function (data) {
+                window.originalRoutineData = data;
+                const $container = $('#detailContainer');
+                $container.empty();
+
+                if (data.length === 0) {
+                    $container.text('해당 루틴의 상세정보가 없습니다.');
+                } else {
+                    const groupedByExercise = {};
+                    data.forEach(item => {
+                        if (!groupedByExercise[item.exerciseTypeId]) {
+                            groupedByExercise[item.exerciseTypeId] = {
+                                exerciseType: item.exerciseType,
+                                sets: []
+                            };
+                        }
+                        groupedByExercise[item.exerciseTypeId].sets.push(item);
+                    });
+
+                    Object.entries(groupedByExercise).forEach(([exerciseTypeId, { exerciseType, sets }]) => {
+                        const $exerciseGroup = $(`
+                            <div class="exercise-group" data-exercise-type-id="${exerciseTypeId}" data-exercise-type-name="${exerciseType}">
+                                <h5>${exerciseType}</h5>
+                                <div class="exercise-sets"></div>
+                                <button class="btn btn-sm btn-outline-success add-set-btn">세트 추가</button>
+                                <hr>
+                            </div>
+                        `);
+                        sets.forEach(set => {
+                            $exerciseGroup.find('.exercise-sets').append(createSetRow(set.weight, set.repetitions));
+                        });
+                        $container.append($exerciseGroup);
+                    });
+                }
+            }
+        });
+    }
+
+    function createSetRow(weight = 0, reps = 0) {
+        return `
+            <div class="exercise row g-3 mb-2">
+                <div class="col-md-5">
+                    <label class="form-label">중량 (kg)</label>
+                    <input type="number" class="form-control weight-input" value="${weight}">
+                </div>
+                <div class="col-md-5">
+                    <label class="form-label">반복 횟수</label>
+                    <input type="number" class="form-control reps-input" value="${reps}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-danger remove-set-btn">삭제</button>
+                </div>
+            </div>
+        `;
+    }
+
+    $(document).on('click', '.add-set-btn', function () {
+        const $group = $(this).closest('.exercise-group');
+        $group.find('.exercise-sets').append(createSetRow());
+    });
+
+    $(document).on('click', '.remove-set-btn', function () {
+        $(this).closest('.exercise').remove();
+    });
+
+    $('#saveBtn').on('click', function () {
+        const token = localStorage.getItem('jwtToken');
+        const routineSets = [];
+
+        $('.exercise-group').each(function () {
+            const exerciseTypeId = $(this).data('exercise-type-id');
+            $(this).find('.exercise').each(function (i) {
+                const weight = parseFloat($(this).find('.weight-input').val());
+                const repetitions = parseInt($(this).find('.reps-input').val());
+                routineSets.push({
+                    exerciseTypeId: parseInt(exerciseTypeId),
+                    setNumber: i + 1,
+                    weight: weight,
+                    repetitions: repetitions
+                });
+            });
+        });
+
+        const dto = {
+            routineName: routineName,
+            routineSets: routineSets
+        };
+
+        $.ajax({
+            url: `/api/routines/${routineId}`,
+            type: 'PUT',
+            contentType: 'application/json',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            data: JSON.stringify(dto),
+            success: function () {
+                alert("✅ 루틴이 성공적으로 저장되었습니다.");
+            },
+            error: function (xhr) {
+                alert("❌ 루틴 저장 실패: " + xhr.responseText);
+            }
+        });
+    });
+
+    $('#startBtn').on('click', function () {
+        const sessionData = [];
+        $('#detailContainer .exercise').each(function () {
+            const weight = parseFloat($(this).find('.weight-input').val());
+            const repetitions = parseInt($(this).find('.reps-input').val());
+            sessionData.push({ weight, repetitions });
+        });
+
+        localStorage.setItem('activeRoutine', JSON.stringify(sessionData));
+        localStorage.setItem('activeRoutineName', routineName);
+        window.location.href = '/exercise-session.html';
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -3,6 +3,7 @@ package com.example.fitnessWeb.controller;
 import com.example.fitnessWeb.dto.ExerciseRecordDto;
 import com.example.fitnessWeb.dto.ExerciseRecordResponseDto;
 import com.example.fitnessWeb.dto.ExerciseRecordSearchRequest;
+import com.example.fitnessWeb.dto.ExerciseSetDto;
 import com.example.fitnessWeb.service.ExerciseRecordService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +24,7 @@ public class ExerciseRecordController {
 
     // 운동 기록 저장
     @PostMapping
-    public ResponseEntity<String> save(@RequestBody @Valid ExerciseRecordDto dto,
+    public ResponseEntity<String> save(@RequestBody @Valid List<ExerciseSetDto> dto,
                                        @AuthenticationPrincipal UserDetails userDetails) {
         service.saveRecord(userDetails.getUsername(), dto);
         return ResponseEntity.ok("운동 기록 저장 완료");

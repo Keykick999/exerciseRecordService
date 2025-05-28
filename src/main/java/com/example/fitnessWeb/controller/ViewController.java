@@ -19,7 +19,13 @@ public class ViewController {
     }
 
     @GetMapping("/routine")
-    public String routine() {
+    public String addRoutine() {
         return "routine";
+    }
+
+
+    @GetMapping("/routines")
+    public String showRoutineList() {
+        return "routines";
     }
 }

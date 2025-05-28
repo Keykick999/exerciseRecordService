@@ -26,4 +26,19 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleExerciseTypeNotFound(ExerciseTypeNotFoundException ex) {
         return ResponseEntity.status(404).body(ex.getMessage());
     }
+
+    @ExceptionHandler(RoutineNotFoundException.class)
+    public ResponseEntity<String> handleRoutineNotFoundException(RoutineNotFoundException ex) {
+        return ResponseEntity.status(404).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(DuplicateRoutineNameException.class)
+    public ResponseEntity<String> handleDuplicateRoutineNameException(DuplicateRoutineNameException ex) {
+        return ResponseEntity.status(409).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(UnauthorizedAccessException.class)
+    public ResponseEntity<String> handleUnauthorizedAccessException(UnauthorizedAccessException ex) {
+        return ResponseEntity.status(403).body(ex.getMessage());
+    }
 }

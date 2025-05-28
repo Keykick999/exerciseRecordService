@@ -1,16 +1,19 @@
 package com.example.fitnessWeb.service;
 
-import com.example.fitnessWeb.dto.RoutineRequestDto;
-import com.example.fitnessWeb.dto.RoutineSetDto;
+import com.example.fitnessWeb.dto.*;
 import com.example.fitnessWeb.entity.*;
 import com.example.fitnessWeb.exception.*;
 import com.example.fitnessWeb.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 
@@ -32,14 +35,20 @@ public class RoutineService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(UserNotFoundException::new);
 
-        // 3. 루틴 저장
+        // 3. 루틴 이름 중복 체크
+        boolean exists = routineRepository.existsByNameAndUserUsername(requestDto.getName(), username);
+        if (exists) {
+            throw new DuplicateRoutineNameException(requestDto.getName());
+        }
+
+        // 4. 루틴 저장
         Routine routine = Routine.builder()
                 .name(requestDto.getName())
                 .user(user)
                 .build();
         routineRepository.save(routine);
 
-        // 4. 루틴 세트 저장
+        // 5. 루틴 세트 저장
         Set<String> duplicateCheck = new HashSet<>();
         for (RoutineSetDto dto : requestDto.getRoutineSets()) {
             // 유효성 검사
@@ -67,5 +76,80 @@ public class RoutineService {
 
             routineSetRepository.save(set);
         }
+    }
+
+    // 루틴 목록 조회
+    public Page<RoutineSummaryDto> getMyRoutines(int page, int size) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        userRepository.findByUsername(username)
+                .orElseThrow(UserNotFoundException::new);
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<RoutineSummaryDto> routines = routineRepository.findAllByUsername(username, pageable);
+        if (routines.isEmpty()) {
+            throw new RoutineNotFoundException();
+        }
+
+        return routines;
+    }
+
+
+    public List<RoutineDetailDto> getRoutineDetails(String routineName) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        userRepository.findByUsername(username)
+                .orElseThrow(UserNotFoundException::new);
+
+        List<RoutineDetailDto> result = routineRepository.findRoutineDetailsByNameAndUsername(routineName, username);
+
+        if (result.isEmpty()) {
+            throw new RoutineNotFoundException();
+        }
+
+        return result;
+    }
+
+
+    @Transactional
+    public void updateRoutine(Long routineId, RoutineUpdateRequestDto requestDto) {
+        // 1. 루틴 조회
+        Routine routine = routineRepository.findById(routineId)
+                .orElseThrow(() -> new RoutineNotFoundException("루틴을 찾을 수 없습니다. ID: " + routineId));
+
+        // 2. 기존 루틴 세트 삭제
+        routine.getRoutineSets().clear();
+
+        // 3. 새로운 루틴 세트 생성
+        List<RoutineSet> newRoutineSets = requestDto.getRoutineSets().stream()
+                .map(dto -> RoutineSet.builder()
+                        .routine(routine)
+                        .exerciseType(exerciseTypeRepository.findById(dto.getExerciseTypeId())
+                                .orElseThrow(() -> new IllegalArgumentException("유효하지 않은 운동 ID: " + dto.getExerciseTypeId())))
+                        .setNumber(dto.getSetNumber())
+                        .weight(dto.getWeight())
+                        .repetitions(dto.getRepetitions())
+                        .build())
+                .toList();
+
+        // 4. 루틴 이름 및 루틴 세트 업데이트
+        routine.setName(requestDto.getRoutineName());
+        routine.getRoutineSets().addAll(newRoutineSets);
+    }
+
+
+    // 루틴 삭제
+    @Transactional
+    public void deleteRoutine(Long routineId) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        Routine routine = routineRepository.findById(routineId)
+                .orElseThrow(() -> new RoutineNotFoundException("루틴을 찾을 수 없습니다."));
+
+        if (!routine.getUser().getUsername().equals(username)) {
+            throw new UnauthorizedAccessException("본인의 루틴만 삭제할 수 있습니다.");
+        }
+
+        routineRepository.delete(routine); // cascade + orphanRemoval 설정되어 있다면 routineSets도 함께 삭제됨
     }
 }
