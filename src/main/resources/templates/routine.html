@@ -5,9 +5,187 @@
     <title>루틴 생성</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: url('https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            color: #0d6efd !important;
+        }
+
+        .container {
+            background-color: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(6px);
+            border-radius: 1rem;
+            padding: 2rem;
+            max-width: 720px;
+            margin: 60px auto;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        h2 {
+            font-weight: bold;
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        label, .form-label {
+            color: #eeeeee;
+            font-weight: 500;
+        }
+
+        .form-control {
+            border-radius: 0.6rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .form-control::placeholder {
+            color: #cccccc;
+        }
+
+        .btn {
+            border-radius: 0.6rem;
+            font-weight: 500;
+        }
+
+        .btn-secondary {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-primary {
+            background-color: #0d6efd;
+            color: #fff;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+        }
+
+        #saveRoutineBtn {
+            width: 100%;
+            padding: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+
+        .card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-radius: 1rem;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            color: white;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .btn-outline-danger.btn-sm.remove-exercise {
+            border: none;
+            background: none;
+            color: #ff6b6b;
+        }
+
+        .btn-outline-danger.btn-sm.remove-exercise:hover {
+            color: white;
+            background-color: #ff6b6b;
+            transition: 0.2s;
+        }
+
+        .remove-set-btn {
+            width: 100%;
+            border-radius: 0.4rem;
+        }
+
+        .btn-outline-secondary.add-set-btn {
+            border-radius: 0.5rem;
+            color: #ddd;
+            border-color: #999;
+        }
+
+        .set-number-label {
+            font-size: 0.95rem;
+            font-weight: 500;
+            color: #cccccc;
+        }
+
+        .modal-content {
+            border-radius: 1rem;
+            background-color: #1e1e1e;
+            color: white;
+        }
+
+        .list-group-item {
+            border-radius: 0.4rem;
+            transition: background-color 0.2s;
+            background-color: #2b2b2b;
+            color: white;
+            border: 1px solid #444;
+        }
+
+        .list-group-item:hover {
+            background-color: #3a3a3a;
+        }
+
+        .form-check-label {
+            color: #e0e0e0;
+        }
+
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+    </style>
 </head>
 <body class="bg-light">
+
+<!-- ✅ 네비게이션 바 -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand" href="/routines">🏋️ FitnessWeb</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link active" href="/routine">루틴 생성</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/routines">내 루틴</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/login">
+                        <i class="bi bi-person-circle" style="font-size: 1.4rem;"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- ✅ 본문 -->
 <div class="container mt-5">
     <h2 class="mb-4">운동 루틴 생성</h2>
 
@@ -98,7 +276,9 @@
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-center mb-2">
             <h5 class="card-title">${exerciseName}</h5>
-            <button class="btn btn-outline-danger btn-sm remove-exercise">운동 삭제</button>
+            <button class="btn btn-outline-danger btn-sm remove-exercise" title="운동 삭제">
+                <i class="bi bi-x-circle"></i>
+            </button>
           </div>
           <div class="set-container"></div>
           <button class="btn btn-sm btn-outline-secondary add-set-btn mt-2">세트 추가</button>
@@ -128,7 +308,9 @@
           <input type="number" class="form-control reps-input" placeholder="반복 수">
         </div>
         <div class="col-md-3">
-          <button class="btn btn-outline-danger btn-sm remove-set-btn">세트 삭제</button>
+        <button class="btn btn-outline-danger btn-sm remove-set-btn" title="세트 삭제">
+            <i class="bi bi-trash"></i>
+        </button>
         </div>
       </div>
     `;
@@ -191,8 +373,6 @@
                         return false;
                     }
 
-                    console.log('weight: ' + weight);
-                    console.log('repetitions: ' + repetitions);
                     routineSets.push({ exerciseTypeId, setNumber, weight, repetitions });
                 });
             });
@@ -202,7 +382,6 @@
                 return;
             }
 
-            console.log('routineSets as JSON:', JSON.stringify(routineSets, null, 2));
             const requestBody = {
                 name: routineName,
                 routineSets: routineSets
@@ -234,5 +413,6 @@
         });
     });
 </script>
+
 </body>
 </html>
