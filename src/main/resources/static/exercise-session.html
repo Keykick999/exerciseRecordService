@@ -3,32 +3,89 @@
 <head>
     <meta charset="UTF-8">
     <title>운동 중</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <style>
-        body { background-color: #f8f9fa; padding-bottom: 80px; }
-        .exercise {
-            padding: 20px;
-            margin-bottom: 15px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: url('https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            margin: 0;
+            padding: 0;
         }
+
+        .container {
+            background-color: rgba(0, 0, 0, 0.75);
+            padding: 2rem;
+            border-radius: 1rem;
+            margin-top: 40px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        h2 {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #ffffff;
+        }
+
+        .exercise {
+            background-color: rgba(255, 255, 255, 0.08);
+            padding: 15px;
+            border-radius: 0.75rem;
+            margin-bottom: 10px;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        label {
+            color: #cccccc;
+        }
+
+        .completed {
+            background-color: rgba(25, 135, 84, 0.3) !important;
+            opacity: 0.95;
+        }
+
+        .btn-outline-primary,
+        .btn-success {
+            border-radius: 0.5rem;
+            font-weight: 500;
+            color: #ffffff;
+            border-color: #888;
+            transition: 0.2s ease;
+        }
+
+        .btn-outline-primary:hover {
+            background-color: #0d6efd;
+            color: #fff;
+            border-color: #0d6efd;
+        }
+
+        .btn-success:hover {
+            background-color: #198754;
+            border-color: #198754;
+        }
+
         .fixed-bottom-buttons {
             position: fixed;
             bottom: 20px;
             right: 30px;
+            display: flex;
+            gap: 10px;
         }
-        .completed {
-            background-color: #d4edda !important;
-            opacity: 0.9;
+
+        .bg-dark.bg-opacity-75 {
+            background-color: rgba(0, 0, 0, 0.75) !important;
         }
     </style>
 </head>
 <body>
-
 <div class="container my-5">
-    <h2 id="routineTitle" class="mb-4">루틴 상세 정보</h2>
+    <h2 id="routineTitle">루틴 상세 정보</h2>
     <div id="detailContainer">로딩 중...</div>
 </div>
 
@@ -44,34 +101,54 @@
     $('#routineTitle').text(`${routineName}`);
 
     const $container = $('#detailContainer');
+    $container.empty();
+
     if (routineData.length === 0) {
         $container.html('<p>운동 세트 정보가 없습니다.</p>');
     } else {
-        $container.empty();
-        routineData.forEach(function (item, index) {
-            const html = `
-                <div class="exercise" data-index="${index}">
-                    <p><strong>운동명:</strong> ${item.exerciseType}</p>
-                    <div class="row g-3">
+        // 👉 1. 종목별로 그룹화
+        const grouped = {};
+        routineData.forEach((item, idx) => {
+            if (!grouped[item.exerciseType]) {
+                grouped[item.exerciseType] = [];
+            }
+            grouped[item.exerciseType].push({ ...item, index: idx });
+        });
+
+        // 👉 2. HTML 생성
+        Object.entries(grouped).forEach(([exerciseType, sets]) => {
+            const $groupBox = $(`
+            <div class="mb-4 p-3 rounded bg-dark bg-opacity-75">
+                <h5 class="text-white fw-bold mb-3">운동명: ${exerciseType}</h5>
+            </div>
+        `);
+
+            sets.forEach((set, i) => {
+                const $setRow = $(`
+                <div class="exercise mb-3" data-index="${set.index}">
+                    <div class="row g-3 align-items-end">
                         <div class="col-md-5">
                             <label class="form-label">중량 (kg)</label>
-                            <input type="number" class="form-control weight-input" value="${item.weight}">
+                            <input type="number" class="form-control weight-input" value="${set.weight}">
                         </div>
                         <div class="col-md-5">
                             <label class="form-label">반복 횟수</label>
-                            <input type="number" class="form-control reps-input" value="${item.repetitions}">
+                            <input type="number" class="form-control reps-input" value="${set.repetitions}">
                         </div>
-                        <div class="col-md-2 d-flex align-items-end">
+                        <div class="col-md-2">
                             <button class="btn btn-outline-primary complete-btn w-100">세트 완료</button>
                         </div>
                     </div>
                 </div>
-            `;
-            $container.append(html);
+            `);
+                $groupBox.append($setRow);
+            });
+
+            $container.append($groupBox);
         });
     }
 
-    // ✔ 세트 완료 토글 처리
+
     $(document).on('click', '.complete-btn', function () {
         const $exercise = $(this).closest('.exercise');
         const isCompleted = $exercise.hasClass('completed');
@@ -85,7 +162,6 @@
         }
     });
 
-    // ✔ 입력값 변경 시 완료 상태 해제
     $(document).on('input change', '.weight-input, .reps-input', function () {
         const $exercise = $(this).closest('.exercise');
         const $btn = $exercise.find('.complete-btn');
@@ -96,7 +172,6 @@
         }
     });
 
-    // 운동 완료 버튼 → 완료된 세트만 전송
     $('#finishBtn').on('click', function () {
         const token = localStorage.getItem('jwtToken');
         if (!token) {

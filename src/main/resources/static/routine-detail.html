@@ -276,10 +276,22 @@
 
     $('#startBtn').on('click', function () {
         const sessionData = [];
-        $('#detailContainer .exercise').each(function () {
-            const weight = parseFloat($(this).find('.weight-input').val());
-            const repetitions = parseInt($(this).find('.reps-input').val());
-            sessionData.push({ weight, repetitions });
+
+        $('.exercise-group').each(function () {
+            const exerciseType = $(this).data('exercise-type-name');
+            const exerciseTypeId = $(this).data('exercise-type-id');
+
+            $(this).find('.exercise').each(function () {
+                const weight = parseFloat($(this).find('.weight-input').val());
+                const repetitions = parseInt($(this).find('.reps-input').val());
+
+                sessionData.push({
+                    exerciseType,
+                    exerciseTypeId,
+                    weight,
+                    repetitions
+                });
+            });
         });
 
         localStorage.setItem('activeRoutine', JSON.stringify(sessionData));
