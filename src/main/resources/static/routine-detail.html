@@ -142,6 +142,12 @@
 <!-- ✅ 본문 -->
 <div class="container my-5">
     <h2 id="routineTitle">루틴 상세 정보</h2>
+
+    <!-- 운동 추가 버튼 -->
+    <div class="text-end mb-3">
+        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#exerciseModal">운동 추가</button>
+    </div>
+
     <div id="detailContainer">로딩 중...</div>
 </div>
 
@@ -150,6 +156,26 @@
     <button class="btn btn-outline-secondary" id="saveBtn">저장</button>
     <button class="btn btn-outline-success" id="startBtn">운동 시작</button>
 </div>
+
+
+<!-- 운동 선택 모달 -->
+<div class="modal fade" id="exerciseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">운동 선택</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control mb-2" id="exerciseSearchInput" placeholder="운동명 검색">
+                <div id="muscleGroupCheckboxes" class="d-flex flex-wrap gap-2 mb-2"></div>
+                <button id="searchExerciseBtn" class="btn btn-outline-primary">검색</button>
+                <div class="list-group mt-3" id="exerciseList"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <script>
     const params = new URLSearchParams(window.location.search);
@@ -191,9 +217,12 @@
                     Object.entries(groupedByExercise).forEach(([exerciseTypeId, { exerciseType, sets }]) => {
                         const $exerciseGroup = $(`
                             <div class="exercise-group" data-exercise-type-id="${exerciseTypeId}" data-exercise-type-name="${exerciseType}">
-                                <h5>${exerciseType}</h5>
-                                <div class="exercise-sets"></div>
-                                <button class="btn btn-sm btn-outline-success add-set-btn">세트 추가</button>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">${exerciseType}</h5>
+                                    <button class="btn btn-sm btn-outline-danger remove-exercise-btn">종목 삭제</button>
+                                </div>
+                                <div class="exercise-sets mt-2"></div>
+                                <button class="btn btn-sm btn-outline-success add-set-btn mt-2">세트 추가</button>
                                 <hr>
                             </div>
                         `);
@@ -234,23 +263,43 @@
         $(this).closest('.exercise').remove();
     });
 
+    $(document).on('click', '.remove-exercise-btn', function () {
+        $(this).closest('.exercise-group').remove();
+    });
+
     $('#saveBtn').on('click', function () {
         const token = localStorage.getItem('jwtToken');
         const routineSets = [];
+        let isValid = true;
 
         $('.exercise-group').each(function () {
             const exerciseTypeId = $(this).data('exercise-type-id');
+
             $(this).find('.exercise').each(function (i) {
                 const weight = parseFloat($(this).find('.weight-input').val());
                 const repetitions = parseInt($(this).find('.reps-input').val());
+
+                if (isNaN(weight) || isNaN(repetitions)) {
+                    alert("❗ 모든 세트에 중량과 반복 횟수를 입력해주세요.");
+                    isValid = false;
+                    return false; // 현재 each() 중단
+                }
+
                 routineSets.push({
                     exerciseTypeId: parseInt(exerciseTypeId),
                     setNumber: i + 1,
-                    weight: weight,
-                    repetitions: repetitions
+                    weight,
+                    repetitions
                 });
             });
+
+            if (!isValid) return false; // 상위 each()도 중단
         });
+
+        if (!isValid || routineSets.length === 0) {
+            return; // 저장 로직 중단
+        }
+
 
         const dto = {
             routineName: routineName,
@@ -297,6 +346,85 @@
         localStorage.setItem('activeRoutine', JSON.stringify(sessionData));
         localStorage.setItem('activeRoutineName', routineName);
         window.location.href = '/exercise-session.html';
+    });
+
+    const muscleGroupOptions = ["가슴", "등", "어깨", "하체", "복근", "팔", "전신"];
+
+    function createMuscleCheckboxes() {
+        const container = $('#muscleGroupCheckboxes');
+        container.empty();
+        muscleGroupOptions.forEach(muscle => {
+            container.append(`
+            <div class="form-check">
+                <input class="form-check-input muscle-checkbox" type="checkbox" value="${muscle}" id="muscle-${muscle}">
+                <label class="form-check-label" for="muscle-${muscle}">${muscle}</label>
+            </div>
+        `);
+        });
+    }
+
+    function fetchExercises() {
+        const name = $('#exerciseSearchInput').val();
+        const muscles = $('.muscle-checkbox:checked').map(function () {
+            return $(this).val();
+        }).get();
+
+        $.ajax({
+            url: '/api/exercise-types',
+            method: 'GET',
+            traditional: true,
+            data: { name, muscleGroup: muscles },
+            success: function (res) {
+                const list = $('#exerciseList');
+                list.empty();
+                res.content.forEach(ex => {
+                    list.append(`
+                    <button type="button" class="list-group-item list-group-item-action"
+                        data-id="${ex.id}" data-name="${ex.name}">
+                        ${ex.name} (${ex.muscleGroup})
+                    </button>
+                `);
+                });
+            }
+        });
+    }
+
+    function createExerciseGroup(exerciseId, exerciseName) {
+        if ($(`[data-exercise-type-id="${exerciseId}"]`).length > 0) {
+            alert("이미 추가된 운동입니다.");
+            return;
+        }
+
+        const $group = $(`
+            <div class="exercise-group" data-exercise-type-id="${exerciseId}" data-exercise-type-name="${exerciseName}">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">${exerciseName}</h5>
+                    <button class="btn btn-sm btn-outline-danger remove-exercise-btn">종목 삭제</button>
+                </div>
+                <div class="exercise-sets mt-2"></div>
+                <button class="btn btn-sm btn-outline-success add-set-btn mt-2">세트 추가</button>
+                <hr>
+            </div>
+        `);
+
+        // 기본 세트 1개 추가
+        $group.find('.exercise-sets').append(createSetRow());
+
+
+        $('#detailContainer').append($group);
+    }
+
+    $(document).ready(function () {
+        createMuscleCheckboxes();
+
+        $('#searchExerciseBtn').on('click', fetchExercises);
+
+        $('#exerciseList').on('click', 'button', function () {
+            const id = $(this).data('id');
+            const name = $(this).data('name');
+            createExerciseGroup(id, name);
+            $('#exerciseModal').modal('hide');
+        });
     });
 </script>
 

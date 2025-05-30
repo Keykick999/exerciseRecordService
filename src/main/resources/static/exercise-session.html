@@ -86,6 +86,12 @@
 <body>
 <div class="container my-5">
     <h2 id="routineTitle">루틴 상세 정보</h2>
+
+    <!-- 운동 추가 버튼 -->
+    <div class="text-end mb-3">
+        <button class="btn btn-outline-light" data-bs-toggle="modal" data-bs-target="#exerciseModal">운동 추가</button>
+    </div>
+
     <div id="detailContainer">로딩 중...</div>
 </div>
 
@@ -94,6 +100,23 @@
     <button class="btn btn-success" id="finishBtn">운동 완료</button>
 </div>
 
+<!-- 운동 선택 모달 -->
+<div class="modal fade" id="exerciseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content bg-dark text-white">
+            <div class="modal-header">
+                <h5 class="modal-title">운동 선택</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="text" class="form-control mb-2" id="exerciseSearchInput" placeholder="운동명 검색">
+                <div id="muscleGroupCheckboxes" class="d-flex flex-wrap gap-2 mb-2"></div>
+                <button id="searchExerciseBtn" class="btn btn-outline-light">검색</button>
+                <div class="list-group mt-3" id="exerciseList"></div>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
     const routineName = localStorage.getItem('activeRoutineName') || '알 수 없음';
     const routineData = JSON.parse(localStorage.getItem('activeRoutine') || '[]');
@@ -117,33 +140,26 @@
 
         // 👉 2. HTML 생성
         Object.entries(grouped).forEach(([exerciseType, sets]) => {
-            const $groupBox = $(`
-            <div class="mb-4 p-3 rounded bg-dark bg-opacity-75">
-                <h5 class="text-white fw-bold mb-3">운동명: ${exerciseType}</h5>
+        const $groupBox = $(`
+          <div class="mb-4 p-3 rounded bg-dark bg-opacity-75 exercise-group"
+               data-exercise-type-id="${sets[0].exerciseTypeId}"
+               data-exercise-type-name="${exerciseType}">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h5 class="text-white fw-bold mb-0">운동명: ${exerciseType}</h5>
+              <div>
+                <button class="btn btn-sm btn-outline-light add-set-btn">세트 추가</button>
+                <button class="btn btn-sm btn-outline-danger remove-exercise-btn">종목 삭제</button>
+              </div>
             </div>
+            <div class="exercise-sets"></div>
+          </div>
         `);
 
-            sets.forEach((set, i) => {
-                const $setRow = $(`
-                <div class="exercise mb-3" data-index="${set.index}">
-                    <div class="row g-3 align-items-end">
-                        <div class="col-md-5">
-                            <label class="form-label">중량 (kg)</label>
-                            <input type="number" class="form-control weight-input" value="${set.weight}">
-                        </div>
-                        <div class="col-md-5">
-                            <label class="form-label">반복 횟수</label>
-                            <input type="number" class="form-control reps-input" value="${set.repetitions}">
-                        </div>
-                        <div class="col-md-2">
-                            <button class="btn btn-outline-primary complete-btn w-100">세트 완료</button>
-                        </div>
-                    </div>
-                </div>
-            `);
-                $groupBox.append($setRow);
-            });
 
+            sets.forEach((set, i) => {
+                const $setRow = $(createSetRow(set.weight, set.repetitions));
+                $groupBox.find('.exercise-sets').append($setRow);
+            });
             $container.append($groupBox);
         });
     }
@@ -152,6 +168,7 @@
     $(document).on('click', '.complete-btn', function () {
         const $exercise = $(this).closest('.exercise');
         const isCompleted = $exercise.hasClass('completed');
+        alert(isCompleted);
 
         if (isCompleted) {
             $exercise.removeClass('completed');
@@ -182,18 +199,22 @@
 
         const updatedData = [];
 
-        $('#detailContainer .exercise.completed').each(function (idx) {
-            const index = $(this).data('index');
-            const original = routineData[index];
+        $('.exercise-group').each(function () {
+            const exerciseTypeId = $(this).data('exercise-type-id');
+            const exerciseType = $(this).data('exercise-type-name');
 
-            const weight = parseFloat($(this).find('.weight-input').val());
-            const repetitions = parseInt($(this).find('.reps-input').val());
+            $(this).find('.exercise.completed').each(function (idx) {
+                const weight = parseFloat($(this).find('.weight-input').val());
+                const repetitions = parseInt($(this).find('.reps-input').val());
 
-            updatedData.push({
-                exerciseTypeId: original.exerciseTypeId,
-                setOrder: idx + 1,
-                weight: weight,
-                reps: repetitions
+                if (!isNaN(weight) && !isNaN(repetitions)) {
+                    updatedData.push({
+                        exerciseTypeId,
+                        setOrder: idx + 1,
+                        weight,
+                        reps: repetitions
+                    });
+                }
             });
         });
 
@@ -222,6 +243,145 @@
             }
         });
     });
+
+    const muscleGroupOptions = ["가슴", "등", "어깨", "하체", "복근", "팔", "전신"];
+
+    function createMuscleCheckboxes() {
+        const container = $('#muscleGroupCheckboxes');
+        container.empty();
+        muscleGroupOptions.forEach(muscle => {
+            container.append(`
+            <div class="form-check">
+                <input class="form-check-input muscle-checkbox" type="checkbox" value="${muscle}" id="muscle-${muscle}">
+                <label class="form-check-label" for="muscle-${muscle}">${muscle}</label>
+            </div>
+        `);
+        });
+    }
+
+    function fetchExercises() {
+        const name = $('#exerciseSearchInput').val();
+        const muscles = $('.muscle-checkbox:checked').map(function () {
+            return $(this).val();
+        }).get();
+
+        $.ajax({
+            url: '/api/exercise-types',
+            method: 'GET',
+            traditional: true,
+            data: { name, muscleGroup: muscles },
+            success: function (res) {
+                const list = $('#exerciseList');
+                list.empty();
+                res.content.forEach(ex => {
+                    list.append(`
+                    <button type="button" class="list-group-item list-group-item-action"
+                        data-id="${ex.id}" data-name="${ex.name}">
+                        ${ex.name} (${ex.muscleGroup})
+                    </button>
+                `);
+                });
+            }
+        });
+    }
+
+    function createSetRow(weight = 0, reps = 0) {
+        return `
+        <div class="exercise mb-2">
+            <div class="row g-2 align-items-end">
+                <div class="col-5">
+                    <label class="form-label">중량 (kg)</label>
+                    <input type="number" class="form-control weight-input" value="${weight}">
+                </div>
+                <div class="col-5">
+                    <label class="form-label">반복 횟수</label>
+                    <input type="number" class="form-control reps-input" value="${reps}">
+                </div>
+                <div class="col-1 d-flex align-items-end">
+                    <button class="btn btn-outline-primary complete-btn w-100">세트 완료</button>
+                </div>
+                <div class="col-1 d-flex align-items-end">
+                    <button class="btn btn-outline-danger remove-set-btn w-100">세트 삭제</button>
+                </div>
+            </div>
+        </div>
+    `;
+    }
+
+
+
+    function createExerciseGroup(exerciseId, exerciseName) {
+        if ($(`[data-exercise-type-id="${exerciseId}"]`).length > 0) {
+            alert("이미 추가된 운동입니다.");
+            return;
+        }
+
+        const $groupBox = $(`
+        <div class="mb-4 p-3 rounded bg-dark bg-opacity-75 exercise-group" data-exercise-type-id="${exerciseId}" data-exercise-type-name="${exerciseName}">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h5 class="text-white fw-bold mb-0">운동명: ${exerciseName}</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-light add-set-btn">세트 추가</button>
+                    <button class="btn btn-sm btn-outline-danger remove-exercise-btn">종목 삭제</button>
+                </div>
+            </div>
+            <div class="exercise-sets"></div>
+        </div>
+    `);
+        $groupBox.find('.exercise-sets').append(createSetRow());
+        $('#detailContainer').append($groupBox);
+    }
+
+    // 세트 추가
+    $(document).on('click', '.add-set-btn', function () {
+        $(this).closest('.exercise-group').find('.exercise-sets').append(createSetRow());
+    });
+
+    // 세트 삭제
+    $(document).on('click', '.remove-set-btn', function () {
+        $(this).closest('.exercise').remove();
+    });
+
+    // 종목 삭제
+    $(document).on('click', '.remove-exercise-btn', function () {
+        $(this).closest('.exercise-group').remove();
+    });
+
+    $(document).ready(function () {
+        createMuscleCheckboxes();
+
+        $('#searchExerciseBtn').on('click', fetchExercises);
+
+        $('#exerciseList').on('click', 'button', function () {
+            const id = $(this).data('id');
+            const name = $(this).data('name');
+            createExerciseGroup(id, name);
+            $('#exerciseModal').modal('hide');
+        });
+
+        // 세트 추가
+        $(document).on('click', '.add-set-btn', function () {
+            $(this).closest('.exercise-group').find('.exercise-sets').append(createSetRow());
+        });
+
+        // 세트 삭제
+        $(document).on('click', '.remove-set-btn', function () {
+            $(this).closest('.exercise').remove();
+        });
+
+        // 종목 삭제
+        $(document).on('click', '.remove-exercise-btn', function () {
+            $(this).closest('.exercise-group').remove();
+        });
+
+        // 값 수정 시 완료 해제
+        $(document).on('input change', '.weight-input, .reps-input', function () {
+            const $exercise = $(this).closest('.exercise');
+            $exercise.removeClass('completed');
+            $exercise.find('.complete-btn').text('세트 완료').removeClass('btn-success').addClass('btn-outline-primary');
+        });
+    });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
