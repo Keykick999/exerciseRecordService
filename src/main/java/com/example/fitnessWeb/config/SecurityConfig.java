@@ -28,7 +28,18 @@ public class SecurityConfig {
                 .formLogin(form -> form.disable())  // ✅ 폼 로그인 제거
                 .httpBasic(httpBasic -> httpBasic.disable())  // ✅ Basic 인증 제거
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/users/**", "/home", "/login", "/routine", "/routines", "/routine-detail.html", "/exercise-session.html").permitAll()
+                        .requestMatchers("/api/users/**",
+                                "/home",
+                                "/login",
+                                "/routine",
+                                "/routines",
+                                "/routine-detail.html",
+                                "/exercise-session.html",
+                                "/images/**",
+                                "/css/**",
+                                "/js/**",
+                                "/favicon.ico",
+                                "chat").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/exercise-types").permitAll()
                         .anyRequest().authenticated()
                 )

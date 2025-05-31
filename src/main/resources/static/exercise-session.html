@@ -81,9 +81,90 @@
         .bg-dark.bg-opacity-75 {
             background-color: rgba(0, 0, 0, 0.75) !important;
         }
+
+        #timerOverlay h2,
+        #timerOverlay #overlayTimerDisplay {
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.8);
+
+        }
+
+        #timerOverlay {
+            background: url('/images/workout.png') no-repeat center center;
+            background-size: cover; /* ← 핵심 변경 */
+            background-color: black;  /* 남는 공간은 검정 처리 (optional) */
+            background-position: center;
+            background-repeat: no-repeat;
+
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1060;
+            color: white;
+            overflow: hidden;
+        }
+
+
+
+        #timerOverlay::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.55); /* 어두운 그라디언트 효과 */
+            z-index: -1;
+        }
+
+        .overlay-background {
+            background: url('/images/workoutMotivation.jpeg') center center / cover no-repeat;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1060;
+            color: white;
+        }
+
+        .overlay-background::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.55);
+            z-index: -1;
+        }
     </style>
 </head>
 <body>
+<!-- ✅ 네비게이션 바 추가 -->
+<nav class="navbar navbar-expand-lg navbar-dark shadow-sm" style="background-color: rgba(255, 255, 255, 0.05); backdrop-filter: blur(8px);">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand fw-bold text-primary" href="/routines">🏋️ FitnessWeb</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/routine">루틴 생성</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/routines">내 루틴</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/chat">운동 질문하기</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/login">
+                        <i class="bi bi-person-circle" style="font-size: 1.4rem;"></i>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
 <div class="container my-5">
     <h2 id="routineTitle">루틴 상세 정보</h2>
 
@@ -117,7 +198,53 @@
         </div>
     </div>
 </div>
+
+<!-- ⏱ 왼쪽 하단 미니 타이머 버튼 -->
+<div id="miniTimer" class="position-fixed bottom-0 start-0 m-3 bg-dark text-white px-3 py-2 rounded shadow" style="cursor:pointer; z-index: 1055;">
+    <span id="miniTimerDisplay" class="fw-bold">00:00</span>
+</div>
+
+<!-- ⏱ 전체 화면 오버레이 타이머 모달 -->
+<div id="timerOverlay" class="overlay-background d-none">
+    <div class="d-flex flex-column justify-content-center align-items-center h-100">
+        <h2 class="mb-4">휴식 타이머</h2>
+        <div id="overlayTimerDisplay" class="display-3 fw-bold mb-4">00:00</div>
+        <div class="d-flex flex-wrap justify-content-center gap-2 mb-4">
+            <button class="btn btn-outline-light time-btn" data-seconds="30">30초</button>
+            <button class="btn btn-outline-light time-btn" data-seconds="60">1분</button>
+            <button class="btn btn-outline-light time-btn" data-seconds="90">1분 30초</button>
+            <button class="btn btn-outline-light time-btn" data-seconds="120">2분</button>
+            <button class="btn btn-outline-light time-btn" data-seconds="150">2분 30초</button>
+            <button class="btn btn-outline-light time-btn" data-seconds="180">3분</button>
+            <button class="btn btn-outline-light time-btn" data-seconds="210">3분 30초</button>
+            <button class="btn btn-outline-light time-btn" data-seconds="240">4분</button>
+        </div>
+        <div class="d-flex gap-3 mb-4">
+            <button class="btn btn-success" id="startTimerBtn">시작</button>
+            <button class="btn btn-danger" id="pauseTimerBtn">일시정지</button>
+        </div>
+        <button class="btn btn-light text-dark fw-bold px-4" id="closeTimerOverlay">닫기</button>
+    </div>
+</div>
+
+<audio id="beepSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" preload="auto"></audio>
+<audio id="finishSound" src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" preload="auto"></audio>
+
+<div id="totalWorkoutTime"
+     class="position-fixed top-0 start-50 translate-middle-x mt-3 px-4 py-2 bg-dark text-white fw-bold rounded shadow d-flex align-items-center gap-2"
+     style="z-index: 2000;">
+    ⏱ 전체 운동 시간: <span id="workoutTimeDisplay">00:00</span>
+    <button id="pauseWorkoutBtn" class="btn btn-sm btn-light text-dark px-2 py-1">⏸</button>
+    <button id="resumeWorkoutBtn" class="btn btn-sm btn-success px-2 py-1 d-none">▶️</button>
+</div>
+</body>
+
 <script>
+    let workoutStartTime = Date.now();
+    let workoutPausedTime = 0; // 누적 일시정지 시간
+    let workoutPausedStart = null;
+    let workoutIsPaused = false;
+    let workoutTimerInterval = null;
     const routineName = localStorage.getItem('activeRoutineName') || '알 수 없음';
     const routineData = JSON.parse(localStorage.getItem('activeRoutine') || '[]');
 
@@ -163,21 +290,6 @@
             $container.append($groupBox);
         });
     }
-
-
-    $(document).on('click', '.complete-btn', function () {
-        const $exercise = $(this).closest('.exercise');
-        const isCompleted = $exercise.hasClass('completed');
-        alert(isCompleted);
-
-        if (isCompleted) {
-            $exercise.removeClass('completed');
-            $(this).text('세트 완료').removeClass('btn-success').addClass('btn-outline-primary');
-        } else {
-            $exercise.addClass('completed');
-            $(this).text('완료됨').removeClass('btn-outline-primary').addClass('btn-success');
-        }
-    });
 
     $(document).on('input change', '.weight-input, .reps-input', function () {
         const $exercise = $(this).closest('.exercise');
@@ -232,10 +344,21 @@
             },
             data: JSON.stringify(updatedData),
             success: function () {
-                alert('운동 기록이 저장되었습니다!');
-                localStorage.removeItem('activeRoutine');
-                localStorage.removeItem('activeRoutineName');
-                window.location.href = '/routines';
+                const elapsed = Math.floor((Date.now() - workoutStartTime - workoutPausedTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+
+                const message = `전체 소요 시간: ${minutes}분 ${seconds}초`;
+                const $notice = $('#workoutDurationNotice');
+                $notice.text(message).fadeIn();
+
+                setTimeout(() => {
+                    $notice.fadeOut(() => {
+                        localStorage.removeItem('activeRoutine');
+                        localStorage.removeItem('activeRoutineName');
+                        window.location.href = '/routines';
+                    });
+                }, 3000);
             },
             error: function (xhr) {
                 console.error('저장 실패:', xhr);
@@ -380,8 +503,130 @@
             $exercise.removeClass('completed');
             $exercise.find('.complete-btn').text('세트 완료').removeClass('btn-success').addClass('btn-outline-primary');
         });
+
+        // ✅ 전체 운동 시간 측정 시작
+        workoutTimerInterval = setInterval(updateWorkoutTimeDisplay, 1000);
+    });
+
+    // 중지 버튼
+    $('#pauseWorkoutBtn').on('click', function () {
+        if (!workoutIsPaused) {
+            workoutIsPaused = true;
+            workoutPausedStart = Date.now();  // 중지 시작 시각 저장
+            clearInterval(workoutTimerInterval);
+            $('#pauseWorkoutBtn').addClass('d-none');
+            $('#resumeWorkoutBtn').removeClass('d-none');
+        }
+    });
+
+
+    // 재시작 버튼
+    $('#resumeWorkoutBtn').on('click', function () {
+        if (workoutIsPaused) {
+            workoutIsPaused = false;
+
+            // 누적 일시정지 시간 += 이번 중지 시간
+            workoutPausedTime += Date.now() - workoutPausedStart;
+            workoutPausedStart = null;
+
+            workoutTimerInterval = setInterval(updateWorkoutTimeDisplay, 1000);
+            $('#resumeWorkoutBtn').addClass('d-none');
+            $('#pauseWorkoutBtn').removeClass('d-none');
+        }
+    });
+
+    function updateWorkoutTimeDisplay() {
+        if (!workoutIsPaused) {
+            const now = Date.now();
+            const elapsed = Math.floor((now - workoutStartTime - workoutPausedTime) / 1000);
+            const min = String(Math.floor(elapsed / 60)).padStart(2, '0');
+            const sec = String(elapsed % 60).padStart(2, '0');
+            $('#workoutTimeDisplay').text(`${min}:${sec}`);
+        }
+    }
+
+
+    let timerInterval = null;
+    let remainingSeconds = 0;
+
+    // 공통 시간 표시
+    function formatTime(seconds) {
+        const min = String(Math.floor(seconds / 60)).padStart(2, '0');
+        const sec = String(seconds % 60).padStart(2, '0');
+        return `${min}:${sec}`;
+    }
+
+    function updateAllTimerDisplays() {
+        $('#miniTimerDisplay').text(formatTime(remainingSeconds));
+        $('#overlayTimerDisplay').text(formatTime(remainingSeconds));
+    }
+
+    // 타이머 동작
+    function startTimer() {
+        if (timerInterval) clearInterval(timerInterval);
+
+        timerInterval = setInterval(() => {
+            if (remainingSeconds > 0) {
+                remainingSeconds--;
+
+                // 🔔 3초, 2초, 1초일 때 짧은 삐 소리 재생
+                if (remainingSeconds <= 3 && remainingSeconds > 0) {
+                    document.getElementById('beepSound').play();
+                }
+
+                updateAllTimerDisplays();
+            } else {
+                clearInterval(timerInterval);
+                timerInterval = null;
+
+                // 🔊 타이머 종료 시 효과음 재생
+                document.getElementById('finishSound').play();
+            }
+        }, 1000);
+    }
+
+    function pauseTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+
+    // 미니 타이머 클릭 → 전체 오버레이 열기
+    $('#miniTimer').on('click', function () {
+        $('#timerOverlay').removeClass('d-none');
+    });
+
+    // 닫기 버튼
+    $('#closeTimerOverlay').on('click', function () {
+        $('#timerOverlay').addClass('d-none');
+    });
+
+    // 시간 버튼 클릭 시
+    $('.time-btn').on('click', function () {
+        remainingSeconds = parseInt($(this).data('seconds'));
+        updateAllTimerDisplays();
+    });
+
+    // 시작/정지 버튼
+    $('#startTimerBtn').on('click', startTimer);
+    $('#pauseTimerBtn').on('click', pauseTimer);
+
+    // ✅ 세트 완료 시 자동 타이머 설정
+    $(document).on('click', '.complete-btn', function () {
+        const $exercise = $(this).closest('.exercise');
+        const isCompleted = $exercise.hasClass('completed');
+
+        if (isCompleted) {
+            $exercise.removeClass('completed');
+            $(this).text('세트 완료').removeClass('btn-success').addClass('btn-outline-primary');
+        } else {
+            $exercise.addClass('completed');
+            $(this).text('완료됨').removeClass('btn-outline-primary').addClass('btn-success');
+
+            remainingSeconds = 60;
+            updateAllTimerDisplays();
+            startTimer();
+        }
     });
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
 </html>
