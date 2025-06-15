@@ -132,6 +132,12 @@
             color: white;
         }
 
+        .modal-body {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+
         .list-group-item {
             border-radius: 0.4rem;
             transition: background-color 0.2s;
@@ -215,6 +221,7 @@
                     <button id="searchExerciseBtn" class="btn btn-outline-primary mt-2">검색</button>
                 </div>
                 <div class="list-group mt-3" id="exerciseList"></div>
+                <div id="scrollSentinel" class="my-3 text-center">🔄 불러오는 중...</div>
             </div>
         </div>
     </div>
@@ -224,8 +231,13 @@
 <script>
     const muscleGroupOptions = ["가슴", "등", "어깨", "하체", "복근", "팔", "전신"];
 
+    let currentPage = 0;
+    let isLoading = false;
+    let hasNext = true;
+
     function createMuscleCheckboxes() {
         const container = $('#muscleGroupCheckboxes');
+        container.empty();
         muscleGroupOptions.forEach(muscle => {
             container.append(`
                 <div class="form-check">
@@ -236,7 +248,17 @@
         });
     }
 
+    function resetAndFetchExercises() {
+        currentPage = 0;
+        hasNext = true;
+        $('#exerciseList').empty();
+        fetchExercises();
+    }
+
     function fetchExercises() {
+        if (isLoading || !hasNext) return;
+        isLoading = true;
+
         const name = $('#exerciseSearchInput').val();
         const muscles = $('.muscle-checkbox:checked').map(function () {
             return $(this).val();
@@ -246,10 +268,14 @@
             url: '/api/exercise-types',
             method: 'GET',
             traditional: true,
-            data: { name, muscleGroup: muscles },
+            data: {
+                name,
+                muscleGroup: muscles,
+                page: currentPage,
+                size: 10
+            },
             success: function (res) {
                 const list = $('#exerciseList');
-                list.empty();
                 res.content.forEach(ex => {
                     list.append(`
                         <button type="button" class="list-group-item list-group-item-action"
@@ -258,6 +284,14 @@
                         </button>
                     `);
                 });
+                hasNext = !res.last;
+                if (res.last) {
+                    $('#scrollSentinel').hide(); // 더 이상 로딩 안 함
+                }
+                currentPage++;
+            },
+            complete: function () {
+                isLoading = false;
             }
         });
     }
@@ -316,12 +350,12 @@
     $(document).ready(function () {
         createMuscleCheckboxes();
 
-        $('#searchExerciseBtn').on('click', fetchExercises);
+        $('#searchExerciseBtn').on('click', resetAndFetchExercises);
 
         $('#exerciseSearchInput').on('keypress', function (e) {
             if (e.which === 13) {
                 e.preventDefault();
-                $('#searchExerciseBtn').click();
+                resetAndFetchExercises();
             }
         });
 
@@ -402,8 +436,17 @@
                 }
             });
         });
+
+        // ✅ IntersectionObserver 등록
+        const observer = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting) {
+                fetchExercises();
+            }
+        }, {
+            root: document.querySelector('#exerciseModal .modal-body')
+        });
+        observer.observe(document.querySelector('#scrollSentinel'));
     });
 </script>
-
 </body>
 </html>

@@ -10,6 +10,8 @@ import com.example.fitnessWeb.repository.ExerciseTypeRepository;
 import com.example.fitnessWeb.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
@@ -55,17 +57,14 @@ public class ExerciseRecordService {
     }
 
 
-    public List<ExerciseRecordResponseDto> getRecords(String username, ExerciseRecordSearchRequest request) {
+    public Page<ExerciseRecordResponseDto> getRecords(String username,
+                                                      LocalDateTime startDate,
+                                                      LocalDateTime endDate,
+                                                      String exerciseName,
+                                                      List<String> muscleGroup,
+                                                      Pageable pageable) {
         User user = userRepository.findByUsername(username).orElseThrow();
-
-
-        return exerciseRecordRepository.searchRecords(
-                user.getId(),
-                request.getStartDate(),
-                request.getEndDate(),
-                request.getExerciseName(),
-                request.getMuscleGroup()
-        );
+        return exerciseRecordRepository.searchRecords(user.getId(), startDate, endDate, exerciseName, muscleGroup, pageable);
     }
 
 
