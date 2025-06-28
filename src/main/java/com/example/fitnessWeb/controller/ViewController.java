@@ -1,6 +1,8 @@
 package com.example.fitnessWeb.controller;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Controller
@@ -27,8 +29,35 @@ public class ViewController {
         return "routines";
     }
 
-    @GetMapping("chat")
+    @GetMapping("/chat")
     public String chat() {
         return "chat";
+    }
+
+    @GetMapping("exercise-records")
+    public String exerciseRecords() {
+        return "exercise-records";
+    }
+
+    @GetMapping("/exercise-record-detail/{exerciseRecordId}")
+    public String exerciseRecordDetail(Model model, @PathVariable Long exerciseRecordId) {
+        System.out.println("요청");
+        model.addAttribute("exerciseRecordId", exerciseRecordId);
+        return "exercise-record-detail";
+    }
+
+    @GetMapping("/routineChat")
+    public String routineChat() {
+        return "routine-chat";
+    }
+
+    @GetMapping("/speech")
+    public String speech() {
+        return "speech";
+    }
+
+    @GetMapping("/workoutVideos")
+    public String workoutVideos() {
+        return "workout-videos";
     }
 }

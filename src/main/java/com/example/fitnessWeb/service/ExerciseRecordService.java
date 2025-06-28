@@ -68,6 +68,12 @@ public class ExerciseRecordService {
     }
 
 
+    public List<ExerciseSetDetailDto> getExerciseSetDetails(Long recordId, String username) {
+        // 사용자 권한 확인 로직을 추가해도 좋습니다 (선택)
+        return exerciseRecordRepository.findExerciseSetDetails(recordId);
+    }
+
+
 //    public List<WeeklyMuscleStatDto> getWeeklyMuscleVolumeStats(String username, int weekCount) {
 //        User user = userRepository.findByUsername(username).orElseThrow();
 //        LocalDate today = LocalDate.now();

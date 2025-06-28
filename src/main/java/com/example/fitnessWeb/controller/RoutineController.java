@@ -9,8 +9,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
+
 
 @RestController
 @RequiredArgsConstructor
@@ -21,6 +21,7 @@ public class RoutineController {
 
     @PostMapping
     public ResponseEntity<Void> createRoutine(@RequestBody RoutineRequestDto requestDto) {
+        System.out.println("requestDto = " + requestDto);
         routineService.saveRoutine(requestDto);
         return ResponseEntity.status(201).build();
     }

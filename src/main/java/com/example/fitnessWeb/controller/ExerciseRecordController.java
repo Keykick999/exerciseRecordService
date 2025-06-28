@@ -1,6 +1,7 @@
 package com.example.fitnessWeb.controller;
 
 import com.example.fitnessWeb.dto.ExerciseRecordResponseDto;
+import com.example.fitnessWeb.dto.ExerciseSetDetailDto;
 import com.example.fitnessWeb.dto.ExerciseSetDto;
 import com.example.fitnessWeb.service.ExerciseRecordService;
 import jakarta.validation.Valid;
@@ -73,6 +74,16 @@ public class ExerciseRecordController {
                 pageable
         );
 
+        return ResponseEntity.ok(result);
+    }
+
+
+    @GetMapping("/{recordId}/details")
+    public ResponseEntity<List<ExerciseSetDetailDto>> getExerciseSetDetails(
+            @PathVariable Long recordId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        List<ExerciseSetDetailDto> result = service.getExerciseSetDetails(recordId, userDetails.getUsername());
         return ResponseEntity.ok(result);
     }
 

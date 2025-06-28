@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>음성 인식 테스트</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 40px;
+            text-align: center;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        #result {
+            margin-top: 30px;
+            font-size: 1.4rem;
+            color: #222;
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            min-height: 80px;
+        }
+
+        #micButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #1f6feb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #micButton:hover {
+            background-color: #1455c1;
+        }
+    </style>
+</head>
+<body>
+<h1>🎤 음성으로 말해보세요</h1>
+<button id="micButton" onclick="startVoice()">마이크 시작</button>
+
+<div id="result">여기에 인식된 음성이 표시됩니다.</div>
+
+<script>
+    function startVoice() {
+        if (!('webkitSpeechRecognition' in window)) {
+            alert("음성 인식을 지원하지 않는 브라우저입니다. 크롬을 이용해주세요.");
+            return;
+        }
+
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = "ko-KR";
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.start();
+
+        recognition.onstart = () => {
+            document.getElementById("result").innerText = "🎙️ 듣고 있어요... 말씀해 주세요.";
+        };
+
+        recognition.onresult = (event) => {
+            const speech = event.results[0][0].transcript;
+            document.getElementById("result").innerText = "📝 인식 결과: " + speech;
+        };
+
+        recognition.onerror = (event) => {
+            document.getElementById("result").innerText = "⚠️ 오류 발생: " + event.error;
+        };
+
+        recognition.onend = () => {
+            console.log("음성 인식 종료");
+        };
+    }
+</script>
+</body>
+</html>

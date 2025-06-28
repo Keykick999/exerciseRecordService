@@ -26,6 +26,7 @@ public class RoutineService {
     private final RoutineSetRepository routineSetRepository;
     private final ExerciseTypeRepository exerciseTypeRepository;
 
+
     @Transactional
     public void saveRoutine(RoutineRequestDto requestDto) {
         // 1. 인증된 사용자 이름 가져오기
@@ -52,7 +53,7 @@ public class RoutineService {
         Set<String> duplicateCheck = new HashSet<>();
         for (RoutineSetDto dto : requestDto.getRoutineSets()) {
             // 유효성 검사
-            if (dto.getSetNumber() <= 0 || dto.getWeight() <= 0 || dto.getRepetitions() < 0) {
+            if (dto.getSetNumber() <= 0 || dto.getWeight() < 0 || dto.getRepetitions() < 0) {
                 throw new InvalidRoutineSetException("세트번호, 중량, 횟수는 양의 정수여야 합니다.");
             }
 

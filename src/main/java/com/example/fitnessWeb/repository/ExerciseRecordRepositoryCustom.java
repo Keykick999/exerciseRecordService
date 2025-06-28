@@ -1,5 +1,6 @@
 package com.example.fitnessWeb.repository;
 import com.example.fitnessWeb.dto.ExerciseRecordResponseDto;
+import com.example.fitnessWeb.dto.ExerciseSetDetailDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -15,4 +16,6 @@ public interface ExerciseRecordRepositoryCustom {
             List<String> muscleGroupList,
             Pageable pageable
     );
+
+    List<ExerciseSetDetailDto> findExerciseSetDetails(Long recordId);
 }

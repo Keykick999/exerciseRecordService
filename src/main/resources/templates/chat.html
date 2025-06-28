@@ -146,25 +146,8 @@
 </head>
 <body>
 
-<!-- ✅ 네비게이션 바 -->
-<nav class="navbar navbar-expand-lg">
-    <div class="container-fluid px-4">
-        <a class="navbar-brand" href="/routines">🏋️ FitnessWeb</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
-            <ul class="navbar-nav">
-                <li class="nav-item"><a class="nav-link" href="/routine">루틴 생성</a></li>
-                <li class="nav-item"><a class="nav-link" href="/routines">내 루틴</a></li>
-                <li class="nav-item"><a class="nav-link active" href="/chat">운동 질문하기</a></li>
-            </ul>
-            <ul class="navbar-nav">
-                <li class="nav-item"><a class="nav-link" href="/login"><i class="bi bi-person-circle" style="font-size: 1.4rem;"></i></a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
+<!-- 네비게이션 바 -->
+<div th:replace="fragments/navbar :: body"></div>
 
 <h1>AI 식단/운동 코치</h1>
 
@@ -178,44 +161,34 @@
     <button onclick="askCoach()">전송</button>
 </div>
 
-<!-- ✅ 기능 스크립트 -->
-<script>
-    const textarea = document.getElementById("question");
+<script src="/js/auth.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
+<script>
     function autoGrow(el) {
         el.style.height = "auto";
         el.style.height = (el.scrollHeight) + "px";
     }
 
-    textarea.addEventListener("keydown", function (e) {
-        if (e.key === "Enter" && !e.shiftKey) {
-            e.preventDefault();
-            askCoach();
-        }
-    });
-
     async function askCoach() {
-        const message = textarea.value.trim();
+        const message = $('#question').val().trim();
         if (!message) return;
 
-        const chatBox = document.getElementById('chat');
+        const chatBox = $('#chat');
         const token = localStorage.getItem('jwtToken');
         if (!token) {
             alert("로그인이 필요합니다.");
             return;
         }
 
-        const userDiv = document.createElement('div');
-        userDiv.className = 'chat-message user-message';
-        userDiv.innerText = message;
-        chatBox.appendChild(userDiv);
-        textarea.value = '';
-        autoGrow(textarea);
+        const userDiv = $('<div>').addClass('chat-message user-message').text(message);
+        chatBox.append(userDiv);
+        $('#question').val('');
+        autoGrow(document.getElementById('question'));
 
-        const aiDiv = document.createElement('div');
-        aiDiv.className = 'chat-message ai-message';
-        chatBox.appendChild(aiDiv);
-        chatBox.scrollTop = chatBox.scrollHeight;
+        const aiDiv = $('<div>').addClass('chat-message ai-message');
+        chatBox.append(aiDiv[0]);
+        chatBox.scrollTop(chatBox[0].scrollHeight);
 
         try {
             const res = await fetch('/chat', {
@@ -229,9 +202,9 @@
 
             const data = await res.json();
             const reply = data.reply || "응답 없음";
-            typeText(aiDiv, reply);
+            typeText(aiDiv[0], reply);
         } catch (err) {
-            aiDiv.innerText = '오류 발생: ' + err.message;
+            aiDiv.text('오류 발생: ' + err.message);
         }
     }
 
@@ -247,7 +220,30 @@
             }
         }, 20);
     }
+
+    $(document).ready(function () {
+        renderAuthMenu(); // 🔁 로그인/로그아웃 버튼 렌더링 함수 (auth.js에 있음)
+
+        // textarea 자동 높이 조절
+        $('#question').on('input', function () {
+            autoGrow(this);
+        });
+
+        // 엔터 키 전송
+        $('#question').on('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                askCoach();
+            }
+        });
+
+        // 전송 버튼 클릭 시 질문 전송
+        $('button').on('click', function () {
+            askCoach();
+        });
+    });
 </script>
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>

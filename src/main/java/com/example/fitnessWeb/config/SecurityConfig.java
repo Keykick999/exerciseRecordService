@@ -33,13 +33,18 @@ public class SecurityConfig {
                                 "/login",
                                 "/routine",
                                 "/routines",
+                                "/exercise-records",
+                                "/exercise-record-detail/**",
                                 "/routine-detail.html",
                                 "/exercise-session.html",
                                 "/images/**",
                                 "/css/**",
                                 "/js/**",
                                 "/favicon.ico",
-                                "chat").permitAll()
+                                "/routineChat",
+                                "speech",
+                                "chat",
+                                "workoutVideos").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/exercise-types").permitAll()
                         .anyRequest().authenticated()
                 )

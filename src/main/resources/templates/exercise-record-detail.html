@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>운동 세트 기록</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Noto Sans KR', sans-serif;
+            background: url('https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            padding: 100px 20px;
+            background-color: rgba(0, 0, 0, 0.75);
+            max-width: 1000px;
+            margin: auto;
+            border-radius: 12px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+        }
+
+        h1 {
+            font-size: 40px;
+            margin-bottom: 40px;
+            color: #ffffff;
+            text-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+        }
+
+        .exercise-group {
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: left;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+            transition: transform 0.2s ease;
+        }
+
+        .exercise-group:hover {
+            transform: translateY(-4px);
+            background-color: rgba(0, 0, 0, 0.7);
+        }
+
+        .exercise-name {
+            font-size: 24px;
+            font-weight: 800;
+            color: #ffcc00;
+            margin-bottom: 15px;
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.7);
+        }
+
+        .set-row {
+            margin-left: 1rem;
+            font-size: 16px;
+            line-height: 2;
+            color: #f0f0f0;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>운동 기록 상세</h1>
+    <div id="record-container"></div>
+</div>
+<script>
+    const recordId = [[${exerciseRecordId}]];
+    const token = localStorage.getItem("jwtToken");
+
+    $(document).ready(function () {
+        $.ajax({
+            url: `/api/exercise-records/${recordId}/details`,
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            },
+            success: function (data) {
+                renderExerciseSets(data);
+            },
+            error: function (xhr) {
+                alert("❌ 데이터를 불러오지 못했습니다.");
+                console.error(xhr);
+            }
+        });
+    });
+
+    function renderExerciseSets(data) {
+        const container = $('#record-container');
+        const grouped = {};
+
+        // 종목별로 그룹화
+        data.forEach(item => {
+            if (!grouped[item.name]) {
+                grouped[item.name] = [];
+            }
+            grouped[item.name].push(item);
+        });
+
+        // UI 렌더링
+        for (const name in grouped) {
+            const groupDiv = $('<div class="exercise-group"></div>');
+            const title = $('<div class="exercise-name"></div>').text(name);
+            groupDiv.append(title);
+
+            grouped[name].forEach(set => {
+                const row = $(`
+                        <div class="set-row">
+                            🏋️‍♀️ ${set.setOrder}세트 - ${set.weight}kg × ${set.reps}회
+                        </div>
+                    `);
+                groupDiv.append(row);
+            });
+
+            container.append(groupDiv);
+        }
+    }
+</script>
+</body>
+</html>

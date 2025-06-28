@@ -1,0 +1,25 @@
+<!-- templates/fragments/navbar.html -->
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<nav class="navbar navbar-expand-lg shadow-sm">
+  <div class="container-fluid px-4">
+    <a class="navbar-brand" th:href="@{/routines}">🏋️ FitnessWeb</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item"><a class="nav-link" th:href="@{/routine}">루틴 생성</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/routines}">내 루틴</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/chat}">운동 질문하기</a></li>
+        <li class="nav-item"><a class="nav-link" th:href="@{/exercise-records}">운동 기록 보기</a></li>
+      </ul>
+      <ul class="navbar-nav" id="authMenu">
+        <!-- JS로 로그인 상태 삽입 -->
+      </ul>
+    </div>
+  </div>
+</nav>
+</body>
+</html>

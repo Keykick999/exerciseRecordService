@@ -1,6 +1,7 @@
 package com.example.fitnessWeb.repository;
 
 import com.example.fitnessWeb.dto.ExerciseRecordResponseDto;
+import com.example.fitnessWeb.dto.ExerciseSetDetailDto;
 import com.example.fitnessWeb.entity.QExerciseRecord;
 import com.example.fitnessWeb.entity.QExerciseSet;
 import com.example.fitnessWeb.entity.QExerciseType;
@@ -117,5 +118,27 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
                     return new OrderSpecifier(direction, path.get(order.getProperty()));
                 })
                 .toArray(OrderSpecifier[]::new);
+    }
+
+    @Override
+    public List<ExerciseSetDetailDto> findExerciseSetDetails(Long recordId) {
+        QExerciseSet s = QExerciseSet.exerciseSet;
+        QExerciseType t = QExerciseType.exerciseType;
+
+        return queryFactory
+                .select(
+                        com.querydsl.core.types.Projections.constructor(
+                                ExerciseSetDetailDto.class,
+                                t.name,
+                                s.setOrder,
+                                s.weight,
+                                s.reps
+                        )
+                )
+                .from(s)
+                .join(t).on(s.exerciseType.id.eq(t.id))
+                .where(s.exerciseRecord.id.eq(recordId))
+//                .orderBy(t.name.asc(), s.setOrder.asc())  // 이미 정렬된 상태로 저장되어 있어 주석 처리함
+                .fetch();
     }
 }
