@@ -203,7 +203,8 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="/js/auth.js"></script>
 <script>
-    const muscleGroupOptions = ["가슴", "등", "어깨", "하체", "복근", "팔", "전신"];
+    const muscleGroupOptions = ["가슴", "등", "어깨", "하체", "복근", "이두", "삼두", "전신"];
+
 
     let currentPage = 0;
     let isLoading = false;
@@ -344,12 +345,13 @@
 
         $('#searchExerciseBtn').on('click', resetAndFetchExercises);
 
-        $('#exerciseSearchInput').on('keypress', function (e) {
-            if (e.which === 13) {
+        $('#exerciseSearchInput').on('keydown', function (e) {
+            if (e.key === 'Enter') {
                 e.preventDefault();
-                resetAndFetchExercises();
+                $('#searchExerciseBtn').trigger('click');
             }
         });
+
 
         $('#exerciseList').on('click', 'button', function () {
             const id = $(this).data('id');
@@ -468,15 +470,17 @@
             });
         });
 
-        // ✅ IntersectionObserver 등록
         const observer = new IntersectionObserver(entries => {
             if (entries[0].isIntersecting) {
                 fetchExercises();
             }
         }, {
-            root: document.querySelector('#exerciseModal .modal-body')
+            root: document.querySelector('.modal-body'), // 정확하게 modal-body를 root로 지정
+            threshold: 1.0
         });
-        observer.observe(document.querySelector('#scrollSentinel'));
+
+        observer.observe(document.getElementById('scrollSentinel'));
+
     });
 </script>
 </body>

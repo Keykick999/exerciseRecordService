@@ -37,6 +37,7 @@ public class SecurityConfig {
                                 "/exercise-record-detail/**",
                                 "/routine-detail.html",
                                 "/exercise-session.html",
+                                "/api/exercise-types/sync-to-es",
                                 "/images/**",
                                 "/css/**",
                                 "/js/**",

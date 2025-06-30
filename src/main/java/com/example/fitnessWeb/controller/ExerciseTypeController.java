@@ -34,12 +34,11 @@ public class ExerciseTypeController {
                                                      @RequestParam(value = "size", defaultValue = "10") int size) {
         return ResponseEntity.ok(service.searchExercise(name, muscleGroups, page, size));
     }
+
+
+    @PostMapping("/sync-to-es")
+    public ResponseEntity<String> syncToElasticsearch() {
+        service.syncAllExerciseTypesToElasticsearch();
+        return ResponseEntity.ok("Elasticsearch로 운동 종목 동기화 완료");
+    }
 }
-
-
-
-
-
-
-
-

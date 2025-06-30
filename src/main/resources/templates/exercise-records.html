@@ -220,7 +220,12 @@
 
     function formatDate(isoString) {
         const date = new Date(isoString);
-        return date.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' });
+        return date.toLocaleDateString('ko-KR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'long'  // 요일 추가
+        });
     }
 
     function renderRecords(records) {
