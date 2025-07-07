@@ -1,10 +1,10 @@
 package com.example.fitnessWeb.entity;
-
 import jakarta.persistence.*;
 import lombok.*;
+import java.util.List;
+
 
 @Entity
-@Table(name = "exercise_video")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -16,15 +16,12 @@ public class ExerciseVideo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 500)
+    @Enumerated(EnumType.STRING)
+    private ExerciseVideoType type;
+
+    @Column(name = "iframe_src", nullable = false, unique = true)
     private String iframeSrc;
 
-    @Column(length = 100)
-    private String muscleGroup;
-
-    @Column(length = 100)
-    private String athleteName;
-
-    @Column(length = 50)
-    private String category;  // 추가된 컬럼
+    @OneToMany(mappedBy = "video", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ExerciseVideoDetail> details;
 }

@@ -1,7 +1,9 @@
 package com.example.fitnessWeb.repository;
 
 import com.example.fitnessWeb.entity.ExerciseVideo;
+import com.example.fitnessWeb.entity.ExerciseVideoType;
 import com.example.fitnessWeb.entity.QExerciseVideo;
+import com.example.fitnessWeb.entity.QExerciseVideoDetail;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -18,35 +20,45 @@ public class ExerciseVideoRepositoryCustomImpl implements ExerciseVideoRepositor
 
     private final EntityManager em;
 
+
     @Override
-    public Page<ExerciseVideo> searchVideos(String muscleGroup, String athleteName, String category, Pageable pageable) {
+    public Page<ExerciseVideo> searchVideos(List<String> muscleGroups, List<String> exerciseNames, List<String> athleteNames, ExerciseVideoType type, Pageable pageable) {
         JPAQueryFactory queryFactory = new JPAQueryFactory(em);
         QExerciseVideo video = QExerciseVideo.exerciseVideo;
+        QExerciseVideoDetail detail = QExerciseVideoDetail.exerciseVideoDetail;
 
-        BooleanExpression condition = null;
+        BooleanExpression condition = video.id.isNotNull();
 
-        if (muscleGroup != null && !muscleGroup.isEmpty()) {
-            condition = video.muscleGroup.eq(muscleGroup);
+        if (type != null) {
+            condition = condition.and(video.type.eq(type));
         }
-        if (athleteName != null && !athleteName.isEmpty()) {
-            condition = condition == null ? video.athleteName.eq(athleteName) : condition.and(video.athleteName.eq(athleteName));
+        if (muscleGroups != null && !muscleGroups.isEmpty()) {
+            condition = condition.and(detail.muscleGroup.in(muscleGroups));
         }
-        if (category != null && !category.isEmpty()) {
-            condition = condition == null ? video.category.eq(category) : condition.and(video.category.eq(category));
+        if (exerciseNames != null && !exerciseNames.isEmpty()) {
+            condition = condition.and(detail.exerciseName.in(exerciseNames));
+        }
+        if (athleteNames != null && !athleteNames.isEmpty()) {
+            condition = condition.and(detail.athleteName.in(athleteNames));
         }
 
         JPAQuery<ExerciseVideo> query = queryFactory
-                .selectFrom(video)
+                .select(video)
+                .from(video)
+                .join(video.details, detail)
                 .where(condition)
+                .distinct()
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize());
 
         List<ExerciseVideo> content = query.fetch();
 
         long total = queryFactory
-                .selectFrom(video)
+                .select(video.countDistinct())
+                .from(video)
+                .join(video.details, detail)
                 .where(condition)
-                .fetchCount();
+                .fetchOne();
 
         return new PageImpl<>(content, pageable, total);
     }

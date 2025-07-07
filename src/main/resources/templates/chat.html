@@ -7,21 +7,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet" />
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', sans-serif;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            background: url('https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
-            background-size: cover;
-            overflow: hidden;
-        }
-
-        nav.navbar {
-            background-color: rgba(0, 0, 0, 0.6);
-            backdrop-filter: blur(10px);
+        .navbar {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1050;
+            background-color: rgba(0, 0, 0, 0.6) !important;
+            backdrop-filter: blur(8px);
         }
 
         .navbar-brand {
@@ -37,15 +29,80 @@
             color: #ccccff !important;
         }
 
-        h1 {
-            text-align: center;
-            padding: 1rem;
+        body {
             margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', sans-serif;
+            height: 100vh;
+            display: flex;
+            background: url('https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+            background-size: cover;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 300px;
+            min-width: 0;
+            max-width: 600px;
             background-color: rgba(0, 0, 0, 0.7);
-            color: #f8f8f8;
-            font-size: 1.8rem;
-            font-weight: bold;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            color: white;
+            overflow-y: auto;
+            position: relative;
+            resize: none;
+        }
+
+        .sidebar-resizer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 8px;
+            height: 100%;
+            cursor: ew-resize;
+            background-color: transparent;
+            z-index: 10;
+        }
+
+        .sidebar.collapsed {
+            display: none;
+        }
+
+        .sidebar-header {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #444;
+        }
+
+        .sidebar .chat-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar .chat-list li {
+            padding: 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid #333;
+        }
+
+        .sidebar .chat-list li:hover {
+            background-color: #1a1a1a;
+        }
+
+        .container-wrapper {
+            display: flex;
+            overflow: hidden;
+            width: 100%;
+            height: calc(100vh - 56px); /* 전체 높이에서 navbar 제외 */
+            margin-top: 56px; /* navbar 높이만큼 아래로 */
+        }
+
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
 
         .chat-container {
@@ -55,10 +112,10 @@
             display: flex;
             flex-direction: column;
             gap: 1rem;
-            width: 100%;
-            max-width: 960px;
-            margin: 0 auto;
+            max-width: 100%;
             box-sizing: border-box;
+            position: relative;
+            height: 100%;
         }
 
         .chat-message {
@@ -89,8 +146,6 @@
             padding: 1rem;
             background-color: rgba(255, 255, 255, 0.95);
             border-top: 1px solid #ddd;
-            position: sticky;
-            bottom: 0;
         }
 
         .input-bar .input-wrapper {
@@ -123,128 +178,308 @@
             border: none;
             border-radius: 10px;
             cursor: pointer;
-            transition: background-color 0.2s ease-in-out;
         }
 
         .input-bar button:hover {
             background-color: #000;
         }
 
-        ::-webkit-scrollbar {
-            width: 8px;
+        .sidebar-toggle-btn {
+            position: fixed;
+            top: 70px;
+            left: 16px;
+            z-index: 1051;
         }
 
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background-color: rgba(255, 255, 255, 0.4);
-            border-radius: 10px;
+        .sending {
+            background-color: #dc3545 !important; /* 붉은색 */
         }
     </style>
 </head>
 <body>
-
-<!-- 네비게이션 바 -->
+<!--네비게이션 바-->
 <div th:replace="fragments/navbar :: body"></div>
 
-<h1>AI 식단/운동 코치</h1>
-
-<div id="chat" class="chat-container"></div>
-
-<!-- ✅ 입력창 -->
-<div class="input-bar">
-    <div class="input-wrapper">
-        <textarea id="question" placeholder="운동 또는 식단에 대해 물어보세요..." rows="1" oninput="autoGrow(this)"></textarea>
+<button class="btn btn-secondary sidebar-toggle-btn" onclick="toggleSidebar()" id="sidebarToggleBtn" style="display: none;"><i class="bi bi-list"></i></button>
+<div class="container-wrapper">
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-resizer" id="sidebarResizer"></div>
+        <div class="sidebar-header">
+            <span>채팅 목록</span>
+            <button class="btn btn-sm btn-light" onclick="toggleSidebar()"><i class="bi bi-x"></i></button>
+        </div>
+        <div class="p-2">
+            <button class="btn btn-primary w-100 mb-2" onclick="createNewChat()"><i class="bi bi-plus-lg"></i> 새 채팅</button>
+            <ul class="chat-list" id="chatList"></ul>
+        </div>
     </div>
-    <button onclick="askCoach()">전송</button>
+
+    <div class="main-content">
+        <h1>AI 식단/운동 코치</h1>
+        <div id="chat" class="chat-container"></div>
+
+        <div class="input-bar">
+            <div class="input-wrapper">
+                <textarea id="question" placeholder="운동 또는 식단에 대해 물어보세요..." rows="1" oninput="autoGrow(this)"></textarea>
+            </div>
+            <button id="sendBtn" onclick="askCoach()">전송</button>
+        </div>
+    </div>
 </div>
 
-<script src="/js/auth.js"></script>
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-
+<script src="/js/auth.js"></script>
 <script>
-    function autoGrow(el) {
-        el.style.height = "auto";
-        el.style.height = (el.scrollHeight) + "px";
+    let currentChatId = null;
+    let currentPage = 0;
+    let hasNextPage = true;
+    let observer;
+    const sidebar = document.getElementById('sidebar');
+    const resizer = document.getElementById('sidebarResizer');
+    let isResizing = false;
+    let isStreaming = false;   // 응답 출력 중인지 여부
+    let stopTyping = false;    // 중지 요청 플래그
+
+
+    // 마우스 누르면 리사이즈 시작
+    resizer.addEventListener('mousedown', function (e) {
+        isResizing = true;
+        document.body.style.cursor = 'ew-resize';
+    });
+
+    // 마우스 움직이면 넓이 조절
+    document.addEventListener('mousemove', function (e) {
+        if (!isResizing) return;
+        const newWidth = e.clientX;
+        if (newWidth >= 0 && newWidth <= 600) {
+            sidebar.style.width = newWidth + 'px';
+        }
+    });
+
+    // 마우스 떼면 리사이즈 종료
+    document.addEventListener('mouseup', function () {
+        isResizing = false;
+        document.body.style.cursor = 'default';
+    });
+
+    async function loadChats() {
+        const token = localStorage.getItem('jwtToken');
+        const res = await fetch('/api/chat', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        const chatList = document.getElementById('chatList');
+        chatList.innerHTML = '';
+        data.content.forEach(chat => {
+            const li = document.createElement('li');
+            li.textContent = chat.title || '새 채팅';
+            li.onclick = () => loadMessages(chat.id, true);
+            chatList.appendChild(li);
+        });
+    }
+
+
+    async function loadMessages(chatId, isInitial = false) {
+        if (isInitial) {
+            currentChatId = chatId;
+            currentPage = 0;
+            hasNextPage = true;
+            document.getElementById('chat').innerHTML = '';
+        }
+
+        if (!hasNextPage) return;
+
+        const token = localStorage.getItem('jwtToken');
+        const chatBox = document.getElementById('chat');
+        const previousScrollHeight = chatBox.scrollHeight;
+
+        const res = await fetch(`/api/chat/${chatId}/messages?page=${currentPage}`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+
+        const fragment = document.createDocumentFragment();
+        data.content.forEach(msg => {
+            const div = document.createElement('div');
+            div.className = 'chat-message ' + (msg.role === 'USER' ? 'user-message' : 'ai-message');
+            div.textContent = msg.content;
+            fragment.appendChild(div);
+        });
+        chatBox.appendChild(fragment);
+
+        // 스크롤 위치 유지
+        if (!isInitial) {
+            chatBox.scrollTop = chatBox.scrollHeight - previousScrollHeight;
+        }
+
+        hasNextPage = !data.last;
+        currentPage++;
+
+        setUpObserver(); // 옵저버 갱신
     }
 
     async function askCoach() {
-        const message = $('#question').val().trim();
-        if (!message) return;
+        const sendBtn = document.getElementById('sendBtn');
 
-        const chatBox = $('#chat');
-        const token = localStorage.getItem('jwtToken');
-        if (!token) {
-            alert("로그인이 필요합니다.");
+        // 이미 응답 중일 때 중지 요청
+        if (isStreaming) {
+            stopTyping = true;
             return;
         }
 
-        const userDiv = $('<div>').addClass('chat-message user-message').text(message);
-        chatBox.append(userDiv);
-        $('#question').val('');
-        autoGrow(document.getElementById('question'));
+        const userInput = document.getElementById('question').value.trim();
+        if (!userInput) return;
 
-        const aiDiv = $('<div>').addClass('chat-message ai-message');
-        chatBox.append(aiDiv[0]);
-        chatBox.scrollTop(chatBox[0].scrollHeight);
+        const token = localStorage.getItem('jwtToken');
+
+        const userDiv = document.createElement('div');
+        userDiv.className = 'chat-message user-message';
+        userDiv.textContent = userInput;
+        document.getElementById('chat').appendChild(userDiv);
+        document.getElementById('question').value = '';
+
+        setSendingState(true); // 버튼 상태 변경
+        isStreaming = true;
+        stopTyping = false;
+
+        const isNewChat = !currentChatId;
+        const url = isNewChat ? `/api/chat` : `/api/chat/${currentChatId}/message`;
 
         try {
-            const res = await fetch('/chat', {
+            const res = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': 'Bearer ' + token
                 },
-                body: JSON.stringify({ message })
+                body: JSON.stringify({ message: userInput })
             });
 
             const data = await res.json();
-            const reply = data.reply || "응답 없음";
-            typeText(aiDiv[0], reply);
-        } catch (err) {
-            aiDiv.text('오류 발생: ' + err.message);
+
+            if (isNewChat && data.chatId) {
+                currentChatId = data.chatId;
+                currentPage = 0;
+                hasNextPage = true;
+                await loadChats();
+            }
+
+            const aiDiv = document.createElement('div');
+            aiDiv.className = 'chat-message ai-message';
+            document.getElementById('chat').appendChild(aiDiv);
+
+            await typeText(aiDiv, data.reply, 30); // ✅ 아래 함수 참고
+            scrollToBottom();
+        } catch (e) {
+            console.error("전송 실패", e);
+        } finally {
+            setSendingState(false);
+            isStreaming = false;
         }
     }
 
-    function typeText(element, text) {
-        let index = 0;
-        element.innerText = '';
-        const interval = setInterval(() => {
-            if (index < text.length) {
-                element.innerText += text.charAt(index++);
-                element.scrollIntoView({ behavior: "smooth", block: "end" });
-            } else {
-                clearInterval(interval);
-            }
-        }, 20);
+
+    function setSendingState(state) {
+        const sendBtn = document.getElementById('sendBtn');
+        const textarea = document.getElementById('question');
+
+        if (state) {
+            sendBtn.textContent = '중지';
+            sendBtn.classList.add('sending');
+            textarea.disabled = true;
+        } else {
+            sendBtn.textContent = '전송';
+            sendBtn.classList.remove('sending');
+            textarea.disabled = false;
+        }
+
+        sendBtn.disabled = false;
     }
 
-    $(document).ready(function () {
-        renderAuthMenu(); // 🔁 로그인/로그아웃 버튼 렌더링 함수 (auth.js에 있음)
 
-        // textarea 자동 높이 조절
-        $('#question').on('input', function () {
-            autoGrow(this);
-        });
 
-        // 엔터 키 전송
-        $('#question').on('keydown', function (e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                askCoach();
+    function typeText(element, text, speed = 30) {
+        return new Promise((resolve) => {
+            if (stopTyping) return resolve();  // 바로 멈추는 상황 대비
+
+            let i = 0;
+            element.textContent = '';
+            let timerId;
+
+            function type() {
+                if (stopTyping || i >= text.length) {
+                    clearTimeout(timerId);
+                    return resolve();
+                }
+
+                element.textContent += text.charAt(i++);
+                timerId = setTimeout(type, speed);
             }
+
+            type();
+        });
+    }
+
+
+
+
+    function toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggleBtn');
+        sidebar.classList.toggle('collapsed');
+        toggleBtn.style.display = sidebar.classList.contains('collapsed') ? 'block' : 'none';
+    }
+
+
+    function createNewChat() {
+        currentChatId = null;
+        currentPage = 0;
+        hasNextPage = true;
+        document.getElementById('chat').innerHTML = '';
+
+        // 사이드바 닫기
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebarToggleBtn');
+
+        if (!sidebar.classList.contains('collapsed')) {
+            sidebar.classList.add('collapsed');
+            toggleBtn.style.display = 'block';
+        }
+    }
+
+
+    function scrollToBottom() {
+        const chatBox = document.getElementById('chat');
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+
+    function setUpObserver() {
+        if (observer) observer.disconnect();
+
+        const chatBox = document.getElementById('chat');
+        const messages = chatBox.querySelectorAll('.chat-message');
+        if (messages.length === 0) return;
+
+        const topMessage = messages[0]; // ✅ 맨 위 메시지를 관찰
+
+        observer = new IntersectionObserver(async (entries) => {
+            if (entries[0].isIntersecting) {
+                await loadMessages(currentChatId);
+            }
+        }, {
+            root: chatBox,
+            threshold: 1.0,
         });
 
-        // 전송 버튼 클릭 시 질문 전송
-        $('button').on('click', function () {
-            askCoach();
+        requestAnimationFrame(() => {
+            observer.observe(topMessage);
         });
-    });
+    }
+
+    window.onload = () => {
+        loadChats();
+    };
 </script>
-
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

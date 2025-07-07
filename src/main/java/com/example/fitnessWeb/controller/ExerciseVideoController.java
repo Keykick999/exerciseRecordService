@@ -1,6 +1,8 @@
 package com.example.fitnessWeb.controller;
 
-import com.example.fitnessWeb.entity.ExerciseVideo;
+import com.example.fitnessWeb.dto.ExerciseVideoResponse;
+import com.example.fitnessWeb.dto.ExerciseVideoSaveRequest;
+import com.example.fitnessWeb.dto.ExerciseVideoSearchRequest;
 import com.example.fitnessWeb.service.ExerciseVideoService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -12,15 +14,15 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ExerciseVideoController {
 
-    private final ExerciseVideoService exerciseVideoService;
+    private final ExerciseVideoService videoService;
 
-    @GetMapping
-    public Page<ExerciseVideo> searchVideos(
-            @RequestParam(required = false) String muscleGroup,
-            @RequestParam(required = false) String athleteName,
-            @RequestParam(required = false) String category,
-            Pageable pageable
-    ) {
-        return exerciseVideoService.searchVideos(muscleGroup, athleteName, category, pageable);
+    @PostMapping
+    public ExerciseVideoResponse save(@RequestBody ExerciseVideoSaveRequest request) {
+        return videoService.save(request);
+    }
+
+    @PostMapping("/search")
+    public Page<ExerciseVideoResponse> search(@RequestBody ExerciseVideoSearchRequest request, Pageable pageable) {
+        return videoService.search(request, pageable);
     }
 }
