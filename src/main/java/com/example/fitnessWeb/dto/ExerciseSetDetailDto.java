@@ -9,4 +9,5 @@ public class ExerciseSetDetailDto {
     private int setOrder;
     private double weight;
     private int reps;
+    private String username;
 }

@@ -5,10 +5,7 @@ import com.example.fitnessWeb.entity.ExerciseRecord;
 import com.example.fitnessWeb.entity.ExerciseSet;
 import com.example.fitnessWeb.entity.ExerciseType;
 import com.example.fitnessWeb.entity.User;
-import com.example.fitnessWeb.exception.EmptyExerciseSetListException;
-import com.example.fitnessWeb.exception.ExerciseTypeNotFoundException;
-import com.example.fitnessWeb.exception.InvalidRoutineSetException;
-import com.example.fitnessWeb.exception.UserNotFoundException;
+import com.example.fitnessWeb.exception.*;
 import com.example.fitnessWeb.repository.ExerciseRecordRepository;
 import com.example.fitnessWeb.repository.ExerciseTypeRepository;
 import com.example.fitnessWeb.repository.UserRepository;
@@ -72,22 +69,31 @@ public class ExerciseRecordService {
         exerciseRecordRepository.save(record);
     }
 
-
-
+    // 운동 기록 전체 조회
     public Page<ExerciseRecordResponseDto> getRecords(String username,
                                                       LocalDateTime startDate,
                                                       LocalDateTime endDate,
                                                       String exerciseName,
                                                       List<String> muscleGroup,
                                                       Pageable pageable) {
-        User user = userRepository.findByUsername(username).orElseThrow();
+        User user = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException());
         return exerciseRecordRepository.searchRecords(user.getId(), startDate, endDate, exerciseName, muscleGroup, pageable);
     }
 
-
+    // 운동 상세 기록 조회
     public List<ExerciseSetDetailDto> getExerciseSetDetails(Long recordId, String username) {
-        // 사용자 권한 확인 로직을 추가해도 좋습니다 (선택)
-        return exerciseRecordRepository.findExerciseSetDetails(recordId);
+        List<ExerciseSetDetailDto> details = exerciseRecordRepository.findExerciseSetDetails(recordId);
+
+        if (details.isEmpty()) {
+            throw new ExerciseRecordNotFoundException("운동 기록을 찾을 수 없습니다.");
+        }
+
+        String ownerUsername = details.get(0).getUsername(); // 어차피 동일 기록이므로 하나만 확인하면 됨
+        if (!ownerUsername.equals(username)) {
+            throw new UnauthorizedAccessException("운동 기록에 접근할 권한이 없습니다.");
+        }
+
+        return details;
     }
 
 

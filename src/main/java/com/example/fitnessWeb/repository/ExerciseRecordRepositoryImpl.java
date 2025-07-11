@@ -124,6 +124,7 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
     public List<ExerciseSetDetailDto> findExerciseSetDetails(Long recordId) {
         QExerciseSet s = QExerciseSet.exerciseSet;
         QExerciseType t = QExerciseType.exerciseType;
+        QExerciseRecord r = QExerciseRecord.exerciseRecord;
 
         return queryFactory
                 .select(
@@ -132,13 +133,14 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
                                 t.name,
                                 s.setOrder,
                                 s.weight,
-                                s.reps
+                                s.reps,
+                                r.user.username  // 🔥 username 추가 선택
                         )
                 )
                 .from(s)
                 .join(t).on(s.exerciseType.id.eq(t.id))
+                .join(r).on(s.exerciseRecord.id.eq(r.id)) // 🔥 record에서 user 접근을 위해 join
                 .where(s.exerciseRecord.id.eq(recordId))
-//                .orderBy(t.name.asc(), s.setOrder.asc())  // 이미 정렬된 상태로 저장되어 있어 주석 처리함
                 .fetch();
     }
 }

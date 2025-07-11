@@ -51,4 +51,9 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleEmptyExerciseSetListException(EmptyExerciseSetListException ex) {
         return ResponseEntity.status(400).body(ex.getMessage());
     }
+
+    @ExceptionHandler(ExerciseRecordNotFoundException.class)
+    public ResponseEntity<String> handleExerciseRecordNotFoundException(ExerciseRecordNotFoundException ex) {
+        return ResponseEntity.status(404).body(ex.getMessage());
+    }
 }
