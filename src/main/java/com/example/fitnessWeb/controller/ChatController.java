@@ -48,4 +48,10 @@ public class ChatController {
         Page<ChatDto> chats = chatService.getChats(page);
         return ResponseEntity.ok(chats);
     }
+
+    @DeleteMapping("/{chatId}")
+    public ResponseEntity<Void> deleteChat(@PathVariable Long chatId) {
+        chatService.deleteChat(chatId);
+        return ResponseEntity.noContent().build();
+    }
 }

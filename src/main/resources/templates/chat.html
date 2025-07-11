@@ -194,6 +194,53 @@
         .sending {
             background-color: #dc3545 !important; /* 붉은색 */
         }
+
+        .chat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .chat-menu-wrapper {
+            position: relative;
+        }
+
+        .more-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .chat-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: #333;
+            border: 1px solid #555;
+            z-index: 999;
+        }
+
+        .chat-menu.show {
+            display: block;
+        }
+
+        .chat-menu .dropdown-item {
+            padding: 5px 10px;
+            color: white;
+            background: none;
+            border: none;
+            text-align: left;
+            width: 100%;
+            cursor: pointer;
+        }
+
+        .chat-menu .dropdown-item:hover {
+            background-color: #444;
+        }
     </style>
 </head>
 <body>
@@ -272,11 +319,64 @@
         chatList.innerHTML = '';
         data.content.forEach(chat => {
             const li = document.createElement('li');
-            li.textContent = chat.title || '새 채팅';
-            li.onclick = () => loadMessages(chat.id, true);
+            li.classList.add('chat-item'); // 스타일을 위해 클래스 추가
+
+            const titleSpan = document.createElement('span');
+            titleSpan.textContent = chat.title || '새 채팅';
+            titleSpan.onclick = () => loadMessages(chat.id, true);
+
+            const menuWrapper = document.createElement('div');
+            menuWrapper.classList.add('chat-menu-wrapper');
+
+            const moreBtn = document.createElement('button');
+            moreBtn.innerHTML = '⋯';
+            moreBtn.classList.add('more-button');
+            moreBtn.onclick = (e) => {
+                e.stopPropagation(); // 채팅 클릭 방지
+                const menu = moreBtn.nextElementSibling;
+                menu.classList.toggle('show');
+            };
+
+            const menu = document.createElement('div');
+            menu.classList.add('chat-menu');
+            const deleteBtn = document.createElement('button');
+            deleteBtn.classList.add('dropdown-item');
+            deleteBtn.textContent = '삭제';
+            deleteBtn.onclick = async (e) => {
+                e.stopPropagation(); // 채팅 클릭 방지
+                await deleteChat(chat.id);
+            };
+
+            menu.appendChild(deleteBtn);
+            menuWrapper.appendChild(moreBtn);
+            menuWrapper.appendChild(menu);
+
+            li.appendChild(titleSpan);
+            li.appendChild(menuWrapper);
             chatList.appendChild(li);
         });
     }
+
+
+    async function deleteChat(chatId) {
+        const confirmDelete = confirm("이 채팅을 삭제하시겠습니까?");
+        if (!confirmDelete) return; // 취소하면 아무 것도 안 함
+
+        const token = localStorage.getItem('jwtToken');
+        try {
+            await fetch(`/api/chat/${chatId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': 'Bearer ' + token
+                }
+            });
+            await loadChats(); // 목록 갱신
+        } catch (e) {
+            alert('삭제 실패');
+            console.error('삭제 실패:', e);
+        }
+    }
+
 
 
     async function loadMessages(chatId, isInitial = false) {

@@ -27,4 +27,6 @@ public interface RoutineRepository extends JpaRepository<Routine, Long> {
                                                                @Param("username") String username);
 
     boolean existsByNameAndUserUsername(String name, String username);
+
+    Object existsByName(String name);
 }

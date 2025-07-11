@@ -32,6 +32,11 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(404).body(ex.getMessage());
     }
 
+    @ExceptionHandler(ChatNotFoundException.class)
+    public ResponseEntity<String> handleChatNotFoundException(ChatNotFoundException ex) {
+        return ResponseEntity.status(404).body(ex.getMessage());
+    }
+
     @ExceptionHandler(DuplicateRoutineNameException.class)
     public ResponseEntity<String> handleDuplicateRoutineNameException(DuplicateRoutineNameException ex) {
         return ResponseEntity.status(409).body(ex.getMessage());
@@ -40,5 +45,10 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnauthorizedAccessException.class)
     public ResponseEntity<String> handleUnauthorizedAccessException(UnauthorizedAccessException ex) {
         return ResponseEntity.status(403).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(EmptyExerciseSetListException.class)
+    public ResponseEntity<String> handleEmptyExerciseSetListException(EmptyExerciseSetListException ex) {
+        return ResponseEntity.status(400).body(ex.getMessage());
     }
 }

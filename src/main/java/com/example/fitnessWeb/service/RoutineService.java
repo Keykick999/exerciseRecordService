@@ -11,7 +11,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,6 +26,7 @@ public class RoutineService {
     private final ExerciseTypeRepository exerciseTypeRepository;
 
 
+    // 루틴 저장
     @Transactional
     public void saveRoutine(RoutineRequestDto requestDto) {
         // 1. 인증된 사용자 이름 가져오기
@@ -79,6 +79,7 @@ public class RoutineService {
         }
     }
 
+
     // 루틴 목록 조회
     public Page<RoutineSummaryDto> getMyRoutines(int page, int size) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -96,6 +97,7 @@ public class RoutineService {
     }
 
 
+    // 루틴 상세 정보 조회
     public List<RoutineDetailDto> getRoutineDetails(String routineName) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
 
@@ -112,16 +114,25 @@ public class RoutineService {
     }
 
 
+    // 루틴 수정
     @Transactional
     public void updateRoutine(Long routineId, RoutineUpdateRequestDto requestDto) {
         // 1. 루틴 조회
         Routine routine = routineRepository.findById(routineId)
                 .orElseThrow(() -> new RoutineNotFoundException("루틴을 찾을 수 없습니다. ID: " + routineId));
 
-        // 2. 기존 루틴 세트 삭제
+        // 2. 인증된 사용자 이름 가져오기
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // 3. 소유자 검사
+        if (!routine.getUser().getUsername().equals(username)) {
+            throw new UnauthorizedAccessException("본인의 루틴만 수정할 수 있습니다.");
+        }
+
+        // 4. 기존 루틴 세트 삭제
         routine.getRoutineSets().clear();
 
-        // 3. 새로운 루틴 세트 생성
+        // 5. 새로운 루틴 세트 생성
         List<RoutineSet> newRoutineSets = requestDto.getRoutineSets().stream()
                 .map(dto -> RoutineSet.builder()
                         .routine(routine)
@@ -133,7 +144,7 @@ public class RoutineService {
                         .build())
                 .toList();
 
-        // 4. 루틴 이름 및 루틴 세트 업데이트
+        // 6. 루틴 이름 및 루틴 세트 업데이트
         routine.setName(requestDto.getRoutineName());
         routine.getRoutineSets().addAll(newRoutineSets);
     }

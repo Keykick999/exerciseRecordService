@@ -5,6 +5,10 @@ import com.example.fitnessWeb.entity.ExerciseRecord;
 import com.example.fitnessWeb.entity.ExerciseSet;
 import com.example.fitnessWeb.entity.ExerciseType;
 import com.example.fitnessWeb.entity.User;
+import com.example.fitnessWeb.exception.EmptyExerciseSetListException;
+import com.example.fitnessWeb.exception.ExerciseTypeNotFoundException;
+import com.example.fitnessWeb.exception.InvalidRoutineSetException;
+import com.example.fitnessWeb.exception.UserNotFoundException;
 import com.example.fitnessWeb.repository.ExerciseRecordRepository;
 import com.example.fitnessWeb.repository.ExerciseTypeRepository;
 import com.example.fitnessWeb.repository.UserRepository;
@@ -34,7 +38,12 @@ public class ExerciseRecordService {
     // 운동 기록 저장
     @Transactional
     public void saveRecord(String username, List<ExerciseSetDto> dto) {
-        User user = userRepository.findByUsername(username).orElseThrow();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException());
+
+        if (dto == null || dto.isEmpty()) {
+            throw new EmptyExerciseSetListException("운동 세트 목록이 비어있습니다.");
+        }
 
         ExerciseRecord record = ExerciseRecord.builder()
                 .createdAt(LocalDateTime.now())
@@ -42,19 +51,27 @@ public class ExerciseRecordService {
                 .build();
         exerciseRecordRepository.save(record);
 
-        List<ExerciseSet> sets = dto.stream().map(s ->
-                ExerciseSet.builder()
-                        .setOrder(s.getSetOrder())
-                        .weight(s.getWeight())
-                        .reps(s.getReps())
-                        .exerciseRecord(record)
-                        .exerciseType(exerciseTypeRepository.findById(s.getExerciseTypeId()).orElseThrow())
-                        .build()
-        ).collect(Collectors.toList());
+        List<ExerciseSet> sets = dto.stream().map(s -> {
+            if (s.getSetOrder() <= 0 || s.getWeight() < 0 || s.getReps() < 0) {
+                throw new InvalidRoutineSetException("세트 정보가 유효하지 않습니다.");
+            }
+
+            ExerciseType exerciseType = exerciseTypeRepository.findById(s.getExerciseTypeId())
+                    .orElseThrow(() -> new ExerciseTypeNotFoundException(s.getExerciseTypeId()));
+
+            return ExerciseSet.builder()
+                    .setOrder(s.getSetOrder())
+                    .weight(s.getWeight())
+                    .reps(s.getReps())
+                    .exerciseRecord(record)
+                    .exerciseType(exerciseType)
+                    .build();
+        }).collect(Collectors.toList());
 
         record.setSets(sets);
         exerciseRecordRepository.save(record);
     }
+
 
 
     public Page<ExerciseRecordResponseDto> getRecords(String username,

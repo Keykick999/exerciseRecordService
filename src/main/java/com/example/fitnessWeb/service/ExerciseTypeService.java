@@ -99,6 +99,7 @@ public class ExerciseTypeService {
 //    }
 
 
+    // 운동 검색
     public Page<ExerciseType> searchExercise(String name, HashSet<String> muscleGroups, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
 
