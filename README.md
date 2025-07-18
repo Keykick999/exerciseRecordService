@@ -87,6 +87,3 @@
 - AWS EC2에 배포하기
     - [서버 배포하기-1](https://velog.io/@yewo2nn16/SpringBoot-서버-배포)
     - [서버 배포하기-2](https://velog.io/@yewo2nn16/SpringBoot-서버-배포-인텔리제이에서-jar-파일-빌드해서-배포하기)
-
-
-<br />
