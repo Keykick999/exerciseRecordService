@@ -20,7 +20,6 @@ public class Routine {
     @Column(unique = true, nullable = false)
     private String name;
 
-    // 사용자 구분이 필요하면 추가
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;

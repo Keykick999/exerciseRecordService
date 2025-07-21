@@ -71,7 +71,7 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
                 .where(record.id.in(recordIds))
                 .fetch();
 
-        // 3. 그룹핑
+        // 3. 그룹핑(recordId, ExerciseResponseDto형식으로 관리)
         Map<Long, ExerciseRecordResponseDto> grouped = new LinkedHashMap<>();
         for (Tuple tuple : tuples) {
             Long recordId = tuple.get(record.id);
@@ -134,12 +134,12 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
                                 s.setOrder,
                                 s.weight,
                                 s.reps,
-                                r.user.username  // 🔥 username 추가 선택
+                                r.user.username
                         )
                 )
                 .from(s)
                 .join(t).on(s.exerciseType.id.eq(t.id))
-                .join(r).on(s.exerciseRecord.id.eq(r.id)) // 🔥 record에서 user 접근을 위해 join
+                .join(r).on(s.exerciseRecord.id.eq(r.id))
                 .where(s.exerciseRecord.id.eq(recordId))
                 .fetch();
     }

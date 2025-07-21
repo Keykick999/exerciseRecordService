@@ -21,7 +21,6 @@ public class RoutineController {
 
     @PostMapping
     public ResponseEntity<Void> createRoutine(@RequestBody RoutineRequestDto requestDto) {
-        System.out.println("requestDto = " + requestDto);
         routineService.saveRoutine(requestDto);
         return ResponseEntity.status(201).build();
     }
@@ -30,7 +29,6 @@ public class RoutineController {
     public ResponseEntity<Page<RoutineSummaryDto>> getMyRoutines(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
         Page<RoutineSummaryDto> routines = routineService.getMyRoutines(page, size);
         return ResponseEntity.ok(routines);
     }
@@ -43,8 +41,6 @@ public class RoutineController {
 
     @PutMapping("/{routineId}")
     public ResponseEntity<Void> updateRoutine(@PathVariable("routineId") Long routineId, @RequestBody RoutineUpdateRequestDto requestDto) {
-        System.out.println("routineId = " + routineId);
-        System.out.println("requestDto = " + requestDto);
         routineService.updateRoutine(routineId, requestDto);
         return ResponseEntity.status(200).build();
     }

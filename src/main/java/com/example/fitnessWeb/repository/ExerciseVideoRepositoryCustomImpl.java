@@ -12,8 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-
 import java.util.List;
+
 
 @RequiredArgsConstructor
 public class ExerciseVideoRepositoryCustomImpl implements ExerciseVideoRepositoryCustom {
@@ -43,13 +43,13 @@ public class ExerciseVideoRepositoryCustomImpl implements ExerciseVideoRepositor
         }
 
         JPAQuery<ExerciseVideo> query = queryFactory
-                .select(video)
-                .from(video)
-                .join(video.details, detail)
+                .selectFrom(video)
+                .join(video.details, detail).fetchJoin()
                 .where(condition)
                 .distinct()
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize());
+
 
         List<ExerciseVideo> content = query.fetch();
 
