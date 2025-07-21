@@ -23,7 +23,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-
 import java.time.LocalDateTime;
 
 @Service
@@ -169,7 +168,6 @@ public class ChatService {
                 .build();
         chatMessageRepository.save(userMsg);
 
-//        String prompt = userMessage + "\n\n- 자연스럽고 간결하게 대답해줘.\n- 마크다운 없이 정리된 요약 형식으로.";
         String prompt = userMessage +
                 "\n\n자연스럽고 간결한 말투로 답변해줘. 말투는 헬스 트레이너처럼 친근하고 명확하게 해줘." +
                 "텍스트는 보기 편하게 문단 단위로 정리하고, 마크다운 기호는 사용하지 말아줘. 예를 들면 별표(*), 하이픈(-), 밑줄(_) 같은 기호나 표 형식도 사용하지 말아줘." +

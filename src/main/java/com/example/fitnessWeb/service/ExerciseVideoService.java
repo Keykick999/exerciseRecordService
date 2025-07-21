@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +19,7 @@ public class ExerciseVideoService {
 
     private final ExerciseVideoRepository videoRepository;
 
+    // 영상 저장
     public ExerciseVideoResponse save(ExerciseVideoSaveRequest request) {
         ExerciseVideo video = ExerciseVideo.builder()
                 .iframeSrc(request.getIframeSrc())
@@ -45,6 +45,8 @@ public class ExerciseVideoService {
         return toDto(saved);
     }
 
+
+    // 영상 검색
     public Page<ExerciseVideoResponse> search(ExerciseVideoSearchRequest request, Pageable pageable) {
         return videoRepository.searchVideos(
                 request.getMuscleGroups(),

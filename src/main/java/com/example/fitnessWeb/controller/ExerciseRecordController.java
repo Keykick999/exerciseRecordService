@@ -42,6 +42,7 @@ public class ExerciseRecordController {
             @RequestParam(required = false) List<String> muscleGroup,
             @AuthenticationPrincipal UserDetails userDetails,
             Pageable pageable) {
+        System.out.println("검색 실행");
 
         // 날짜 파싱 (문자열 → LocalDateTime)
         LocalDateTime start = (startDate != null && !startDate.isBlank())
@@ -82,7 +83,7 @@ public class ExerciseRecordController {
     public ResponseEntity<List<ExerciseSetDetailDto>> getExerciseSetDetails(
             @PathVariable Long recordId,
             @AuthenticationPrincipal UserDetails userDetails) {
-
+        System.out.println("상세 조회 실행");
         List<ExerciseSetDetailDto> result = service.getExerciseSetDetails(recordId, userDetails.getUsername());
         return ResponseEntity.ok(result);
     }
