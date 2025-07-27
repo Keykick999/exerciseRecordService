@@ -47,6 +47,8 @@ public class SecurityConfig {
                                 "chat",
                                 "workoutVideos").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/exercise-types").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/exercise-types/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/exercise-types/sync-to-es").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(new JwtAuthenticationFilter(jwtUtil, customUserDetailsService),

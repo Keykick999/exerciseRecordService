@@ -56,4 +56,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleExerciseRecordNotFoundException(ExerciseRecordNotFoundException ex) {
         return ResponseEntity.status(404).body(ex.getMessage());
     }
+
+    @ExceptionHandler(InvalidMuscleException.class)
+    public ResponseEntity<String> handleInvalidMuscleException(InvalidMuscleException ex) {
+        return ResponseEntity.status(400).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(DuplicateExerciseTypeException.class)
+    public ResponseEntity<String> handleDuplicateExerciseTypeException(DuplicateExerciseTypeException ex) {
+        return ResponseEntity.status(404).body(ex.getMessage());
+    }
 }

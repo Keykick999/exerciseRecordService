@@ -194,6 +194,9 @@
                 <div id="muscleGroupCheckboxes" class="d-flex flex-wrap gap-2 mb-2"></div>
                 <button id="searchExerciseBtn" class="btn btn-outline-light">검색</button>
                 <div class="list-group mt-3" id="exerciseList"></div>
+                <div id="scrollSentinel" class="my-3 text-center">
+                    🔄 불러오는 중...
+                </div>
             </div>
         </div>
     </div>
@@ -247,6 +250,9 @@
     let workoutTimerInterval = null;
     const routineName = localStorage.getItem('activeRoutineName') || '알 수 없음';
     const routineData = JSON.parse(localStorage.getItem('activeRoutine') || '[]');
+    let currentPage = 0;
+    let isLoading = false;
+    let hasNext = true;
 
     $('#routineTitle').text(`${routineName}`);
 
@@ -370,7 +376,7 @@
         });
     });
 
-    const muscleGroupOptions = ["가슴", "등", "어깨", "하체", "복근", "팔", "전신"];
+    const muscleGroupOptions = ["가슴", "등", "어깨", "하체", "복근", "팔"];
 
     function createMuscleCheckboxes() {
         const container = $('#muscleGroupCheckboxes');
@@ -386,30 +392,40 @@
     }
 
     function fetchExercises() {
-        const name = $('#exerciseSearchInput').val();
-        const muscles = $('.muscle-checkbox:checked').map(function () {
-            return $(this).val();
-        }).get();
+        if (isLoading || !hasNext) return;
+        isLoading = true;
+
+        const name    = $('#exerciseSearchInput').val();
+        const muscles = $('.muscle-checkbox:checked').map(function(){ return $(this).val() }).get();
 
         $.ajax({
             url: '/api/exercise-types',
             method: 'GET',
             traditional: true,
-            data: { name, muscleGroup: muscles },
-            success: function (res) {
-                const list = $('#exerciseList');
-                list.empty();
+            data: {
+                name,
+                muscleGroup: muscles,  // 단수 key
+                page: currentPage,
+                size: 10
+            },
+            success(res) {
+                const $list = $('#exerciseList');
                 res.content.forEach(ex => {
-                    list.append(`
-                    <button type="button" class="list-group-item list-group-item-action"
-                        data-id="${ex.id}" data-name="${ex.name}">
-                        ${ex.name} (${ex.muscleGroup})
-                    </button>
-                `);
+                    $list.append(`
+          <button class="list-group-item list-group-item-action"
+                  data-id="${ex.id}" data-name="${ex.name}">
+            ${ex.name} (${ex.muscleGroups.join(', ')})
+          </button>
+        `);
                 });
-            }
+                hasNext = !res.last;
+                if (!hasNext) $('#scrollSentinel').hide();
+                currentPage++;
+            },
+            complete() { isLoading = false; }
         });
     }
+
 
     function createSetRow(weight = 0, reps = 0) {
         return `
@@ -458,25 +474,40 @@
         $('#detailContainer').append($groupBox);
     }
 
-    // 세트 추가
-    $(document).on('click', '.add-set-btn', function () {
-        $(this).closest('.exercise-group').find('.exercise-sets').append(createSetRow());
-    });
-
-    // 세트 삭제
-    $(document).on('click', '.remove-set-btn', function () {
-        $(this).closest('.exercise').remove();
-    });
-
-    // 종목 삭제
-    $(document).on('click', '.remove-exercise-btn', function () {
-        $(this).closest('.exercise-group').remove();
-    });
 
     $(document).ready(function () {
         createMuscleCheckboxes();
 
-        $('#searchExerciseBtn').on('click', fetchExercises);
+        // Enter키로 검색 가능하게
+        $('#exerciseSearchInput').on('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                $('#searchExerciseBtn').trigger('click');
+            }
+        });
+
+        $('#searchExerciseBtn')
+            .off('click')
+            .on('click', () => {
+                currentPage = 0;
+                isLoading   = false;
+                hasNext     = true;
+                $('#exerciseList').empty();
+                $('#scrollSentinel').show();
+                fetchExercises();
+            });
+
+
+
+        const observer = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting) fetchExercises();
+        }, {
+            root: document.querySelector('.modal-body'),
+            threshold: 1.0
+        });
+        observer.observe(document.getElementById('scrollSentinel'));
+
+        fetchExercises();
 
         $('#exerciseList').on('click', 'button', function () {
             const id = $(this).data('id');

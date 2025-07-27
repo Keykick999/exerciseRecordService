@@ -415,7 +415,7 @@
     });
 
 
-    const muscleGroupOptions = ["가슴", "등", "어깨", "하체", "복근", "이두", "삼두", "전신"];
+    const muscleGroupOptions = ["가슴", "등", "어깨", "하체", "복근", "이두", "삼두"];
 
     function createMuscleCheckboxes() {
         const container = $('#muscleGroupCheckboxes');
@@ -438,23 +438,27 @@
             return $(this).val();
         }).get();
 
+        const requestData = {
+            name,
+            muscleGroup: muscles,
+            page: currentPage,
+            size: 10
+        };
+
+        console.log('🔍 요청 데이터:', requestData);  // 요청 확인용 로그
+
         $.ajax({
             url: '/api/exercise-types',
             method: 'GET',
             traditional: true,
-            data: {
-                name,
-                muscleGroup: muscles,
-                page: currentPage,
-                size: 10
-            },
+            data: requestData,
             success: function (res) {
                 const list = $('#exerciseList');
                 res.content.forEach(ex => {
                     list.append(`
                     <button type="button" class="list-group-item list-group-item-action"
                         data-id="${ex.id}" data-name="${ex.name}">
-                        ${ex.name} (${ex.muscleGroup})
+                        ${ex.name} (${ex.muscleGroups.join(', ')})
                     </button>
                 `);
                 });
@@ -507,7 +511,6 @@
 
         observer.observe(document.getElementById('scrollSentinel'));
 
-
         // Enter 키로 검색 가능하게
         $('#exerciseSearchInput').on('keydown', function (e) {
             if (e.key === 'Enter') {
@@ -516,7 +519,15 @@
             }
         });
 
-        $('#searchExerciseBtn').on('click', fetchExercises);
+        // ✅ 중복 이벤트 방지 + reset 초기화 명확히
+        $('#searchExerciseBtn').off('click').on('click', function () {
+            currentPage = 0;
+            hasNext = true;
+            $('#exerciseList').empty();
+            $('#scrollSentinel').show();
+            fetchExercises();
+        });
+
         $('#exerciseList').on('click', 'button', function () {
             const exerciseId = $(this).data('id');
             const exerciseName = $(this).data('name');
@@ -530,17 +541,6 @@
             createExerciseGroup(exerciseId, exerciseName);
             $('#exerciseModal').modal('hide');
         });
-
-
-        function resetAndFetchExercises() {
-            currentPage = 0;
-            hasNext = true;
-            $('#exerciseList').empty();
-            $('#scrollSentinel').show();
-            fetchExercises();
-        }
-
-        $('#searchExerciseBtn').on('click', resetAndFetchExercises);
     });
 </script>
 

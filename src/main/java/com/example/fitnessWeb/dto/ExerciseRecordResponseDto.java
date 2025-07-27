@@ -11,7 +11,7 @@ import java.util.Set;
 @AllArgsConstructor
 public class ExerciseRecordResponseDto {
     private LocalDateTime createdAt;
-    private String muscleGroups;        // 최종 출력용
+    private String muscleGroups;
     private Long exerciseRecordId;
 
     private transient Set<String> muscleGroupSet = new HashSet<>();

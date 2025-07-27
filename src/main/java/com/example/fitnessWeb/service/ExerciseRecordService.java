@@ -14,15 +14,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
@@ -82,15 +77,10 @@ public class ExerciseRecordService {
 
     // 운동 상세 기록 조회
     public List<ExerciseSetDetailDto> getExerciseSetDetails(Long recordId, String username) {
-        List<ExerciseSetDetailDto> details = exerciseRecordRepository.findExerciseSetDetails(recordId);
+        List<ExerciseSetDetailDto> details = exerciseRecordRepository.findExerciseSetDetails(recordId, username);
 
         if (details.isEmpty()) {
             throw new ExerciseRecordNotFoundException("운동 기록을 찾을 수 없습니다.");
-        }
-
-        String ownerUsername = details.get(0).getUsername(); // 어차피 동일 기록이므로 하나만 확인하면 됨
-        if (!ownerUsername.equals(username)) {
-            throw new UnauthorizedAccessException("운동 기록에 접근할 권한이 없습니다.");
         }
 
         return details;

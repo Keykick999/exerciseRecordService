@@ -1,12 +1,13 @@
 package com.example.fitnessWeb.service;
 
 import com.example.fitnessWeb.dto.ExerciseSaveDto;
-import com.example.fitnessWeb.entity.ExerciseSearchTerm;
-import com.example.fitnessWeb.entity.ExerciseType;
-import com.example.fitnessWeb.entity.ExerciseTypeDocument;
-import com.example.fitnessWeb.repository.ExerciseSearchTermRepository;
+import com.example.fitnessWeb.dto.ExerciseTypeProjection;
+import com.example.fitnessWeb.dto.ExerciseTypeResponseDto;
+import com.example.fitnessWeb.entity.*;
+import com.example.fitnessWeb.exception.DuplicateExerciseTypeException;
 import com.example.fitnessWeb.repository.ExerciseTypeRepository;
 import com.example.fitnessWeb.repository.ExerciseTypeSearchRepository;
+import com.example.fitnessWeb.repository.MuscleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -14,7 +15,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -22,134 +25,133 @@ import java.util.*;
 public class ExerciseTypeService {
 
     private final ExerciseTypeRepository exerciseTypeRepository;
-    private final ExerciseSearchTermRepository exerciseSearchTermRepository;
     private final ExerciseTypeSearchRepository exerciseTypeSearchRepository;
+    private final MuscleRepository muscleRepository;
 
     public void createExerciseType(ExerciseSaveDto dto) {
         if (exerciseTypeRepository.existsByName(dto.getName())) {
-            throw new IllegalArgumentException("이미 존재하는 운동입니다.");
+            throw new DuplicateExerciseTypeException("이미 존재하는 운동입니다.");
         }
 
-        // ExerciseType 저장
-        String name = dto.getName();
+        // Muscle 조회 및 유효성 검사
+        List<String> requested = dto.getMuscleGroups();
+        List<Muscle> muscles = muscleRepository.findAllByNameIn(requested);
+
+        Set<String> foundMuscleNames = muscles.stream()
+                .map(Muscle::getName)
+                .collect(Collectors.toSet());
+
+        List<String> notFound = requested.stream()
+                .filter(name -> !foundMuscleNames.contains(name))
+                .toList();
+
+        if (!notFound.isEmpty()) {
+            throw new IllegalArgumentException("유효하지 않은 부위입니다: " + notFound);
+        }
+
+        // ExerciseType 생성
         ExerciseType exerciseType = ExerciseType.builder()
-                .name(name)
-                .muscleGroup(dto.getMuscleGroup())
+                .name(dto.getName())
                 .build();
-        exerciseTypeRepository.save(exerciseType);
 
-
-        // 이름의 모든 부분 문자열 ExerciseSearchTerm 테이블에 저장
-        name = name.replaceAll("\\s+", ""); // 공백 제거
-        int length = name.length();
-        Set<String> uniqueKeywords = new HashSet<>();
-
-        for (int i = 0; i < length; i++) {
-            for (int j = i + 1; j <= length; j++) {
-                String keyword = name.substring(i, j);
-                uniqueKeywords.add(keyword);
-            }
-        }
-
-        List<ExerciseSearchTerm> terms = uniqueKeywords.stream()
-                .map(keyword -> ExerciseSearchTerm.builder()
-                        .keyword(keyword)
+        List<ExerciseMuscle> relations = muscles.stream()
+                .map(muscle -> ExerciseMuscle.builder()
                         .exerciseType(exerciseType)
+                        .muscle(muscle)
                         .build())
                 .toList();
 
+        exerciseType.setExerciseMuscles(relations);
+        exerciseTypeRepository.save(exerciseType);
 
-        // 한꺼번에 저장
-        exerciseSearchTermRepository.saveAll(terms);
+
+        // ElasticSearch에 저장
+        ExerciseTypeDocument document = ExerciseTypeDocument.builder()
+                .id(String.valueOf(exerciseType.getId()))
+                .name(exerciseType.getName())
+                .muscleGroups(
+                        muscles.stream()
+                                .map(Muscle::getName)
+                                .distinct()
+                                .toList()
+                )
+                .build();
+
+        exerciseTypeSearchRepository.save(document);
     }
 
+
+
+    public Page<ExerciseTypeResponseDto> searchExercise(String name, Set<String> muscleGroups, int page, int size) throws IOException {
+        Pageable pageable = PageRequest.of(page, size);
+
+        Page<ExerciseTypeDocument> esResults = exerciseTypeSearchRepository.searchByNameAndMuscles(name, muscleGroups, pageable);
+
+        return esResults.map(doc -> ExerciseTypeResponseDto.builder()
+                .id(Long.valueOf(doc.getId()))
+                .name(doc.getName())
+                .muscleGroups(doc.getMuscleGroups())
+                .build());
+    }
+
+
+    // 운동 검색
 //    public Page<ExerciseType> searchExercise(String name, HashSet<String> muscleGroups, int page, int size) {
-//        Pageable pageable = PageRequest.of(page, size); // TODO 정렬 로직 추가
-//        System.out.println("name = " + name);
-//        System.out.println("name.isEmpty() = " + name.isEmpty());
-//        System.out.println("muscleGroups = " + muscleGroups);
+//        Pageable pageable = PageRequest.of(page, size);
 //
-//
-//        if (name.isEmpty()) {
-//            if (muscleGroups == null) {
+//        // 1. 검색어가 없으면 muscleGroup 기준 MySQL 검색
+//        if (name == null || name.isBlank()) {
+//            if (muscleGroups == null || muscleGroups.isEmpty()) {
 //                return exerciseTypeRepository.findAll(pageable);
-//            }
-//            else {
+//            } else {
 //                return exerciseTypeRepository.findByMuscleGroups(muscleGroups, pageable);
 //            }
 //        }
 //
-//        // name 기반 검색
-//        List<ExerciseType> foundExercises = exerciseSearchTermRepository.findExerciseTypesByKeyword(name);
-//        System.out.println("foundExercises = " + foundExercises);
+//        // 2. 검색어가 있으면 Elasticsearch에서 이름 검색
+//        List<ExerciseTypeDocument> esResults = exerciseTypeSearchRepository.findByNameContaining(name);
 //
-//        // muscleGroups 조건이 있을 경우 필터링
-//        List<ExerciseType> filtered = (muscleGroups == null)
-//                ? foundExercises
-//                : foundExercises.stream()
-//                        .filter(e -> muscleGroups.contains(e.getMuscleGroup()))
-//                        .toList();
+//        // 3. muscleGroup 필터링 적용
+//        List<ExerciseTypeDocument> filtered = (muscleGroups == null || muscleGroups.isEmpty())
+//                ? esResults
+//                : esResults.stream()
+//                .filter(d -> muscleGroups.contains(d.getMuscleGroup()))
+//                .toList();
 //
-//        int total = filtered.size();
+//        // 4. ES Document → JPA Entity로 매핑
+//        List<ExerciseType> entities = filtered.stream()
+//                .map(doc -> ExerciseType.builder()
+//                        .id(Long.valueOf(doc.getId()))
+//                        .name(doc.getName())
+//                        .muscleGroup(doc.getMuscleGroup())
+//                        .build())
+//                .toList();
+//
+//        // 5. 페이징 수동 처리
+//        int total = entities.size();
 //        int fromIndex = Math.min(page * size, total);
 //        int toIndex = Math.min(fromIndex + size, total);
-//        List<ExerciseType> pageContent = filtered.subList(fromIndex, toIndex);
+//        List<ExerciseType> pageContent = entities.subList(fromIndex, toIndex);
 //
 //        return new PageImpl<>(pageContent, pageable, total);
 //    }
 
 
-    // 운동 검색
-    public Page<ExerciseType> searchExercise(String name, HashSet<String> muscleGroups, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
 
-        // 1. 검색어가 없으면 muscleGroup 기준 MySQL 검색
-        if (name == null || name.isBlank()) {
-            if (muscleGroups == null || muscleGroups.isEmpty()) {
-                return exerciseTypeRepository.findAll(pageable);
-            } else {
-                return exerciseTypeRepository.findByMuscleGroups(muscleGroups, pageable);
-            }
-        }
-
-        // 2. 검색어가 있으면 Elasticsearch에서 이름 검색
-        List<ExerciseTypeDocument> esResults = exerciseTypeSearchRepository.findByNameContaining(name);
-
-        // 3. muscleGroup 필터링 적용
-        List<ExerciseTypeDocument> filtered = (muscleGroups == null || muscleGroups.isEmpty())
-                ? esResults
-                : esResults.stream()
-                .filter(d -> muscleGroups.contains(d.getMuscleGroup()))
-                .toList();
-
-        // 4. ES Document → JPA Entity로 매핑
-        List<ExerciseType> entities = filtered.stream()
-                .map(doc -> ExerciseType.builder()
-                        .id(Long.valueOf(doc.getId()))
-                        .name(doc.getName())
-                        .muscleGroup(doc.getMuscleGroup())
-                        .build())
-                .toList();
-
-        // 5. 페이징 수동 처리
-        int total = entities.size();
-        int fromIndex = Math.min(page * size, total);
-        int toIndex = Math.min(fromIndex + size, total);
-        List<ExerciseType> pageContent = entities.subList(fromIndex, toIndex);
-
-        return new PageImpl<>(pageContent, pageable, total);
-    }
-
-
-
+    // 기존 MySQL -> ElasticSearch 동기화 메서드
     public void syncAllExerciseTypesToElasticsearch() {
-        List<ExerciseType> exerciseTypes = exerciseTypeRepository.findAll();
+        List<ExerciseType> exerciseTypes = exerciseTypeRepository.findAllWithMuscles();
 
         List<ExerciseTypeDocument> documents = exerciseTypes.stream()
                 .map(e -> ExerciseTypeDocument.builder()
                         .id(e.getId().toString())
                         .name(e.getName())
-                        .muscleGroup(e.getMuscleGroup())
+                        .muscleGroups(
+                                e.getExerciseMuscles().stream()
+                                        .map(em -> em.getMuscle().getName())
+                                        .distinct()
+                                        .toList()
+                        )
                         .build())
                 .toList();
 

@@ -17,5 +17,5 @@ public interface ExerciseRecordRepositoryCustom {
             Pageable pageable
     );
 
-    List<ExerciseSetDetailDto> findExerciseSetDetails(Long recordId);
+    List<ExerciseSetDetailDto> findExerciseSetDetails(Long recordId, String username);
 }

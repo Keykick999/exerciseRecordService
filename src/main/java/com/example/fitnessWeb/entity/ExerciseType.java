@@ -4,17 +4,18 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(
-        indexes = {
-                @Index(name = "idx_muscleGroup_name", columnList = "muscleGroup, name")
-        }
-)
+@Table(indexes = {
+        @Index(name = "idx_exercisetype_name", columnList = "name")
+})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class ExerciseType {
 
@@ -23,8 +24,8 @@ public class ExerciseType {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String name;  // 예: Bench Press
+    private String name;
 
-    @Column(nullable = false)
-    private String muscleGroup; // 예: Chest, Back, Legs 등
+    @OneToMany(mappedBy = "exerciseType", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ExerciseMuscle> exerciseMuscles = new ArrayList<>();
 }

@@ -2,9 +2,7 @@ package com.example.fitnessWeb.repository;
 
 import com.example.fitnessWeb.dto.ExerciseRecordResponseDto;
 import com.example.fitnessWeb.dto.ExerciseSetDetailDto;
-import com.example.fitnessWeb.entity.QExerciseRecord;
-import com.example.fitnessWeb.entity.QExerciseSet;
-import com.example.fitnessWeb.entity.QExerciseType;
+import com.example.fitnessWeb.entity.*;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -14,7 +12,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
-
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -36,21 +33,24 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
         QExerciseRecord record = QExerciseRecord.exerciseRecord;
         QExerciseSet set = QExerciseSet.exerciseSet;
         QExerciseType type = QExerciseType.exerciseType;
+        QExerciseMuscle em = QExerciseMuscle.exerciseMuscle;
+        QMuscle m = QMuscle.muscle;
 
-        // 1. distinct record.id만 페이징으로 추출
         List<Long> recordIds = queryFactory
                 .select(record.id)
                 .distinct()
                 .from(record)
                 .join(record.sets, set)
                 .join(set.exerciseType, type)
+                .join(type.exerciseMuscles, em)
+                .join(em.muscle, m)
                 .where(
                         record.user.id.eq(userId),
                         startDate != null ? record.createdAt.goe(startDate) : null,
                         endDate != null ? record.createdAt.loe(endDate) : null,
                         exerciseName != null ? type.name.contains(exerciseName) : null,
                         (muscleGroupList != null && !muscleGroupList.isEmpty())
-                                ? type.muscleGroup.in(muscleGroupList)
+                                ? m.name.in(muscleGroupList)
                                 : null
                 )
                 .orderBy(getOrderSpecifiers(pageable))
@@ -62,21 +62,21 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
             return new PageImpl<>(Collections.emptyList(), pageable, 0);
         }
 
-        // 2. 실제 recordId 기준으로 muscleGroup 포함 전체 조회
         List<Tuple> tuples = queryFactory
-                .select(record.id, record.createdAt, type.muscleGroup)
+                .select(record.id, record.createdAt, m.name)
                 .from(record)
                 .join(record.sets, set)
                 .join(set.exerciseType, type)
+                .join(type.exerciseMuscles, em)
+                .join(em.muscle, m)
                 .where(record.id.in(recordIds))
                 .fetch();
 
-        // 3. 그룹핑(recordId, ExerciseResponseDto형식으로 관리)
         Map<Long, ExerciseRecordResponseDto> grouped = new LinkedHashMap<>();
         for (Tuple tuple : tuples) {
             Long recordId = tuple.get(record.id);
             LocalDateTime createdAt = tuple.get(record.createdAt);
-            String muscle = tuple.get(type.muscleGroup);
+            String muscle = tuple.get(m.name);
             grouped.computeIfAbsent(recordId, id -> new ExerciseRecordResponseDto(id, createdAt))
                     .getMuscleGroupSet().add(muscle);
         }
@@ -89,19 +89,20 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
                 ))
                 .collect(Collectors.toList());
 
-        // 4. 전체 count
         Long total = queryFactory
                 .select(record.id.countDistinct())
                 .from(record)
                 .join(record.sets, set)
                 .join(set.exerciseType, type)
+                .join(type.exerciseMuscles, em)
+                .join(em.muscle, m)
                 .where(
                         record.user.id.eq(userId),
                         startDate != null ? record.createdAt.goe(startDate) : null,
                         endDate != null ? record.createdAt.loe(endDate) : null,
                         exerciseName != null ? type.name.contains(exerciseName) : null,
                         (muscleGroupList != null && !muscleGroupList.isEmpty())
-                                ? type.muscleGroup.in(muscleGroupList)
+                                ? m.name.in(muscleGroupList)
                                 : null
                 )
                 .fetchOne();
@@ -109,7 +110,7 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
         return new PageImpl<>(content, pageable, total == null ? 0 : total);
     }
 
-    private OrderSpecifier<?>[] getOrderSpecifiers(Pageable pageable) {
+        private OrderSpecifier<?>[] getOrderSpecifiers(Pageable pageable) {
         PathBuilder<?> path = new PathBuilder<>(QExerciseRecord.exerciseRecord.getType(), QExerciseRecord.exerciseRecord.getMetadata());
 
         return pageable.getSort().stream()
@@ -120,27 +121,33 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
                 .toArray(OrderSpecifier[]::new);
     }
 
+
     @Override
-    public List<ExerciseSetDetailDto> findExerciseSetDetails(Long recordId) {
-        QExerciseSet s = QExerciseSet.exerciseSet;
-        QExerciseType t = QExerciseType.exerciseType;
-        QExerciseRecord r = QExerciseRecord.exerciseRecord;
+    public List<ExerciseSetDetailDto> findExerciseSetDetails(Long recordId, String username) {
+        QExerciseSet set = QExerciseSet.exerciseSet;
+        QExerciseType type = QExerciseType.exerciseType;
+        QExerciseRecord record = QExerciseRecord.exerciseRecord;
+        QUser user = QUser.user;
 
         return queryFactory
                 .select(
                         com.querydsl.core.types.Projections.constructor(
                                 ExerciseSetDetailDto.class,
-                                t.name,
-                                s.setOrder,
-                                s.weight,
-                                s.reps,
-                                r.user.username
+                                type.name,
+                                set.setOrder,
+                                set.weight,
+                                set.reps
                         )
                 )
-                .from(s)
-                .join(t).on(s.exerciseType.id.eq(t.id))
-                .join(r).on(s.exerciseRecord.id.eq(r.id))
-                .where(s.exerciseRecord.id.eq(recordId))
+                .from(set)
+                .join(set.exerciseType, type)
+                .join(record).on(set.exerciseRecord.id.eq(record.id))
+                .join(record.user, user)
+                .where(
+                        set.exerciseRecord.id.eq(recordId),
+                        user.username.eq(username)
+                )
+                .orderBy(set.setOrder.asc())
                 .fetch();
     }
 }

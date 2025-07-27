@@ -239,25 +239,29 @@
             return $(this).val();
         }).get();
 
+        const requestData = {
+            name,
+            muscleGroup: muscles,
+            page: currentPage,
+            size: 10
+        };
+
+        console.log('🔍 요청 데이터:', requestData);  // 요청 확인용 로그
+
         $.ajax({
             url: '/api/exercise-types',
             method: 'GET',
             traditional: true,
-            data: {
-                name,
-                muscleGroup: muscles,
-                page: currentPage,
-                size: 10
-            },
+            data: requestData,
             success: function (res) {
                 const list = $('#exerciseList');
                 res.content.forEach(ex => {
                     list.append(`
-                        <button type="button" class="list-group-item list-group-item-action"
-                            data-id="${ex.id}" data-name="${ex.name}">
-                            ${ex.name} (${ex.muscleGroup})
-                        </button>
-                    `);
+                    <button type="button" class="list-group-item list-group-item-action"
+                        data-id="${ex.id}" data-name="${ex.name}">
+                        ${ex.name} (${ex.muscleGroups.join(', ')})
+                    </button>
+                `);
                 });
                 hasNext = !res.last;
                 if (res.last) {
@@ -270,6 +274,7 @@
             }
         });
     }
+
 
     function addExerciseCard(exerciseId, exerciseName) {
         if ($(`[data-exercise-id="${exerciseId}"]`).length > 0) {
