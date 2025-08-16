@@ -7,16 +7,19 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <style>
-        .navbar {
-            background-color: rgba(255, 255, 255, 0.05) !important;
-            backdrop-filter: blur(8px);
+        :root{
+            --glass: rgba(255,255,255,.08);
+            --panel: rgba(0,0,0,.6);
+            --border: rgba(255,255,255,.15);
+            --brand: #0d6efd;
         }
-
-        .navbar-brand {
-            font-weight: bold;
-            color: #0d6efd !important;
+        body{
+            font-family: 'Segoe UI', system-ui, -apple-system, Roboto, "Noto Sans KR", sans-serif;
+            background: url('https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=1600&q=80') center/cover fixed no-repeat;
+            color: #fff;
+            min-height: 100vh;
         }
-
+        /* Glassy navbar */
         .navbar-nav .nav-link {
             color: #ffffff !important;
         }
@@ -25,251 +28,429 @@
             color: #ccccff !important;
         }
 
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: url('https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
-            background-size: cover;
-            color: white;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            background-color: rgba(0, 0, 0, 0.75);
-            padding: 2rem;
-            border-radius: 1rem;
-            margin-top: 40px;
-            max-width: 860px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
-        }
-
-        h2 {
+        .navbar-brand {
             font-weight: bold;
-            text-align: center;
-            margin-bottom: 2rem;
+            color: #0d6efd !important;
         }
 
-        .form-select, .form-control {
-            background-color: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white;
+        .navbar {
+            background-color: rgba(255, 255, 255, 0.05) !important;
+            backdrop-filter: blur(8px);
         }
 
-        .form-select:focus, .form-control:focus {
-            border-color: #66afe9;
-            outline: 0;
-            box-shadow: 0 0 0 0.2rem rgba(102, 175, 233, 0.25);
+        /* Page container */
+        .shell{
+            max-width: 1100px;
+            margin: 80px auto 40px;
+            padding: 0 16px;
         }
 
-        select option {
-            background-color: #1e1e1e;
-            color: white;
+        /* Sticky filter bar */
+        .filter-bar{
+            position: sticky; top: 68px; z-index: 10;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            padding: 14px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.35);
+        }
+        .filter-bar .form-select, .filter-bar .form-control{
+            background: rgba(255,255,255,.06);
+            border: 1px solid var(--border);
+            color: #fff;
         }
 
-        .video-card {
-            background-color: rgba(255, 255, 255, 0.05);
-            padding: 1rem;
-            border-radius: 0.8rem;
-            margin-bottom: 1.5rem;
+        .filter-actions .btn{ width: 100%; }
+        .filter-chips{ gap: 8px; }
+
+        /* Grid of videos */
+        .grid{
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+        @media (min-width: 0){
+            .col-card{ grid-column: span 12; }
+        }
+        @media (min-width: 768px){
+            .col-card{ grid-column: span 6; }
+        }
+        @media (min-width: 1100px){
+            .col-card{ grid-column: span 4; }
         }
 
-        iframe {
-            width: 100%;
-            height: 315px;
-            border-radius: 0.8rem;
+        .video-card{
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,.35);
+            transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+        }
+        .video-card:hover{
+            transform: translateY(-2px);
+            border-color: rgba(13,110,253,.5);
+            box-shadow: 0 16px 40px rgba(13,110,253,.2);
+        }
+        .video-thumb{
+            position: relative;
+            aspect-ratio: 16/9;
+            background: rgba(255,255,255,.04);
+        }
+        .video-thumb iframe{
+            width: 100%; height: 100%; border: 0; border-bottom: 1px solid var(--border);
+        }
+        .badge-pill{
+            background: rgba(255,255,255,.08);
+            border: 1px solid var(--border);
+            color: #fff;
+            border-radius: 999px;
+            padding: 6px 10px;
+            font-size: .8rem;
+        }
+        .video-meta{ padding: 12px 14px 14px; }
+        .meta-line{ color: #d1d5db; font-size: .9rem; margin: 4px 0 0; }
+        .meta-line small{ color: #a1a1aa; }
+
+        /* Skeleton loader */
+        .skeleton{
+            background: linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.12), rgba(255,255,255,.06));
+            background-size: 200% 100%;
+            animation: shimmer 1.4s infinite;
+            border-radius: 12px;
+        }
+        @keyframes shimmer{
+            0%{ background-position: 200% 0; }
+            100%{ background-position: -200% 0; }
+        }
+        .skeleton-card{
+            height: 260px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,.03);
         }
 
-        .scroll-loader {
-            text-align: center;
-            color: #aaa;
-            margin-top: 1rem;
+        /* Empty state & sentinel */
+        .empty{
+            text-align: center; padding: 40px 16px; color: #cbd5e1;
+            border: 1px dashed var(--border); border-radius: 16px;
+            background: rgba(0,0,0,.35);
+            margin-top: 16px;
         }
+        #scrollSentinel{
+            text-align: center; color: #a3a3a3;
+            padding: 14px; margin: 8px 0 0;
+        }
+
+        /* Small utilities */
+        .muted{ color: #9ca3af; }
+
+        .chip{ background: rgba(255,255,255,.08); border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; font-size: .8rem; }
+
+        .chip button{ border: 0; background: transparent; color: #fff; margin-left: 6px; opacity: .7; }
+
+        .chip button:hover{ opacity: 1; }
+
+        /* 필터 바 고정 해제 */
+        .filter-bar { position: static !important; top: auto !important; z-index: auto !important; }
     </style>
 </head>
 <body>
-<!--네비게이션 바-->
+<!-- 네비게이션 바 -->
 <div th:replace="fragments/navbar :: body"></div>
 
-<div class="container">
-    <!-- 🔍 필터 영역 -->
-    <div class="row mb-3">
-        <div class="col-md-3">
-            <select id="typeSelect" class="form-select text-white">
-                <option value="">영상 유형</option>
-                <option value="TUTORIAL">튜토리얼</option>
-                <option value="HARD_TRAINING">빡운동</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <select id="muscleInput" class="form-select text-white" multiple>
-                <option value="">운동 부위</option>
-                <option value="등">등</option>
-                <option value="가슴">가슴</option>
-                <option value="하체">하체</option>
-                <option value="이두">이두</option>
-                <option value="삼두">삼두</option>
-                <option value="복근">복근</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <select id="exerciseInput" class="form-select text-white" multiple>
-                <option value="">운동 종목</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <select id="athleteInput" class="form-select text-white" multiple>
-                <option value="">선수명</option>
-                <option value="김명섭">김명섭</option>
-                <option value="강경원">강경원</option>
-                <option value="크리스 범스테드">크리스 범스테드</option>
-            </select>
+<div class="shell">
+    <h2 class="fw-bold text-center mb-3">운동 영상</h2>
+    <p class="text-center muted mb-3">부위/종목/선수 & 영상 유형으로 필터링하고, 아래로 스크롤하면 더 불러와요.</p>
+
+    <!-- 필터 바 (sticky / glass) -->
+    <div class="filter-bar">
+        <div class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label mb-1">영상 유형</label>
+                <select id="typeSelect" class="form-select text-white" size="3">
+                    <option value="">전체</option>
+                    <option value="TUTORIAL">튜토리얼</option>
+                    <option value="HARD_TRAINING">빡운동</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label mb-1">운동 부위 (다중)</label>
+                <select id="muscleInput" class="form-select text-white" multiple size="6">
+                    <option value="등">등</option>
+                    <option value="가슴">가슴</option>
+                    <option value="하체">하체</option>
+                    <option value="이두">이두</option>
+                    <option value="삼두">삼두</option>
+                    <option value="복근">복근</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label mb-1">운동 종목 (다중)</label>
+                <select id="exerciseInput" class="form-select text-white" multiple size="8">
+                    <!-- JS에서 동적 채움 -->
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label mb-1">선수명 (다중)</label>
+                <select id="athleteInput" class="form-select text-white" multiple size="6">
+                    <option value="김명섭">김명섭</option>
+                    <option value="강경원">강경원</option>
+                    <option value="크리스 범스테드">크리스 범스테드</option>
+                </select>
+            </div>
+
+            <div class="col-12">
+                <div class="d-flex flex-wrap filter-chips mt-2" id="filterChips"></div>
+            </div>
+
+            <div class="col-12 mt-2">
+                <div class="row g-2 filter-actions">
+                    <div class="col-md-9">
+                        <button id="searchBtn" class="btn btn-primary w-100">
+                            검색
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <button id="resetBtn" class="btn btn-outline-light w-100">
+                            초기화
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <button id="searchBtn" class="btn btn-outline-primary mb-4 w-100">검색</button>
-    <button id="resetBtn" class="btn btn-outline-light w-100 mb-2">초기화</button>
-
-
-    <!-- 📺 영상 리스트 -->
-    <div id="videoList"></div>
-    <div id="scrollSentinel" class="scroll-loader">🔄 불러오는 중...</div>
+    <!-- 컨텐츠 -->
+    <div id="videoList" class="grid">
+        <!-- 스켈레톤 프리로더 -->
+    </div>
+    <div id="emptyState" class="empty d-none">
+        <div class="display-6 mb-2">🙈 결과가 없어요</div>
+        <div class="muted">필터를 조금 넓혀 보거나 다른 키워드로 검색해 보세요.</div>
+    </div>
+    <div id="scrollSentinel" class="">🔄 불러오는 중...</div>
 </div>
 
 <script src="/js/auth.js"></script>
 <script>
+    /* ---------- 데이터 & 상태 ---------- */
     const exerciseMap = {
-        "가슴": [
-            "플랫 벤치프레스", "인클라인 벤치프레스", "딥스", "플랫 덤벨프레스",
-            "인클라인 덤벨프레스", "펙덱 플라이", "푸쉬업", "체스트 프레스"
-        ],
-        "등": [
-            "랫풀다운", "풀업", "친업", "바벨로우", "데드리프트", "원암 덤벨로우"
-        ],
-        "하체": [
-            "스쿼트", "레그프레스", "레스컬", "레그 익스텐션", "핵 스쿼트", "불가리안 스플릿 스쿼트"
-        ],
-        "이두": ["바벨 컬", "덤벨 컬"],
-        "삼두": ["케이블 푸쉬 다운", "라잉 트라이셉스 익스텐션"],
-        "복근": ["크런치"]
+        "가슴":[ "플랫 벤치프레스","인클라인 벤치프레스","딥스","플랫 덤벨프레스","인클라인 덤벨프레스","펙덱 플라이","푸쉬업","체스트 프레스" ],
+        "등":[ "랫풀다운","풀업","친업","바벨로우","데드리프트","원암 덤벨로우" ],
+        "하체":[ "스쿼트","레그프레스","레스컬","레그 익스텐션","핵 스쿼트","불가리안 스플릿 스쿼트" ],
+        "이두":[ "바벨 컬","덤벨 컬" ],
+        "삼두":[ "케이블 푸쉬 다운","라잉 트라이셉스 익스텐션" ],
+        "복근":[ "크런치" ]
     };
 
-    $('#muscleInput').on('change', function () {
-        const selectedMuscle = $(this).val();
-        const exerciseSelect = $('#exerciseInput');
-        exerciseSelect.empty();
-        exerciseSelect.append('<option value="">운동 종목</option>');
-        if (selectedMuscle && exerciseMap[selectedMuscle]) {
-            exerciseMap[selectedMuscle].forEach(function (exercise) {
-                exerciseSelect.append(`<option value="${exercise}">${exercise}</option>`);
-            });
-        }
-    });
-
+    // 페이징 상태
     let currentPage = 0;
     let hasNext = true;
     let isLoading = false;
 
-    function fetchVideos(reset = false) {
-        if (isLoading) return;
-
-        if (reset) {
-            currentPage = 0;
-            hasNext = true;
-            $('#videoList').empty();
+    /* ---------- 유틸 ---------- */
+    function unique(arr){ return Array.from(new Set(arr)); }
+    function renderSkeleton(count=6){
+        const frag = document.createDocumentFragment();
+        for(let i=0;i<count;i++){
+            const cell = document.createElement('div');
+            cell.className = 'col-card skeleton-card skeleton';
+            frag.appendChild(cell);
         }
+        document.getElementById('videoList').appendChild(frag);
+    }
+    function clearSkeleton(){
+        document.querySelectorAll('.skeleton-card').forEach(n=>n.remove());
+    }
 
-        if (!hasNext) return;
+    function updateExerciseOptions(){
+        const muscles = $('#muscleInput').val() || [];
+        const exSelect = $('#exerciseInput');
+        exSelect.empty();
+        // 선택 근육 여러 개 → 종목 합집합
+        let ex = [];
+        muscles.forEach(m => { if(exerciseMap[m]) ex = ex.concat(exerciseMap[m]); });
+        ex = unique(ex);
+        if(ex.length===0){ return; }
+        ex.forEach(name => exSelect.append(`<option value="${name}">${name}</option>`));
+    }
 
-        isLoading = true;
+    function renderFilterChips(){
+        const chips = $('#filterChips');
+        chips.empty();
+        const type = $('#typeSelect').val();
+        const muscles = $('#muscleInput').val() || [];
+        const exercises = $('#exerciseInput').val() || [];
+        const athletes = $('#athleteInput').val() || [];
 
-        const requestBody = {
-            type: $('#typeSelect').val() || null,
-            muscleGroups: $('#muscleInput').val() || [],
-            exerciseNames: $('#exerciseInput').val() || [],
-            athleteNames: $('#athleteInput').val() || []
+        const pushChip = (label, clearFn) => {
+            const chip = $(`<span class="chip">${label}<button title="삭제" aria-label="삭제">×</button></span>`);
+            chip.find('button').on('click', clearFn);
+            chips.append(chip);
         };
 
-
-        const token = localStorage.getItem('jwtToken');
-        const url = `/api/videos/search?page=${currentPage}&size=6`;
-
-        console.log("🔼 요청 전송:", requestBody);
-
-        $.ajax({
-            url,
-            method: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify(requestBody),
-            headers: {
-                Authorization: `Bearer ${token}`
-            },
-            success: function (res) {
-                console.log("✅ 응답 받음:", res);
-                res.content.forEach(video => {
-                    $('#videoList').append(`
-                        <div class="video-card">
-                            <iframe src="${video.iframeSrc}" frameborder="0" allowfullscreen></iframe>
-                            <p class="mt-2 mb-0"><strong>유형:</strong> ${video.type}</p>
-                            ${video.details.map(d =>
-                        `<small class="text-white-50 d-block">[${d.muscleGroup}] ${d.exerciseName} - ${d.athleteName}</small>`
-                    ).join('')}
-                        </div>
-                    `);
-                });
-
-                hasNext = !res.last;
-                currentPage++;
-                $('#scrollSentinel').text(hasNext ? '🔄 불러오는 중...' : '📦 모든 영상을 불러왔습니다.');
-            },
-            error: function (xhr) {
-                console.error("❌ 오류 응답:", xhr);
-                if (xhr.status === 401 || xhr.status === 403) {
-                    alert('로그인이 필요합니다.');
-                    localStorage.removeItem('jwtToken');
-                    location.href = '/login';
-                } else {
-                    alert('영상 데이터를 불러오는 중 오류가 발생했습니다.');
-                }
-            },
-            complete: function () {
-                isLoading = false;
-            }
-        });
+        if(type) pushChip(`유형: ${type}`, ()=>{ $('#typeSelect').val(''); triggerSearch(true); });
+        muscles.forEach(v => pushChip(`부위: ${v}`, ()=>{
+            const vals = $('#muscleInput').val().filter(x=>x!==v);
+            $('#muscleInput').val(vals);
+            updateExerciseOptions();
+            triggerSearch(true);
+        }));
+        exercises.forEach(v => pushChip(`종목: ${v}`, ()=>{
+            const vals = $('#exerciseInput').val().filter(x=>x!==v);
+            $('#exerciseInput').val(vals);
+            triggerSearch(true);
+        }));
+        athletes.forEach(v => pushChip(`선수: ${v}`, ()=>{
+            const vals = $('#athleteInput').val().filter(x=>x!==v);
+            $('#athleteInput').val(vals);
+            triggerSearch(true);
+        }));
     }
 
-    function resetFilters() {
-        $('#typeSelect').val('');
-        $('#muscleInput').val([]);
-        $('#exerciseInput').empty().append('<option value="">운동 종목</option>');
-        $('#athleteInput').val([]);
-        fetchVideos(true);
+    function cardTemplate(video){
+        const typeBadge = `<span class="badge-pill me-2">${video.type || '유형'}</span>`;
+        const details = (video.details||[])
+            .map(d => `<small class="d-block text-white-50">[${d.muscleGroup}] ${d.exerciseName} - ${d.athleteName}</small>`)
+            .join('');
+        return `
+        <div class="col-card">
+          <article class="video-card">
+            <div class="video-thumb">
+        <iframe src="${video.iframeSrc}" loading="lazy" allowfullscreen></iframe>
+        </div>
+        <div class="video-meta">
+        <div class="d-flex align-items-center justify-content-between">
+        ${typeBadge}
+        ${video.duration ? `<small class="muted">${video.duration}</small>` : ''}
+        </div>
+        <p class="meta-line mt-2 mb-0">${video.title ? video.title : ''}</p>
+        ${details ? `<div class="mt-1">${details}</div>` : ''}
+        </div>
+        </article>
+        </div>`;
     }
 
+    function setEmptyState(show){
+      $('#emptyState').toggleClass('d-none', !show);
+    }
 
-    $(document).ready(function () {
-        fetchVideos();
+    /* ---------- API ---------- */
+    function fetchVideos(reset=false){
+      if(isLoading) return;
+      if(reset){
+        currentPage = 0; hasNext = true;
+        $('#videoList').empty();
+        setEmptyState(false);
+      }
+      if(!hasNext) return;
 
-        $('#searchBtn').on('click', function () {
-            hasNext = true;
-            isLoading = false;
-            fetchVideos(true);
-        });
+      isLoading = true;
+      renderSkeleton(currentPage===0 ? 6 : 3);
 
-        $('#resetBtn').on('click', function () {
-            resetFilters();
-        });
+      const requestBody = {
+        type: $('#typeSelect').val() || null,
+        muscleGroups: $('#muscleInput').val() || [],
+        exerciseNames: $('#exerciseInput').val() || [],
+        athleteNames: $('#athleteInput').val() || []
+      };
+      const token = localStorage.getItem('jwtToken');
+      const url = `/api/videos/search?page=${currentPage}&size=6`;
 
-        const observer = new IntersectionObserver(entries => {
-            if (entries[0].isIntersecting) {
-                fetchVideos();
-            }
-        }, {
-            root: null,
-            threshold: 0.7
-        });
+      $.ajax({
+        url, method:'POST', contentType:'application/json',
+        data: JSON.stringify(requestBody),
+        headers: { Authorization: `Bearer ${token}` },
+        success: function(res){
+          clearSkeleton();
+          if(currentPage===0 && (!res.content || res.content.length===0)){
+            setEmptyState(true);
+          }
+          (res.content || []).forEach(v => $('#videoList').append(cardTemplate(v)));
+          hasNext = !res.last;
+          currentPage++;
+          $('#scrollSentinel').text(hasNext ? '🔄 불러오는 중...' : '📦 모든 영상을 불러왔습니다.');
+        },
+        error: function(xhr){
+          clearSkeleton();
+          if(xhr.status===401 || xhr.status===403){
+            alert('로그인이 필요합니다.');
+            localStorage.removeItem('jwtToken');
+            location.href='/login';
+          }else{
+            alert('영상 데이터를 불러오는 중 오류가 발생했습니다.');
+          }
+        },
+        complete: function(){ isLoading=false; }
+      });
+    }
 
-        observer.observe(document.getElementById('scrollSentinel'));
+    function resetFilters(){
+      $('#typeSelect').val('');
+      $('#muscleInput').val([]);
+      $('#exerciseInput').empty(); // 종목 초기화
+      $('#athleteInput').val([]);
+      renderFilterChips();
+      fetchVideos(true);
+    }
+
+    // 버튼 스팸 방지용 디바운스
+    let searchTimer=null;
+    function triggerSearch(reset){
+      renderFilterChips();
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(()=> fetchVideos(reset), 120);
+    }
+
+    /* ---------- Init ---------- */
+    $(document).ready(function(){
+      // 초기 종목 옵션 생성(빈 상태)
+      updateExerciseOptions();
+      renderFilterChips();
+
+
+      // 이벤트
+      $('#muscleInput, #exerciseInput, #athleteInput').on('mousedown', 'option', function (e) {
+          e.preventDefault();                         // 기본 선택 동작 방지
+          const $opt = $(this);
+          const $select = $opt.closest('select');
+          $opt.prop('selected', !$opt.prop('selected')); // 토글
+          $select.trigger('change');                  // 변경 이벤트 발화 (필터 반영)
+      });
+
+
+      $('#muscleInput').on('change', function(){
+        updateExerciseOptions();
+        // 선택된 종목이 더 이상 유효하지 않으면 제거
+        const valid = new Set($('#exerciseInput option').map((i,o)=>o.value).get());
+        const selected = ($('#exerciseInput').val()||[]).filter(v=>valid.has(v));
+        $('#exerciseInput').val(selected);
+        triggerSearch(true);
+      });
+      $('#exerciseInput, #athleteInput, #typeSelect').on('change', function(){
+        triggerSearch(true);
+      });
+
+      $('#searchBtn').on('click', function(){ triggerSearch(true); });
+      $('#resetBtn').on('click', function(){ resetFilters(); });
+
+      // 최초 로드
+      fetchVideos(true);
+
+      // 인터섹션 옵저버 (무한 스크롤)
+      const sentinel = document.getElementById('scrollSentinel');
+      const observer = new IntersectionObserver(entries => {
+        if(entries[0].isIntersecting && hasNext && !isLoading){
+          fetchVideos(false);
+        }
+      }, { root:null, threshold:.25 });
+      observer.observe(sentinel);
     });
-</script>
+  </script>
 </body>
 </html>

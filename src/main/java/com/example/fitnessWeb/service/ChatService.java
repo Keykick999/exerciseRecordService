@@ -130,6 +130,7 @@ public class ChatService {
         }
     }
 
+
     public Page<ChatDto> getChats(int page) {
         // 1. 현재 인증된 username 꺼내기
         Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
