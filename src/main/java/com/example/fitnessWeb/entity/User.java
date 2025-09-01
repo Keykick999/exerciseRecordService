@@ -5,7 +5,6 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-// 회원 엔티티
 @Entity
 @Getter
 @Setter
