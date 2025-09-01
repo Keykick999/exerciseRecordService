@@ -55,3 +55,4 @@ public class ChatController {
         return ResponseEntity.noContent().build();
     }
 }
+
