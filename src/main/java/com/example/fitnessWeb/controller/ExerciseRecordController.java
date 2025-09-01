@@ -42,8 +42,6 @@ public class ExerciseRecordController {
             @RequestParam(required = false) List<String> muscleGroup,
             @AuthenticationPrincipal UserDetails userDetails,
             Pageable pageable) {
-        System.out.println("검색 실행");
-
         // 날짜 파싱 (문자열 → LocalDateTime)
         LocalDateTime start = (startDate != null && !startDate.isBlank())
                 ? LocalDateTime.parse(startDate.trim())

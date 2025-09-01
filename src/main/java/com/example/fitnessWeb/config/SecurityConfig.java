@@ -48,6 +48,7 @@ public class SecurityConfig {
                                 "workoutVideos").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/exercise-types").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/exercise-types/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/analytics/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/exercise-types/sync-to-es").permitAll()
                         .anyRequest().authenticated()
                 )

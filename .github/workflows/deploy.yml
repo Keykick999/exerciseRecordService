@@ -1,0 +1,24 @@
+name: Deploy To GCE VM
+
+on:
+  push:
+    branches:
+      - temp
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH로 GCE VM에 접속하여 배포
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.GCE_HOST }}          # GCE VM 외부 IP
+          username: ${{ secrets.GCE_USERNAME }}  # GCE VM 접속 username (예: rootisthefirst)
+          key: ${{ secrets.GCE_PRIVATE_KEY }}    # 로컬에서 생성한 개인키(id_rsa) 내용
+          script_stop: true                      # 아래 명령어 중 하나라도 실패하면 전체 실패 처리
+          script: |
+            cd /home/${{ secrets.GCE_USERNAME }}/exerciseRecordService  # GCE VM의 실제 프로젝트 경로
+            git pull origin temp
+            ./gradlew clean build
+            sudo fuser -k -n tcp 8080 || true
+            nohup java -jar build/libs/*SNAPSHOT.jar > ./output.log 2>&1 &
