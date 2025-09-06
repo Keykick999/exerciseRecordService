@@ -5,7 +5,7 @@ import com.example.fitnessWeb.dto.ChatMessageDto;
 import com.example.fitnessWeb.dto.ChatResponse;
 import com.example.fitnessWeb.entity.*;
 import com.example.fitnessWeb.exception.ChatNotFoundException;
-import com.example.fitnessWeb.exception.UnauthorizedAccessException;
+import com.example.fitnessWeb.exception.UnAuthorizedAccessException;
 import com.example.fitnessWeb.exception.UserNotFoundException;
 import com.example.fitnessWeb.repository.ChatMessageRepository;
 import com.example.fitnessWeb.repository.ChatRepository;
@@ -220,7 +220,7 @@ public class ChatService {
                 .orElseThrow(() -> new ChatNotFoundException("채팅이 존재하지 않습니다."));
 
         if (!chat.getUser().equals(user)) {
-            throw new UnauthorizedAccessException("본인의 채팅만 삭제할 수 있습니다.");
+            throw new UnAuthorizedAccessException("본인의 채팅만 삭제할 수 있습니다.");
         }
 
         // Chat 및 관련 메시지 소프트 삭제

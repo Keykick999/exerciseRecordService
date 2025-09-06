@@ -126,7 +126,7 @@ public class RoutineService {
 
         // 3. 소유자 검사
         if (!routine.getUser().getUsername().equals(username)) {
-            throw new UnauthorizedAccessException("본인의 루틴만 수정할 수 있습니다.");
+            throw new UnAuthorizedAccessException("본인의 루틴만 수정할 수 있습니다.");
         }
 
         // 4. 기존 루틴 세트 삭제
@@ -159,7 +159,7 @@ public class RoutineService {
                 .orElseThrow(() -> new RoutineNotFoundException("루틴을 찾을 수 없습니다."));
 
         if (!routine.getUser().getUsername().equals(username)) {
-            throw new UnauthorizedAccessException("본인의 루틴만 삭제할 수 있습니다.");
+            throw new UnAuthorizedAccessException("본인의 루틴만 삭제할 수 있습니다.");
         }
 
         routineRepository.delete(routine); // cascade + orphanRemoval 설정되어 있다면 routineSets도 함께 삭제됨

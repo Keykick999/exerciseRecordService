@@ -42,8 +42,8 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(409).body(ex.getMessage());
     }
 
-    @ExceptionHandler(UnauthorizedAccessException.class)
-    public ResponseEntity<String> handleUnauthorizedAccessException(UnauthorizedAccessException ex) {
+    @ExceptionHandler(UnAuthorizedAccessException.class)
+    public ResponseEntity<String> handleUnauthorizedAccessException(UnAuthorizedAccessException ex) {
         return ResponseEntity.status(403).body(ex.getMessage());
     }
 
@@ -64,6 +64,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateExerciseTypeException.class)
     public ResponseEntity<String> handleDuplicateExerciseTypeException(DuplicateExerciseTypeException ex) {
+        return ResponseEntity.status(404).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(NutritionNotFoundException.class)
+    public ResponseEntity<String> handleNutritionNotFoundException(NutritionNotFoundException ex) {
         return ResponseEntity.status(404).body(ex.getMessage());
     }
 }
