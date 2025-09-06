@@ -9,7 +9,7 @@ import java.util.List;
 
 public interface ExerciseRecordRepositoryCustom {
     Page<ExerciseRecordResponseDto> searchRecords(
-            Long userId,
+            String userId,
             LocalDateTime startDate,
             LocalDateTime endDate,
             String exerciseName,
@@ -17,5 +17,5 @@ public interface ExerciseRecordRepositoryCustom {
             Pageable pageable
     );
 
-    List<ExerciseSetDetailDto> findExerciseSetDetails(Long recordId, String username);
+    List<ExerciseSetDetailDto> findExerciseSetDetails(Long recordId, String userId);
 }

@@ -1,7 +1,6 @@
 package com.example.fitnessWeb.service;
 
 import com.example.fitnessWeb.dto.ExerciseSaveDto;
-import com.example.fitnessWeb.dto.ExerciseTypeProjection;
 import com.example.fitnessWeb.dto.ExerciseTypeResponseDto;
 import com.example.fitnessWeb.entity.*;
 import com.example.fitnessWeb.exception.DuplicateExerciseTypeException;
@@ -10,10 +9,12 @@ import com.example.fitnessWeb.repository.ExerciseTypeSearchRepository;
 import com.example.fitnessWeb.repository.MuscleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.elasticsearch.core.ElasticsearchOperations;
+import org.springframework.data.elasticsearch.core.IndexOperations;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.*;
@@ -26,6 +27,7 @@ public class ExerciseTypeService {
 
     private final ExerciseTypeRepository exerciseTypeRepository;
     private final ExerciseTypeSearchRepository exerciseTypeSearchRepository;
+    private final ElasticsearchOperations elasticsearchOperations;
     private final MuscleRepository muscleRepository;
 
     public void createExerciseType(ExerciseSaveDto dto) {
@@ -139,9 +141,20 @@ public class ExerciseTypeService {
 
 
     // 기존 MySQL -> ElasticSearch 동기화 메서드
+    @Transactional(readOnly = true)
     public void syncAllExerciseTypesToElasticsearch() {
+        // 1) 인덱스 삭제/재생성/매핑적용
+        IndexOperations indexOps = elasticsearchOperations.indexOps(ExerciseTypeDocument.class);
+        if (indexOps.exists()) {
+            indexOps.delete();
+        }
+        indexOps.create();
+        indexOps.putMapping(indexOps.createMapping());
+
+        // 2) MySQL에서 데이터 조회
         List<ExerciseType> exerciseTypes = exerciseTypeRepository.findAllWithMuscles();
 
+        // 3) 문서 변환
         List<ExerciseTypeDocument> documents = exerciseTypes.stream()
                 .map(e -> ExerciseTypeDocument.builder()
                         .id(e.getId().toString())
@@ -155,25 +168,10 @@ public class ExerciseTypeService {
                         .build())
                 .toList();
 
+        // 4) bulk 저장
         exerciseTypeSearchRepository.saveAll(documents);
+
+        // 5) 즉시 검색 가능하도록 refresh
+        indexOps.refresh();
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

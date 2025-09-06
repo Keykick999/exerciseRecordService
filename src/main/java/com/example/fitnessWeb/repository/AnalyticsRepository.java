@@ -74,7 +74,7 @@ public interface AnalyticsRepository extends JpaRepository<com.example.fitnessWe
         """,
             nativeQuery = true)
     List<MaxRepsRow> findRecentMaxRepsByWeight(
-            @Param("userId") Long userId,
+            @Param("userId") String userId,
             @Param("exerciseTypeId") Long exerciseTypeId,
             @Param("weight") Integer weight,
             Pageable pageable
@@ -121,7 +121,7 @@ public interface AnalyticsRepository extends JpaRepository<com.example.fitnessWe
         """,
             nativeQuery = true)
     List<MaxWeightRepsRow> findMaxWeightRepsHistory(
-            @Param("userId") Long userId,
+            @Param("userId") String userId,
             @Param("exerciseTypeId") Long exerciseTypeId,
             Pageable pageable
     );
@@ -174,7 +174,7 @@ public interface AnalyticsRepository extends JpaRepository<com.example.fitnessWe
         """,
             nativeQuery = true)
     List<MaxVolumeSetRow> findMaxVolumeSets(
-            @Param("userId") Long userId,
+            @Param("userId") String userId,
             @Param("exerciseTypeId") Long exerciseTypeId,   // nullable
             @Param("startDate") LocalDateTime startDate,     // nullable
             @Param("endDate") LocalDateTime endDate,         // nullable

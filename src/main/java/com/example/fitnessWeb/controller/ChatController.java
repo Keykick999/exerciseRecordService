@@ -6,6 +6,7 @@ import com.example.fitnessWeb.dto.ChatResponse;
 import com.example.fitnessWeb.service.ChatService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,8 +20,9 @@ public class ChatController {
     }
 
     @PostMapping
-    public ResponseEntity<ChatResponse> askCoach(@RequestBody ChatRequest request) {
-        return ResponseEntity.ok(chatService.askModel(request.getMessage()));
+    public ResponseEntity<ChatResponse> askCoach(Authentication auth, @RequestBody ChatRequest request) {
+        System.out.println("request = " + request);
+        return ResponseEntity.ok(chatService.askModel(auth.getName(), request.getMessage()));
     }
 
     @PostMapping("/{chatId}/message")
@@ -43,15 +45,16 @@ public class ChatController {
 
     @GetMapping
     public ResponseEntity<Page<ChatDto>> getChats(
+            Authentication auth,
             @RequestParam(defaultValue = "0") int page
     ) {
-        Page<ChatDto> chats = chatService.getChats(page);
+        Page<ChatDto> chats = chatService.getChats(auth.getName(), page);
         return ResponseEntity.ok(chats);
     }
 
     @DeleteMapping("/{chatId}")
-    public ResponseEntity<Void> deleteChat(@PathVariable Long chatId) {
-        chatService.deleteChat(chatId);
+    public ResponseEntity<Void> deleteChat(Authentication auth, @PathVariable Long chatId) {
+        chatService.deleteChat(auth.getName(), chatId);
         return ResponseEntity.noContent().build();
     }
 }

@@ -150,6 +150,49 @@
         .chat-menu.show { display: block; }
         .chat-menu button { width: 100%; padding: 8px 10px; background: transparent; border: 0; color: var(--text); text-align: left; }
         .chat-menu button:hover { background: rgba(255,255,255,.06); }
+        .chat-menu {
+            position: absolute;
+            right: 0;
+            top: 120%;
+            background: var(--bg-elev);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: none;
+            min-width: 120px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+
+            z-index: 9999;   /* ✅ 최상단으로 */
+        }
+
+        /* 사이드바는 잘라내지 않도록 (혹시 hidden이면 visible로) */
+        .sidebar { overflow: visible; }
+
+        /* 화면 최상단으로 띄울 공용 케밥 메뉴 */
+        .kebab-menu {
+            position: fixed;           /* ← 화면 기준 */
+            z-index: 9999;             /* ← 무엇보다 위로 */
+            min-width: 140px;
+            background: var(--bg-elev);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            display: none;             /* 기본은 숨김 */
+        }
+        .kebab-menu.show { display: block; }
+
+        .kebab-menu button {
+            width: 100%;
+            padding: 8px 12px;
+            background: transparent;
+            border: 0;
+            color: var(--text);
+            text-align: left;
+        }
+        .kebab-menu button:hover { background: rgba(255,255,255,.06); }
+
+
 
         .sidebar-resizer { position: absolute; top: 0; right: 0; width: 10px; height: 100%; cursor: ew-resize; }
 
@@ -321,6 +364,70 @@
     });
 
     /* ---------- Helpers ---------- */
+    // === 전역 케밥 메뉴 유틸 ===
+    function getOrCreateKebabMenu() {
+        let menu = document.getElementById('globalKebabMenu');
+        if (!menu) {
+            menu = document.createElement('div');
+            menu.id = 'globalKebabMenu';
+            menu.className = 'kebab-menu';
+            document.body.appendChild(menu);
+        }
+        return menu;
+    }
+
+    function openKebabMenu(triggerBtn, items = []) {
+        const menu = getOrCreateKebabMenu();
+
+        // 메뉴 내용 초기화 후 다시 채우기
+        menu.innerHTML = '';
+        items.forEach(({ label, onClick, danger }) => {
+            const btn = document.createElement('button');
+            btn.textContent = label;
+            if (danger) btn.style.color = '#ef4444';
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                closeKebabMenu();
+                onClick && onClick();
+            };
+            menu.appendChild(btn);
+        });
+
+        // 버튼 위치 기준으로 메뉴 위치 계산
+        const r = triggerBtn.getBoundingClientRect();
+        const gap = 6;
+        const preferredTop = r.bottom + gap;
+        const left = Math.min(r.left, window.innerWidth - 160);
+
+        const menuHeight = 42 * items.length;
+        const top = (preferredTop + menuHeight > window.innerHeight)
+            ? (r.top - gap - menuHeight)
+            : preferredTop;
+
+        menu.style.top = `${Math.max(8, top + window.scrollY)}px`;
+        menu.style.left = `${Math.max(8, left + window.scrollX)}px`;
+        menu.classList.add('show');
+
+        // 바깥 클릭/스크롤/리사이즈 시 닫기
+        setTimeout(() => {
+            const closer = (ev) => {
+                if (ev.type === 'click' && (ev.target === menu || menu.contains(ev.target))) return;
+                closeKebabMenu();
+                window.removeEventListener('scroll', closer, true);
+                window.removeEventListener('resize', closer, true);
+                document.removeEventListener('click', closer, true);
+            };
+            window.addEventListener('scroll', closer, true);
+            window.addEventListener('resize', closer, true);
+            document.addEventListener('click', closer, true);
+        }, 0);
+    }
+
+    function closeKebabMenu() {
+        const menu = document.getElementById('globalKebabMenu');
+        if (menu) menu.classList.remove('show');
+    }
+
     function autoGrow(el) {
         el.style.height = 'auto';
         el.style.height = Math.min(el.scrollHeight, 200) + 'px';
@@ -374,10 +481,13 @@
 
     /* ---------- Chat list ---------- */
     async function loadChats() {
-        const token = localStorage.getItem('jwtToken');
+        const token = localStorage.getItem('accessToken');
         try {
             const res = await fetch('/api/chat', { headers: { 'Authorization': 'Bearer ' + token } });
-            if (!res.ok) throw new Error('채팅 목록 로딩 실패');
+            if (!res.ok) {
+                alert(res.status);
+                throw new Error('채팅 목록 로딩 실패');
+            }
             const data = await res.json();
 
             const chatList = document.getElementById('chatList');
@@ -407,11 +517,13 @@
                 moreBtn.className = 'chat-menu-btn';
                 moreBtn.innerHTML = '<i class="bi bi-three-dots"></i>';
                 moreBtn.onclick = (e) => {
-                    e.stopPropagation(); // 🔸 li 클릭 방지
-                    const menu = moreBtn.nextElementSibling;
-                    document.querySelectorAll('.chat-menu').forEach(m => { if (m !== menu) m.classList.remove('show'); });
-                    menu.classList.toggle('show');
+                    e.stopPropagation();
+                    openKebabMenu(moreBtn, [
+                        { label: '이름 바꾸기', onClick: () => toast('이름 바꾸기 준비중') },
+                        { label: '삭제', danger: true, onClick: async () => { await deleteChat(chat.id); } },
+                    ]);
                 };
+
 
                 const menu = document.createElement('div');
                 menu.className = 'chat-menu';
@@ -452,7 +564,7 @@
 
     async function deleteChat(chatId) {
         if (!confirm('이 채팅을 삭제하시겠습니까?')) return;
-        const token = localStorage.getItem('jwtToken');
+        const token = localStorage.getItem('accessToken');
         try {
             const res = await fetch(`/api/chat/${chatId}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
             if (!res.ok) throw new Error('삭제 실패');
@@ -539,7 +651,7 @@
 
     /* 실제 호출 + 렌더링 유틸 */
     async function fetchMessagesPage(chatId, pageNo, { metaOnly = false, append = 'bottom' } = {}) {
-        const token = localStorage.getItem('jwtToken');
+        const token = localStorage.getItem('accessToken');
         const previousScrollHeight = chatBox.scrollHeight;
 
         const res = await fetch(`/api/chat/${chatId}/messages?page=${pageNo}`, {
@@ -640,7 +752,7 @@
         const userInput = (textarea?.value || '').trim();
         if (!userInput) return;
 
-        const token = localStorage.getItem('jwtToken');
+        const token = localStorage.getItem('accessToken');
 
         // Ensure chat area ready
         const empty = document.getElementById('emptyState');

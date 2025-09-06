@@ -7,5 +7,6 @@ import java.time.LocalDate;
 import java.util.Optional;
 
 public interface NutritionDayRepository extends JpaRepository<NutritionDay, Long> {
-    Optional<NutritionDay> findByUserIdAndDate(Long userId, LocalDate date);
+    Optional<NutritionDay> findByUser_UserIdAndDate(String userId, LocalDate date);
+
 }

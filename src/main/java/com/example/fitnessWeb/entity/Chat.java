@@ -1,5 +1,6 @@
 package com.example.fitnessWeb.entity;
 
+import com.example.fitnessWeb.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -17,6 +18,7 @@ public class Chat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(length = 255, nullable = false)
     private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)

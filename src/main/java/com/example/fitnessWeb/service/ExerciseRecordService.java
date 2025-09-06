@@ -4,11 +4,11 @@ import com.example.fitnessWeb.dto.*;
 import com.example.fitnessWeb.entity.ExerciseRecord;
 import com.example.fitnessWeb.entity.ExerciseSet;
 import com.example.fitnessWeb.entity.ExerciseType;
-import com.example.fitnessWeb.entity.User;
+import com.example.fitnessWeb.user.entity.User;
 import com.example.fitnessWeb.exception.*;
 import com.example.fitnessWeb.repository.ExerciseRecordRepository;
 import com.example.fitnessWeb.repository.ExerciseTypeRepository;
-import com.example.fitnessWeb.repository.UserRepository;
+import com.example.fitnessWeb.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,8 +29,8 @@ public class ExerciseRecordService {
 
     // 운동 기록 저장
     @Transactional
-    public void saveRecord(String username, List<ExerciseSetDto> dto) {
-        User user = userRepository.findByUsername(username)
+    public void saveRecord(String userId, List<ExerciseSetDto> dto) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException());
 
         if (dto == null || dto.isEmpty()) {
@@ -65,19 +65,19 @@ public class ExerciseRecordService {
     }
 
     // 운동 기록 전체 조회
-    public Page<ExerciseRecordResponseDto> getRecords(String username,
+    public Page<ExerciseRecordResponseDto> getRecords(String userId,
                                                       LocalDateTime startDate,
                                                       LocalDateTime endDate,
                                                       String exerciseName,
                                                       List<String> muscleGroup,
                                                       Pageable pageable) {
-        User user = userRepository.findByUsername(username).orElseThrow(() -> new UserNotFoundException());
-        return exerciseRecordRepository.searchRecords(user.getId(), startDate, endDate, exerciseName, muscleGroup, pageable);
+        User user = userRepository.findById(userId).orElseThrow(() -> new UserNotFoundException());
+        return exerciseRecordRepository.searchRecords(user.getUserId(), startDate, endDate, exerciseName, muscleGroup, pageable);
     }
 
     // 운동 상세 기록 조회
-    public List<ExerciseSetDetailDto> getExerciseSetDetails(Long recordId, String username) {
-        List<ExerciseSetDetailDto> details = exerciseRecordRepository.findExerciseSetDetails(recordId, username);
+    public List<ExerciseSetDetailDto> getExerciseSetDetails(Long recordId, String userId) {
+        List<ExerciseSetDetailDto> details = exerciseRecordRepository.findExerciseSetDetails(recordId, userId);
 
         if (details.isEmpty()) {
             throw new ExerciseRecordNotFoundException("운동 기록을 찾을 수 없습니다.");

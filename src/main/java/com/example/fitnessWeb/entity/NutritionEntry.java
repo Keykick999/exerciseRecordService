@@ -1,5 +1,6 @@
 package com.example.fitnessWeb.entity;
 
+import com.example.fitnessWeb.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.SQLDelete;

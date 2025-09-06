@@ -3,6 +3,7 @@ package com.example.fitnessWeb.repository;
 import com.example.fitnessWeb.dto.ExerciseRecordResponseDto;
 import com.example.fitnessWeb.dto.ExerciseSetDetailDto;
 import com.example.fitnessWeb.entity.*;
+import com.example.fitnessWeb.user.entity.QUser;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
@@ -23,7 +24,7 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
 
     @Override
     public Page<ExerciseRecordResponseDto> searchRecords(
-            Long userId,
+            String userId,
             LocalDateTime startDate,
             LocalDateTime endDate,
             String exerciseName,
@@ -45,7 +46,7 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
                 .join(type.exerciseMuscles, em)
                 .join(em.muscle, m)
                 .where(
-                        record.user.id.eq(userId),
+                        record.user.userId.eq(userId),
                         startDate != null ? record.createdAt.goe(startDate) : null,
                         endDate != null ? record.createdAt.loe(endDate) : null,
                         exerciseName != null ? type.name.contains(exerciseName) : null,
@@ -97,7 +98,7 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
                 .join(type.exerciseMuscles, em)
                 .join(em.muscle, m)
                 .where(
-                        record.user.id.eq(userId),
+                        record.user.userId.eq(userId),
                         startDate != null ? record.createdAt.goe(startDate) : null,
                         endDate != null ? record.createdAt.loe(endDate) : null,
                         exerciseName != null ? type.name.contains(exerciseName) : null,
@@ -123,7 +124,7 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
 
 
     @Override
-    public List<ExerciseSetDetailDto> findExerciseSetDetails(Long recordId, String username) {
+    public List<ExerciseSetDetailDto> findExerciseSetDetails(Long recordId, String userId) {
         QExerciseSet set = QExerciseSet.exerciseSet;
         QExerciseType type = QExerciseType.exerciseType;
         QExerciseRecord record = QExerciseRecord.exerciseRecord;
@@ -145,7 +146,7 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
                 .join(record.user, user)
                 .where(
                         set.exerciseRecord.id.eq(recordId),
-                        user.username.eq(username)
+                        user.userId.eq(userId)
                 )
                 .orderBy(set.setOrder.asc())
                 .fetch();

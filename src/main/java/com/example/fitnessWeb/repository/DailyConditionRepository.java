@@ -1,7 +1,7 @@
 package com.example.fitnessWeb.repository;
 
 import com.example.fitnessWeb.entity.DailyCondition;
-import com.example.fitnessWeb.entity.User;
+import com.example.fitnessWeb.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;

@@ -4,6 +4,8 @@ import com.example.fitnessWeb.dto.*;
 import com.example.fitnessWeb.entity.*;
 import com.example.fitnessWeb.exception.*;
 import com.example.fitnessWeb.repository.*;
+import com.example.fitnessWeb.user.entity.User;
+import com.example.fitnessWeb.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -28,28 +30,25 @@ public class RoutineService {
 
     // 루틴 저장
     @Transactional
-    public void saveRoutine(RoutineRequestDto requestDto) {
-        // 1. 인증된 사용자 이름 가져오기
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-
-        // 2. 사용자 조회
-        User user = userRepository.findByUsername(username)
+    public void saveRoutine(String userId, RoutineRequestDto requestDto) {
+        // 1. 사용자 조회
+        User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        // 3. 루틴 이름 중복 체크
-        boolean exists = routineRepository.existsByNameAndUserUsername(requestDto.getName(), username);
+        // 2. 루틴 이름 중복 체크
+        boolean exists = routineRepository.existsByNameAndUserUserId(requestDto.getName(), userId);
         if (exists) {
             throw new DuplicateRoutineNameException(requestDto.getName());
         }
 
-        // 4. 루틴 저장
+        // 3. 루틴 저장
         Routine routine = Routine.builder()
                 .name(requestDto.getName())
                 .user(user)
                 .build();
         routineRepository.save(routine);
 
-        // 5. 루틴 세트 저장
+        // 4. 루틴 세트 저장
         Set<String> duplicateCheck = new HashSet<>();
         for (RoutineSetDto dto : requestDto.getRoutineSets()) {
             // 유효성 검사
@@ -81,14 +80,12 @@ public class RoutineService {
 
 
     // 루틴 목록 조회
-    public Page<RoutineSummaryDto> getMyRoutines(int page, int size) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-
-        userRepository.findByUsername(username)
+    public Page<RoutineSummaryDto> getMyRoutines(String userId, int page, int size) {
+        userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
         Pageable pageable = PageRequest.of(page, size);
-        Page<RoutineSummaryDto> routines = routineRepository.findAllByUsername(username, pageable);
+        Page<RoutineSummaryDto> routines = routineRepository.findAllByUserId(userId, pageable);
         if (routines.isEmpty()) {
             throw new RoutineNotFoundException();
         }
@@ -98,13 +95,11 @@ public class RoutineService {
 
 
     // 루틴 상세 정보 조회
-    public List<RoutineDetailDto> getRoutineDetails(String routineName) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-
-        userRepository.findByUsername(username)
+    public List<RoutineDetailDto> getRoutineDetails(String userId, String routineName) {
+        userRepository.findByUserId(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        List<RoutineDetailDto> result = routineRepository.findRoutineDetailsByNameAndUsername(routineName, username);
+        List<RoutineDetailDto> result = routineRepository.findRoutineDetailsByNameAndUserId(routineName, userId);
 
         if (result.isEmpty()) {
             throw new RoutineNotFoundException();
@@ -116,16 +111,13 @@ public class RoutineService {
 
     // 루틴 수정
     @Transactional
-    public void updateRoutine(Long routineId, RoutineUpdateRequestDto requestDto) {
+    public void updateRoutine(String userId, Long routineId, RoutineUpdateRequestDto requestDto) {
         // 1. 루틴 조회
         Routine routine = routineRepository.findById(routineId)
                 .orElseThrow(() -> new RoutineNotFoundException("루틴을 찾을 수 없습니다. ID: " + routineId));
 
-        // 2. 인증된 사용자 이름 가져오기
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-
         // 3. 소유자 검사
-        if (!routine.getUser().getUsername().equals(username)) {
+        if (!routine.getUser().getUserId().equals(userId)) {
             throw new UnAuthorizedAccessException("본인의 루틴만 수정할 수 있습니다.");
         }
 
@@ -152,13 +144,11 @@ public class RoutineService {
 
     // 루틴 삭제
     @Transactional
-    public void deleteRoutine(Long routineId) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-
+    public void deleteRoutine(String userId, Long routineId) {
         Routine routine = routineRepository.findById(routineId)
                 .orElseThrow(() -> new RoutineNotFoundException("루틴을 찾을 수 없습니다."));
 
-        if (!routine.getUser().getUsername().equals(username)) {
+        if (!routine.getUser().getUserId().equals(userId)) {
             throw new UnAuthorizedAccessException("본인의 루틴만 삭제할 수 있습니다.");
         }
 

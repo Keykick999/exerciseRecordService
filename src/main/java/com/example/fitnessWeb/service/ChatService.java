@@ -9,7 +9,8 @@ import com.example.fitnessWeb.exception.UnAuthorizedAccessException;
 import com.example.fitnessWeb.exception.UserNotFoundException;
 import com.example.fitnessWeb.repository.ChatMessageRepository;
 import com.example.fitnessWeb.repository.ChatRepository;
-import com.example.fitnessWeb.repository.UserRepository;
+import com.example.fitnessWeb.user.entity.User;
+import com.example.fitnessWeb.user.repository.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
@@ -19,8 +20,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.*;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.time.LocalDateTime;
@@ -39,24 +38,15 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
     private final UserRepository userRepository;
 
-    public ChatResponse askModel(String userMessage) {
-        // 1. 인증된 사용자 정보에서 username 꺼내기
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username;
-
-        if (principal instanceof UserDetails userDetails) {
-            username = userDetails.getUsername();
-        } else {
-            throw new UserNotFoundException();
-        }
-
+    public ChatResponse askModel(String userId, String userMessage) {
         // 2. username으로 User 조회
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException());
 
 
         // 3. 채팅 제목 생성
         String generatedTitle = generateTitleFromGemini(userMessage);
+        System.out.println("generatedTitle = " + generatedTitle);
         if (generatedTitle == null || generatedTitle.isBlank()) {
             generatedTitle = "새 채팅";  // fallback
         }
@@ -84,6 +74,7 @@ public class ChatService {
         // 6. Gemini API 호출
         String prompt = userMessage + "\n\n- 자연스럽고 간결하게 대답해줘.\n- userMessage에 ** 같은 기호는 빼고, 가독성을 위해 기호는 · 또는 - 만 사용해줘.\n- 내용이 표로 보여주기 편하면 표로 보여주고, 아니면 텍스트로 가독성 좋게 정리해줘.\n- 말투는 헬스 트레이너 스타일로.";
         String gptResponse = sendToGemini(prompt);
+        System.out.println("gptResponse = " + gptResponse);
 
         // 7. GPT 응답 저장
         ChatMessage gptMsg = ChatMessage.builder()
@@ -97,6 +88,7 @@ public class ChatService {
 
         return new ChatResponse(chat.getId(), gptResponse);
     }
+
 
     private String sendToGemini(String userMessage) {
         RestTemplate restTemplate = new RestTemplate();
@@ -131,22 +123,14 @@ public class ChatService {
     }
 
 
-    public Page<ChatDto> getChats(int page) {
-        // 1. 현재 인증된 username 꺼내기
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username;
-        if (principal instanceof UserDetails ud) {
-            username = ud.getUsername();
-        } else {
-            throw new UserNotFoundException();
-        }
-
-        // 2. User 엔티티 조회
-        User user = userRepository.findByUsername(username)
+    public Page<ChatDto> getChats(String userId, int page) {
+        // 1. User 엔티티 조회
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException());
-        // 3. 페이지 요청
+        // 2. 페이지 요청
         Pageable pg = PageRequest.of(page, 10);
-        // 4. Projection 호출
+
+        // 3. Projection 호출
         return chatRepository.findDtoByUserOrderByLastAccessedAtDesc(user, pg);
     }
 
@@ -203,17 +187,9 @@ public class ChatService {
 
 
     @Transactional
-    public void deleteChat(Long chatId) {
+    public void deleteChat(String userId, Long chatId) {
         // 현재 로그인된 사용자 확인
-        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        String username;
-        if (principal instanceof UserDetails ud) {
-            username = ud.getUsername();
-        } else {
-            throw new UserNotFoundException();
-        }
-
-        User user = userRepository.findByUsername(username)
+        User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
         Chat chat = chatRepository.findById(chatId)

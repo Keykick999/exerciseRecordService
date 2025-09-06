@@ -6,6 +6,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -23,8 +24,8 @@ public class DailyConditionController {
     @PostMapping
     public ResponseEntity<String> save(
             @RequestBody @Valid DailyConditionDto dto,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        service.saveOrUpdate(userDetails.getUsername(), dto);
+            Authentication auth) {
+        service.saveOrUpdate(auth.getName(), dto);
         return ResponseEntity.ok("컨디션 기록 저장 완료");
     }
 
@@ -32,7 +33,7 @@ public class DailyConditionController {
     public ResponseEntity<List<DailyConditionDto>> getHistory(
             @RequestParam("start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam("end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
-            @AuthenticationPrincipal UserDetails userDetails) {
-        return ResponseEntity.ok(service.getConditionHistory(userDetails.getUsername(), start, end));
+            Authentication auth) {
+        return ResponseEntity.ok(service.getConditionHistory(auth.getName(), start, end));
     }
 }

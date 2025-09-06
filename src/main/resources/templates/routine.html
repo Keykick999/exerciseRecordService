@@ -449,7 +449,7 @@
                 method: 'POST',
                 contentType: 'application/json',
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('jwtToken')}`
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
                 },
                 data: JSON.stringify(requestBody),
                 success: function () {
@@ -459,7 +459,7 @@
                 error: function (xhr) {
                     if (xhr.status === 401 || xhr.status === 403) {
                         alert('로그인이 필요합니다.');
-                        localStorage.removeItem('jwtToken');
+                        localStorage.removeItem('accessToken');
                         window.location.href = '/login';
                     } else if (xhr.status === 400) {
                         alert('입력한 세트 정보가 유효하지 않습니다. 세트 번호, 중량, 반복 수를 확인하세요.');

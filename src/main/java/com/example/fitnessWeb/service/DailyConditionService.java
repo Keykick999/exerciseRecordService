@@ -2,12 +2,11 @@ package com.example.fitnessWeb.service;
 
 import com.example.fitnessWeb.dto.DailyConditionDto;
 import com.example.fitnessWeb.entity.DailyCondition;
-import com.example.fitnessWeb.entity.User;
+import com.example.fitnessWeb.user.entity.User;
 import com.example.fitnessWeb.repository.DailyConditionRepository;
-import com.example.fitnessWeb.repository.UserRepository;
+import com.example.fitnessWeb.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.util.List;
 
@@ -18,8 +17,8 @@ public class DailyConditionService {
     private final DailyConditionRepository repository;
     private final UserRepository userRepository;
 
-    public void saveOrUpdate(String username, DailyConditionDto dto) {
-        User user = userRepository.findByUsername(username).orElseThrow();
+    public void saveOrUpdate(String userId, DailyConditionDto dto) {
+        User user = userRepository.findById(userId).orElseThrow();
 
         DailyCondition condition = repository.findByUserAndDate(user, dto.getDate())
                 .orElse(DailyCondition.builder()
@@ -35,8 +34,8 @@ public class DailyConditionService {
         repository.save(condition);
     }
 
-    public List<DailyConditionDto> getConditionHistory(String username, LocalDate start, LocalDate end) {
-        User user = userRepository.findByUsername(username).orElseThrow();
+    public List<DailyConditionDto> getConditionHistory(String userId, LocalDate start, LocalDate end) {
+        User user = userRepository.findById(userId).orElseThrow();
 
         return repository.findByUserAndDateBetween(user, start, end).stream()
                 .map(c -> {

@@ -241,7 +241,7 @@
         window.location.href = '/routines.html';
     } else {
         $('#routineTitle').text(`${routineName}`);
-        const token = localStorage.getItem('jwtToken');
+        const token = localStorage.getItem('accessToken');
 
         $.ajax({
             url: `/api/routines/${encodeURIComponent(routineName)}`,
@@ -321,7 +321,7 @@
     });
 
     $('#saveBtn').on('click', function () {
-        const token = localStorage.getItem('jwtToken');
+        const token = localStorage.getItem('accessToken');
         const routineSets = [];
         let isValid = true;
 

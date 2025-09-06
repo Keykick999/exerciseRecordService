@@ -13,19 +13,19 @@ import java.util.List;
 
 public interface RoutineRepository extends JpaRepository<Routine, Long> {
     @Query("SELECT new com.example.fitnessWeb.dto.RoutineSummaryDto(r.id, r.name, r.createdAt) " +
-            "FROM Routine r WHERE r.user.username = :username")
-    Page<RoutineSummaryDto> findAllByUsername(String username, Pageable pageable);
+            "FROM Routine r WHERE r.user.userId = :userId")
+    Page<RoutineSummaryDto> findAllByUserId(String userId, Pageable pageable);
 
     @Query("SELECT new com.example.fitnessWeb.dto.RoutineDetailDto(" +
             "r.name, et.id, et.name, rs.setNumber, rs.weight, rs.repetitions) " +
             "FROM Routine r " +
             "JOIN r.routineSets rs " +
             "JOIN rs.exerciseType et " +
-            "WHERE r.name = :routineName AND r.user.username = :username")
-    List<RoutineDetailDto> findRoutineDetailsByNameAndUsername(@Param("routineName") String routineName,
-                                                               @Param("username") String username);
+            "WHERE r.name = :routineName AND r.user.userId = :userId")
+    List<RoutineDetailDto> findRoutineDetailsByNameAndUserId(@Param("routineName") String routineName,
+                                                               @Param("userId") String userId);
 
-    boolean existsByNameAndUserUsername(String name, String username);
+    boolean existsByNameAndUserUserId(String name, String userId);
 
     Object existsByName(String name);
 }

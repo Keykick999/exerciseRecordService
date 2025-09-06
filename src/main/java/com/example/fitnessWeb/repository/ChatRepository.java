@@ -2,7 +2,7 @@ package com.example.fitnessWeb.repository;
 
 import com.example.fitnessWeb.dto.ChatDto;
 import com.example.fitnessWeb.entity.Chat;
-import com.example.fitnessWeb.entity.User;
+import com.example.fitnessWeb.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

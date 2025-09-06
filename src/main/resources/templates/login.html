@@ -10,98 +10,27 @@
             font-family: 'Segoe UI', sans-serif;
             background: url('https://images.unsplash.com/photo-1579758629938-03607ccdbaba?auto=format&fit=crop&w=1470&q=80') no-repeat center center fixed;
             background-size: cover;
-            margin: 0;
-            padding: 0;
-            height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            margin: 0; padding: 0; height: 100vh; display: flex; align-items: center; justify-content: center;
         }
-
         .auth-container {
-            background-color: rgba(0, 0, 0, 0.85); /* 더 진한 배경 투명도 */
-            backdrop-filter: blur(12px); /* 더 강한 블러 효과 */
-            padding: 2.5rem;
-            border-radius: 1rem;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
-            color: white;
-            width: 100%;
-            max-width: 420px;
-            transition: all 0.3s ease;
+            background-color: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
+            padding: 2.5rem; border-radius: 1rem; box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            color: white; width: 100%; max-width: 480px; transition: all .3s ease;
         }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 2rem;
-            font-weight: bold;
-            color: #ffffff;
-            font-size: 1.8rem;
-            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.5);
-        }
-
-        .form-floating > label {
-            color: #cccccc;
-        }
-
-        .form-control {
-            background-color: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #ffffff;
-            border-radius: 0.5rem;
-        }
-
-        .form-control::placeholder {
-            color: #bbbbbb;
-        }
-
-        .form-control:focus {
-            background-color: rgba(255, 255, 255, 0.15);
-            color: #ffffff;
-            border-color: #0d6efd;
-            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        .btn-primary {
-            background-color: #0d6efd;
-            border: none;
-            width: 100%;
-            padding: 0.8rem;
-            font-weight: bold;
-            border-radius: 0.6rem;
-            box-shadow: 0 4px 10px rgba(13, 110, 253, 0.4);
-        }
-
-        .btn-primary:hover {
-            background-color: #0b5ed7;
-        }
-
-        .auth-switch {
-            text-align: center;
-            margin-top: 1rem;
-            color: #bbbbbb;
-        }
-
-        .auth-switch a {
-            color: #0d6efd;
-            text-decoration: none;
-            font-weight: 500;
-            cursor: pointer;
-        }
-
-        .auth-switch a:hover {
-            text-decoration: underline;
-        }
-
-        .error-message {
-            color: #ff6b6b;
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-            display: none;
-        }
+        h2 { text-align: center; margin-bottom: 2rem; font-weight: bold; color: #fff; font-size: 1.8rem; text-shadow: 1px 1px 4px rgba(0,0,0,.5); }
+        .form-floating>label { color: #ccc; }
+        .form-control { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: #fff; border-radius: .5rem; }
+        .form-control::placeholder { color: #bbb; }
+        .form-control:focus { background: rgba(255,255,255,0.15); color: #fff; border-color: #0d6efd; box-shadow: 0 0 0 .2rem rgba(13,110,253,.25); }
+        .form-group { margin-bottom: 1rem; }
+        .btn-primary { background: #0d6efd; border: none; width: 100%; padding: .8rem; font-weight: bold; border-radius: .6rem; box-shadow: 0 4px 10px rgba(13,110,253,.4); }
+        .btn-primary:hover { background: #0b5ed7; }
+        .auth-switch { text-align: center; margin-top: 1rem; color: #bbb; }
+        .auth-switch a { color: #0d6efd; text-decoration: none; font-weight: 500; cursor: pointer; }
+        .auth-switch a:hover { text-decoration: underline; }
+        .error-message { color: #ff6b6b; font-size: .875rem; margin-top: .25rem; display: none; }
+        .helper { font-size: .85rem; color: #9ad0ff; margin-top: .25rem; display: none; }
+        .row-gx-8 { --bs-gutter-x: .5rem; }
     </style>
 </head>
 <body>
@@ -123,44 +52,75 @@
             </div>
             <div id="loginPasswordError" class="error-message"></div>
         </div>
-        <button class="btn btn-primary" onclick="login()">로그인</button>
+        <button class="btn btn-primary" id="loginBtn" type="button">로그인</button>
         <div class="auth-switch">
             계정이 없으신가요? <a onclick="toggleForms()">회원가입</a>
         </div>
     </div>
 
     <!-- 회원가입 폼 -->
-    <div id="registerForm" style="display: none;">
+    <div id="registerForm" style="display:none;">
         <h2>회원가입</h2>
+
+        <!-- userId (로그인에 사용하는 고유 아이디) -->
         <div class="form-group">
             <div class="form-floating">
-                <input type="text" class="form-control" id="registerUsername" placeholder="아이디">
-                <label for="registerUsername">아이디</label>
+                <input type="text" class="form-control" id="registerUserId" placeholder="아이디(로그인에 사용)">
+                <label for="registerUserId">아이디</label>
             </div>
-            <div id="registerUsernameError" class="error-message"></div>
+            <div id="registerUserIdError" class="error-message"></div>
         </div>
+
+        <!-- userName (표시명/닉네임) -->
         <div class="form-group">
             <div class="form-floating">
-                <input type="password" class="form-control" id="registerPassword" placeholder="비밀번호">
-                <label for="registerPassword">비밀번호</label>
+                <input type="text" class="form-control" id="registerUserName" placeholder="사용자명/닉네임">
+                <label for="registerUserName">사용자명 (닉네임)</label>
             </div>
-            <div id="registerPasswordError" class="error-message"></div>
+            <div id="registerUserNameError" class="error-message"></div>
         </div>
-        <div class="form-group">
-            <div class="form-floating">
-                <input type="password" class="form-control" id="registerPasswordConfirm" placeholder="비밀번호 확인">
-                <label for="registerPasswordConfirm">비밀번호 확인</label>
+
+        <!-- 비밀번호 / 비밀번호 확인 -->
+        <div class="row row-gx-8">
+            <div class="col-12 col-md-6 form-group">
+                <div class="form-floating">
+                    <input type="password" class="form-control" id="registerPassword" placeholder="비밀번호">
+                    <label for="registerPassword">비밀번호</label>
+                </div>
+                <div id="registerPasswordError" class="error-message"></div>
             </div>
-            <div id="registerPasswordConfirmError" class="error-message"></div>
+            <div class="col-12 col-md-6 form-group">
+                <div class="form-floating">
+                    <input type="password" class="form-control" id="registerPasswordConfirm" placeholder="비밀번호 확인">
+                    <label for="registerPasswordConfirm">비밀번호 확인</label>
+                </div>
+                <div id="registerPasswordConfirmError" class="error-message"></div>
+            </div>
         </div>
+
+        <!-- 이메일 / 코드 전송 -->
         <div class="form-group">
             <div class="form-floating">
                 <input type="email" class="form-control" id="registerEmail" placeholder="이메일">
                 <label for="registerEmail">이메일</label>
             </div>
             <div id="registerEmailError" class="error-message"></div>
+            <div id="emailSendHelper" class="helper">이메일로 인증 코드를 전송했습니다. 메일함을 확인하세요.</div>
+            <button class="btn btn-primary mt-2" id="sendCodeBtn" type="button">인증 코드 전송</button>
         </div>
-        <button class="btn btn-primary" onclick="register()">회원가입</button>
+
+        <!-- 인증 코드 입력 / 확인 -->
+        <div class="form-group">
+            <div class="form-floating">
+                <input type="text" class="form-control" id="registerEmailCode" placeholder="인증 코드 6자리" maxlength="6">
+                <label for="registerEmailCode">인증 코드 (6자리)</label>
+            </div>
+            <div id="registerEmailCodeError" class="error-message"></div>
+            <div id="emailVerifyHelper" class="helper">이메일 인증이 완료되었습니다.</div>
+            <button class="btn btn-primary mt-2" id="verifyCodeBtn" type="button">인증 코드 확인</button>
+        </div>
+
+        <button class="btn btn-primary" id="registerBtn" type="button" disabled>회원가입</button>
         <div class="auth-switch">
             이미 계정이 있으신가요? <a onclick="toggleForms()">로그인</a>
         </div>
@@ -169,8 +129,11 @@
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
+    let emailVerified = false;
+
     function clearErrors() {
         $('.error-message').hide().text('');
+        $('.helper').hide();
     }
 
     function toggleForms() {
@@ -179,20 +142,29 @@
         $('#registerForm').toggle();
     }
 
+    // 공통: 서버 에러 메시지 파싱 (SimpleErrorResponse 대응)
+    function serverMessage(xhr, fallback) {
+        try {
+            if (xhr.responseJSON && typeof xhr.responseJSON.message === 'string' && xhr.responseJSON.message.trim() !== '') {
+                return xhr.responseJSON.message;
+            }
+            if (typeof xhr.responseText === 'string' && xhr.responseText.trim() !== '') {
+                // 문자열 그대로인 경우(plain text)도 반영
+                return xhr.responseText;
+            }
+        } catch (_) {}
+        return fallback;
+    }
+
+    /* ================= 로그인 ================= */
     function login() {
         clearErrors();
-        const username = $('#loginUsername').val();
-        const password = $('#loginPassword').val();
+        const username = $('#loginUsername').val().trim();
+        const password = $('#loginPassword').val().trim();
         let hasError = false;
 
-        if (!username) {
-            $('#loginUsernameError').text('아이디를 입력해주세요.').show();
-            hasError = true;
-        }
-        if (!password) {
-            $('#loginPasswordError').text('비밀번호를 입력해주세요.').show();
-            hasError = true;
-        }
+        if (!username) { $('#loginUsernameError').text('아이디를 입력해주세요.').show(); hasError = true; }
+        if (!password) { $('#loginPasswordError').text('비밀번호를 입력해주세요.').show(); hasError = true; }
         if (hasError) return;
 
         $.ajax({
@@ -200,84 +172,214 @@
             method: 'POST',
             contentType: 'application/json',
             data: JSON.stringify({ username, password }),
-            success: function(response) {
-                localStorage.setItem('jwtToken', response);
+            success: function(res) {
+                const access = res?.accessToken || res?.access || res?.token || res;
+                const refresh = res?.refreshToken || res?.refresh;
+                const expMs   = res?.expiresInMs || res?.expMs;
+                if (typeof access === 'string') localStorage.setItem('accessToken', access);
+                if (refresh) localStorage.setItem('refreshToken', refresh);
+                if (expMs)   localStorage.setItem('accessTokenExpMs', String(expMs));
                 window.location.href = '/routine';
             },
             error: function(xhr) {
-                if (xhr.status === 401) {
-                    $('#loginPasswordError').text('아이디 또는 비밀번호가 올바르지 않습니다.').show();
-                } else {
-                    $('#loginUsernameError').text('로그인 중 오류가 발생했습니다.').show();
+                switch (xhr.status) {
+                    case 400:
+                        $('#loginUsernameError').text(serverMessage(xhr, '잘못된 요청입니다. 입력값을 확인해주세요.')).show();
+                        break;
+                    case 403:
+                        $('#loginPasswordError').text(serverMessage(xhr, '아이디 또는 비밀번호가 올바르지 않습니다.')).show();
+                        break;
+                    case 500:
+                        $('#loginUsernameError').text(serverMessage(xhr, '서버 내부 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')).show();
+                        break;
+                    default:
+                        $('#loginUsernameError').text(serverMessage(xhr, '로그인 중 알 수 없는 오류가 발생했습니다.')).show();
                 }
             }
         });
     }
 
-    function register() {
+    /* ================= 이메일 코드 전송 ================= */
+    function sendEmailCode() {
         clearErrors();
-        const username = $('#registerUsername').val();
-        const password = $('#registerPassword').val();
-        const passwordConfirm = $('#registerPasswordConfirm').val();
-        const email = $('#registerEmail').val();
-        let hasError = false;
-
-        if (!username) {
-            $('#registerUsernameError').text('아이디를 입력해주세요.').show();
-            hasError = true;
-        }
-        if (!password) {
-            $('#registerPasswordError').text('비밀번호를 입력해주세요.').show();
-            hasError = true;
-        }
-        if (!passwordConfirm) {
-            $('#registerPasswordConfirmError').text('비밀번호 확인을 입력해주세요.').show();
-            hasError = true;
-        }
+        const email = $('#registerEmail').val().trim();
         if (!email) {
             $('#registerEmailError').text('이메일을 입력해주세요.').show();
-            hasError = true;
-        }
-
-        if (hasError) return;
-
-        if (password !== passwordConfirm) {
-            $('#registerPasswordConfirmError').text('비밀번호가 일치하지 않습니다.').show();
             return;
         }
-
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             $('#registerEmailError').text('올바른 이메일 형식이 아닙니다.').show();
             return;
         }
 
+        $('#sendCodeBtn').prop('disabled', true);
+
         $.ajax({
-            url: '/api/users/register',
+            url: '/api/email',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ username, password, email }),
+            data: JSON.stringify({ email, purpose: 'signup' }),
             success: function() {
-                alert('회원가입이 완료되었습니다. 로그인해주세요.');
-                toggleForms();
+                $('#emailSendHelper').text('이메일로 인증 코드를 전송했습니다. 메일함을 확인하세요.').show();
             },
             error: function(xhr) {
-                if (xhr.status === 409) {
-                    $('#registerUsernameError').text('이미 사용 중인 아이디입니다.').show();
-                } else {
-                    $('#registerUsernameError').text('회원가입 중 오류가 발생했습니다.').show();
+                switch (xhr.status) {
+                    case 400:
+                        $('#registerEmailError').text(serverMessage(xhr, '이메일 주소가 유효하지 않습니다.')).show();
+                        break;
+                    case 409:
+                        $('#registerEmailError').text(serverMessage(xhr, '이미 등록된 이메일입니다.')).show();
+                        break;
+                    case 500:
+                        $('#registerEmailError').text(serverMessage(xhr, '메일 전송 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.')).show();
+                        break;
+                    default:
+                        alert(xhr.status);
+                        $('#registerEmailError').text(serverMessage(xhr, '인증 코드 전송 중 오류가 발생했습니다.')).show();
                 }
+            },
+            complete: function() {
+                // 간단 쿨다운(5초)
+                setTimeout(() => $('#sendCodeBtn').prop('disabled', false), 5000);
             }
         });
     }
 
-    $('#loginUsername, #loginPassword').keypress(function(e) {
-        if (e.which === 13) login();
-    });
+    /* ================= 이메일 코드 검증 ================= */
+    function verifyEmailCode() {
+        clearErrors();
+        const email = $('#registerEmail').val().trim();
+        const code  = $('#registerEmailCode').val().trim();
 
-    $('#registerUsername, #registerPassword, #registerPasswordConfirm, #registerEmail').keypress(function(e) {
-        if (e.which === 13) register();
-    });
+        if (!email) { $('#registerEmailError').text('이메일을 입력해주세요.').show(); return; }
+        if (!code || code.length !== 6) { $('#registerEmailCodeError').text('인증 코드 6자리를 입력해주세요.').show(); return; }
+
+        $('#verifyCodeBtn').prop('disabled', true);
+
+        $.ajax({
+            url: '/api/email/verify',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ email, purpose: 'signup', code }),
+            success: function() {
+                emailVerified = true;
+                $('#emailVerifyHelper').text('이메일 인증이 완료되었습니다.').show();
+                $('#registerBtn').prop('disabled', false);
+            },
+            error: function(xhr) {
+                emailVerified = false;
+                $('#registerBtn').prop('disabled', true);
+                switch (xhr.status) {
+                    case 400:
+                        $('#registerEmailCodeError').text(serverMessage(xhr, '인증 코드가 올바르지 않거나 만료되었습니다.')).show();
+                        break;
+                    case 500:
+                        $('#registerEmailCodeError').text(serverMessage(xhr, '인증 처리 중 오류가 발생했습니다.')).show();
+                        break;
+                    default:
+                        $('#registerEmailCodeError').text(serverMessage(xhr, '이메일 인증 중 오류가 발생했습니다.')).show();
+                }
+            },
+            complete: function() {
+                $('#verifyCodeBtn').prop('disabled', false);
+            }
+        });
+    }
+
+    /* ================= 회원가입 ================= */
+    function register() {
+        clearErrors();
+        const userId   = $('#registerUserId').val().trim();
+        const userName = $('#registerUserName').val().trim();
+        const password = $('#registerPassword').val().trim();
+        const confirm  = $('#registerPasswordConfirm').val().trim();
+        const email    = $('#registerEmail').val().trim();
+
+        let hasError = false;
+        if (!userId)   { $('#registerUserIdError').text('아이디를 입력해주세요.').show(); hasError = true; }
+        if (!userName) { $('#registerUserNameError').text('사용자명을 입력해주세요.').show(); hasError = true; }
+        if (!password) { $('#registerPasswordError').text('비밀번호를 입력해주세요.').show(); hasError = true; }
+        if (!confirm)  { $('#registerPasswordConfirmError').text('비밀번호 확인을 입력해주세요.').show(); hasError = true; }
+        if (!email)    { $('#registerEmailError').text('이메일을 입력해주세요.').show(); hasError = true; }
+        if (hasError) return;
+
+        if (password !== confirm) {
+            $('#registerPasswordConfirmError').text('비밀번호가 일치하지 않습니다.').show();
+            return;
+        }
+        if (!emailVerified) {
+            $('#registerEmailCodeError').text('이메일 인증을 먼저 완료해주세요.').show();
+            return;
+        }
+
+        $('#registerBtn').prop('disabled', true);
+
+        $.ajax({
+            url: '/api/users/register',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ userId, userName, password, email }),
+            success: function() {
+                alert('회원가입이 완료되었습니다. 로그인해주세요.');
+                // 상태 초기화
+                emailVerified = false;
+                $('#registerBtn').prop('disabled', true);
+                toggleForms();
+            },
+            error: function(xhr) {
+                switch (xhr.status) {
+                    case 400:
+                        // validation 메시지 우선
+                        $('#registerUserIdError').text(serverMessage(xhr, '입력값이 잘못되었습니다. 다시 확인해주세요.')).show();
+                        break;
+                    case 401:
+                        $('#registerUserIdError').text(serverMessage(xhr, '인증되지 않은 요청입니다.')).show();
+                        break;
+                    case 403:
+                        $('#registerUserIdError').text(serverMessage(xhr, '권한이 없습니다.')).show();
+                        break;
+                    case 404:
+                        $('#registerUserIdError').text(serverMessage(xhr, '요청한 리소스를 찾을 수 없습니다.')).show();
+                        break;
+                    case 409:
+                        // 충돌(중복) 세분화
+                        const msg = serverMessage(xhr, '');
+                        if (msg.includes('userId') || msg.toLowerCase().includes('userid')) {
+                            $('#registerUserIdError').text(msg || '이미 사용 중인 아이디입니다.').show();
+                        } else if (msg.toLowerCase().includes('username') || msg.includes('userName')) {
+                            $('#registerUserNameError').text(msg || '이미 사용 중인 사용자명입니다.').show();
+                        } else if (msg.toLowerCase().includes('email')) {
+                            $('#registerEmailError').text(msg || '이미 등록된 이메일입니다.').show();
+                        } else {
+                            $('#registerUserIdError').text(msg || '입력한 값이 기존 데이터와 충돌합니다.').show();
+                        }
+                        break;
+                    case 412:
+                        $('#registerEmailError').text(serverMessage(xhr, '이메일 인증을 먼저 완료해주세요.')).show();
+                        break;
+                    case 500:
+                        $('#registerUserIdError').text(serverMessage(xhr, '서버 내부 오류가 발생했습니다.')).show();
+                        break;
+                    default:
+                        $('#registerUserIdError').text(serverMessage(xhr, '회원가입 중 알 수 없는 오류가 발생했습니다.')).show();
+                }
+            },
+            complete: function() {
+                $('#registerBtn').prop('disabled', !emailVerified);
+            }
+        });
+    }
+
+    /* ========= 엔터키 & 버튼 바인딩 ========= */
+    $('#loginUsername, #loginPassword').on('keypress', function(e){ if (e.which === 13) login(); });
+    $('#registerUserId, #registerUserName, #registerPassword, #registerPasswordConfirm, #registerEmail').on('keypress', function(e){ if (e.which === 13) register(); });
+    $('#registerEmailCode').on('keypress', function(e){ if (e.which === 13) verifyEmailCode(); });
+
+    $('#loginBtn').on('click', login);
+    $('#sendCodeBtn').on('click', sendEmailCode);
+    $('#verifyCodeBtn').on('click', verifyEmailCode);
+    $('#registerBtn').on('click', register);
 </script>
 </body>
 </html>

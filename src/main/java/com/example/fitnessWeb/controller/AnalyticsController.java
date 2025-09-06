@@ -9,6 +9,7 @@ import com.example.fitnessWeb.service.ExerciseAnalyticsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,27 +29,13 @@ public class AnalyticsController {
     // 이번주 볼륨
     @GetMapping("/weekly-volume/me")
     public ResponseEntity<WeeklyVolumeResponseDto> weeklyVolumeMe(
-            @AuthenticationPrincipal UserDetails user, // 인증 사용자
+            Authentication auth, // 인증 사용자
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         WeeklyVolumeResponseDto dto =
-                analyticsService.getWeeklyVolumeFor(user.getUsername(), date);
+                analyticsService.getWeeklyVolumeFor(auth.getName(), date);
         return ResponseEntity.ok(dto);
-    }
-
-
-    // 부위별 몰륨 밸런스
-    @GetMapping("/muscle-balance")
-    public MuscleBalanceResponse muscleBalance(
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
-            @AuthenticationPrincipal UserDetails userDetails
-    ) {
-        System.out.println("userDetails.getUsername() = " + userDetails.getUsername());
-        return analyticsService.getMuscleBalance(userDetails.getUsername(), start, end);
     }
 
 
@@ -66,18 +53,31 @@ public class AnalyticsController {
     }
 
 
+    // 부위별 몰륨 밸런스
+    @GetMapping("/muscle-balance")
+    public MuscleBalanceResponse muscleBalance(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
+            @AuthenticationPrincipal UserDetails userDetails
+    ) {
+        return analyticsService.getMuscleBalance(userDetails.getUsername(), start, end);
+    }
+
+
     /**
      * 운동기록 단위로 "최대 무게 & 그 무게에서 최대 reps"를 최근 N회 조회
      * 예) GET /analytics/max-weight-reps?exerciseTypeId=38&size=5
      */
     @GetMapping("/max-weight-reps")
     public ResponseEntity<List<MaxWeightRepsRow>> getMaxWeightRepsHistory(
-            @AuthenticationPrincipal UserDetails user,
+            Authentication auth,
             @RequestParam("exerciseTypeId") Long exerciseTypeId,
             @RequestParam(name = "size", defaultValue = "5") Integer size
     ) {
         List<MaxWeightRepsRow> result = analyticsService.getMaxWeightRepsHistory(
-                user.getUsername(), exerciseTypeId, size
+                auth.getName(), exerciseTypeId, size
         );
         return ResponseEntity.ok(result);
     }
@@ -90,7 +90,7 @@ public class AnalyticsController {
      */
     @GetMapping("/max-volume-sets")
     public ResponseEntity<List<MaxVolumeSetRow>> getMaxVolumeSets(
-            @AuthenticationPrincipal UserDetails user,
+            Authentication auth,
             @RequestParam(name = "exerciseTypeId", required = false) Long exerciseTypeId,
             @RequestParam(name = "start", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
@@ -99,7 +99,7 @@ public class AnalyticsController {
             @RequestParam(name = "size", defaultValue = "5") Integer size
     ) {
         List<MaxVolumeSetRow> result = analyticsService.getMaxVolumeSets(
-                user.getUsername(),
+                auth.getName(),
                 exerciseTypeId,
                 start,
                 endExclusive,

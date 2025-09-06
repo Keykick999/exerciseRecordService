@@ -246,7 +246,7 @@
             muscleGroup.forEach(m => params.append("muscleGroup", m));
         }
 
-        const token = localStorage.getItem("jwtToken");
+        const token = localStorage.getItem("accessToken");
 
         try {
             const res = await fetch(`/api/exercise-records?${params.toString()}`, {

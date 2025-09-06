@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +27,8 @@ public class ExerciseRecordController {
 
     // 운동 기록 저장
     @PostMapping
-    public ResponseEntity<String> save(@RequestBody @Valid List<ExerciseSetDto> dto,
+    public ResponseEntity<String> save(Authentication auth,
+                                       @RequestBody @Valid List<ExerciseSetDto> dto,
                                        @AuthenticationPrincipal UserDetails userDetails) {
         service.saveRecord(userDetails.getUsername(), dto);
         return ResponseEntity.ok("운동 기록 저장 완료");
@@ -40,7 +42,7 @@ public class ExerciseRecordController {
             @RequestParam(required = false) String endDate,
             @RequestParam(required = false) String exerciseName,
             @RequestParam(required = false) List<String> muscleGroup,
-            @AuthenticationPrincipal UserDetails userDetails,
+            Authentication auth,
             Pageable pageable) {
         // 날짜 파싱 (문자열 → LocalDateTime)
         LocalDateTime start = (startDate != null && !startDate.isBlank())
@@ -65,7 +67,7 @@ public class ExerciseRecordController {
 
         // 서비스 호출
         Page<ExerciseRecordResponseDto> result = service.getRecords(
-                userDetails.getUsername(),
+                auth.getName(),
                 start,
                 end,
                 filteredExerciseName,
@@ -80,9 +82,9 @@ public class ExerciseRecordController {
     @GetMapping("/{recordId}/details")
     public ResponseEntity<List<ExerciseSetDetailDto>> getExerciseSetDetails(
             @PathVariable Long recordId,
-            @AuthenticationPrincipal UserDetails userDetails) {
+            Authentication auth) {
         System.out.println("상세 조회 실행");
-        List<ExerciseSetDetailDto> result = service.getExerciseSetDetails(recordId, userDetails.getUsername());
+        List<ExerciseSetDetailDto> result = service.getExerciseSetDetails(recordId, auth.getName());
         return ResponseEntity.ok(result);
     }
 

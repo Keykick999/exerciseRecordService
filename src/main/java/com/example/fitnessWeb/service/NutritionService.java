@@ -2,19 +2,19 @@ package com.example.fitnessWeb.service;
 
 import com.example.fitnessWeb.dto.NutritionEntryCreateRequest;
 import com.example.fitnessWeb.dto.NutritionEntryUpdateRequest;
-import com.example.fitnessWeb.entity.User;
+import com.example.fitnessWeb.exception.UserNotFoundException;
+import com.example.fitnessWeb.user.entity.User;
 import com.example.fitnessWeb.entity.NutritionDay;
 import com.example.fitnessWeb.entity.NutritionEntry;
 import com.example.fitnessWeb.exception.NutritionNotFoundException;
 import com.example.fitnessWeb.exception.UnAuthorizedAccessException;
 import com.example.fitnessWeb.repository.NutritionDayRepository;
 import com.example.fitnessWeb.repository.NutritionEntryRepository;
-import com.example.fitnessWeb.repository.UserRepository;
+import com.example.fitnessWeb.user.repository.UserRepository;
 import jakarta.persistence.OptimisticLockException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
@@ -29,20 +29,17 @@ public class NutritionService {
     private final NutritionEntryRepository entryRepository;
     private final NutritionDayRepository dayRepository;
 
-    /** 현재 인증 사용자 조회 (username 기반) */
     private User getCurrentUser() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Object principal = (auth != null) ? auth.getPrincipal() : null;
-
-        if (principal instanceof UserDetails userDetails) {
-            String username = userDetails.getUsername();
-            return userRepository.findByUsername(username)
-                    .orElseThrow(() -> new IllegalStateException("User not found by username: " + username));
+        if (auth == null || auth.getName() == null) {
+            throw new UserNotFoundException();
         }
-        throw new IllegalStateException("인증 정보에서 UserDetails/username을 찾을 수 없습니다.");
+
+        String userId = auth.getName();
+        return userRepository.findByUserId(userId)
+                .orElseThrow(() -> new UserNotFoundException());
     }
 
-    private Long getCurrentUserId() { return getCurrentUser().getId(); }
 
     // ===== 생성 =====
     @Transactional
@@ -62,7 +59,7 @@ public class NutritionService {
         entryRepository.save(e);
 
         LocalDate date = req.getConsumedAt().toLocalDate();
-        applyDeltaToDay(user.getId(), date,
+        applyDeltaToDay(user.getUserId(), date,
                 req.getCaloriesKcal(), req.getProteinG(), req.getCarbsG(), req.getFatG());
 
         return e.getId();
@@ -71,12 +68,12 @@ public class NutritionService {
     // ===== 수정 (모든 필드 입력) =====
     @Transactional
     public void updateEntry(Long entryId, NutritionEntryUpdateRequest req) {
-        Long currentUserId = getCurrentUserId();
+        User currentUser = getCurrentUser();
 
         NutritionEntry e = entryRepository.findById(entryId)
                 .orElseThrow(() -> new NutritionNotFoundException());
 
-        if (!e.getUser().getId().equals(currentUserId)) {
+        if (!e.getUser().getUserId().equals(currentUser.getUserId())) {
             throw new UnAuthorizedAccessException("user does not have access to endpoint");
         }
 
@@ -102,23 +99,23 @@ public class NutritionService {
             BigDecimal dCar = req.getCarbsG().subtract(oldCar);
             BigDecimal dFat = req.getFatG().subtract(oldFat);
             if (isNonZero(dCal, dPro, dCar, dFat)) {
-                applyDeltaToDay(currentUserId, oldDate, dCal, dPro, dCar, dFat);
+                applyDeltaToDay(currentUser.getUserId(), oldDate, dCal, dPro, dCar, dFat);
             }
         } else {
-            applyDeltaToDay(currentUserId, oldDate, oldCal.negate(), oldPro.negate(), oldCar.negate(), oldFat.negate());
-            applyDeltaToDay(currentUserId, newDate, req.getCaloriesKcal(), req.getProteinG(), req.getCarbsG(), req.getFatG());
+            applyDeltaToDay(currentUser.getUserId(), oldDate, oldCal.negate(), oldPro.negate(), oldCar.negate(), oldFat.negate());
+            applyDeltaToDay(currentUser.getUserId(), newDate, req.getCaloriesKcal(), req.getProteinG(), req.getCarbsG(), req.getFatG());
         }
     }
 
     // ===== 소프트 삭제 =====
     @Transactional
     public void softDeleteEntry(Long entryId) {
-        Long currentUserId = getCurrentUserId();
+        User currentUser = getCurrentUser();
 
         NutritionEntry e = entryRepository.findById(entryId)
                 .orElseThrow(() -> new NutritionNotFoundException());
 
-        if (!e.getUser().getId().equals(currentUserId)) {
+        if (!e.getUser().getUserId().equals(currentUser.getUserId())) {
             throw new UnAuthorizedAccessException("user does not have access to endpoint");
         }
 
@@ -126,7 +123,7 @@ public class NutritionService {
             LocalDate date = e.getConsumedAt().toLocalDate();
 
             applyDeltaToDay(
-                    e.getUser().getId(),
+                    e.getUser().getUserId(),
                     date,
                     e.getCaloriesKcal().negate(),
                     e.getProteinG().negate(),
@@ -141,20 +138,20 @@ public class NutritionService {
     /** (선택) 특정 날짜 Day 풀 재계산 — 범위(BETWEEN)로 안전하게 합산 */
     @Transactional
     public void recomputeDay(LocalDate date) {
-        Long userId = getCurrentUserId();
+        User currentUser = getCurrentUser();
 
         LocalDateTime start = date.atStartOfDay();
         LocalDateTime endExclusive = date.plusDays(1).atStartOfDay();
 
-        Object[] sums = entryRepository.sumActiveByUserAndConsumedAtBetween(userId, start, endExclusive);
+        Object[] sums = entryRepository.sumActiveByUserAndConsumedAtBetween(currentUser.getUserId(), start, endExclusive);
         BigDecimal c = (BigDecimal) sums[0];
         BigDecimal p = (BigDecimal) sums[1];
         BigDecimal cb = (BigDecimal) sums[2];
         BigDecimal f = (BigDecimal) sums[3];
 
-        NutritionDay day = dayRepository.findByUserIdAndDate(userId, date)
+        NutritionDay day = dayRepository.findByUser_UserIdAndDate(currentUser.getUserId(), date)
                 .orElseGet(() -> NutritionDay.builder()
-                        .user(userRepository.getReferenceById(userId))
+                        .user(userRepository.getReferenceById(currentUser.getUserId()))
                         .date(date)
                         .caloriesKcal(BigDecimal.ZERO)
                         .proteinG(BigDecimal.ZERO)
@@ -171,12 +168,12 @@ public class NutritionService {
     }
 
     /** Day 증감 반영 (+ 낙관적 락 재시도) */
-    private void applyDeltaToDay(Long userId, LocalDate date,
+    private void applyDeltaToDay(String userId, LocalDate date,
                                  BigDecimal dCal, BigDecimal dPro, BigDecimal dCar, BigDecimal dFat) {
         int maxRetry = 3;
         for (int attempt = 1; attempt <= maxRetry; attempt++) {
             try {
-                NutritionDay day = dayRepository.findByUserIdAndDate(userId, date)
+                NutritionDay day = dayRepository.findByUser_UserIdAndDate(userId, date)
                         .orElseGet(() -> NutritionDay.builder()
                                 .user(userRepository.getReferenceById(userId))
                                 .date(date)
