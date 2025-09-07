@@ -19,6 +19,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfig {
 
+    // 비밀번호 인코딩
     @Bean
     public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
@@ -70,3 +71,4 @@ public class SecurityConfig {
         return http.build();
     }
 }
+
