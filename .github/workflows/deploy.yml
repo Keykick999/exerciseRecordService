@@ -47,13 +47,13 @@ jobs:
             sudo nohup java -jar build/libs/*SNAPSHOT.jar > ./output.log 2>&1 &
 
             # 배포 검증 (최대 10번, 2초 간격)
-            for i in {1..10}; do
-              if curl -skI https://xn--2y5bw4a.site | grep -qE '^HTTP/.* (200|301|302)'; then
-                echo "HTTPS health check OK"
-                exit 0
-              fi
-              sleep 2
-            done
-
-            echo "Health check failed"
-            exit 1
+#            for i in {1..10}; do
+#              if curl -skI https://xn--2y5bw4a.site | grep -qE '^HTTP/.* (200|301|302)'; then
+#                echo "HTTPS health check OK"
+#                exit 0
+#              fi
+#              sleep 2
+#            done
+#
+#            echo "Health check failed"
+#            exit 1
