@@ -62,7 +62,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/exercise-types/sync-to-es").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/email").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/email/verify").permitAll()
-
                         // 나머지는 인증 필요
                         .anyRequest().authenticated()
                 );
