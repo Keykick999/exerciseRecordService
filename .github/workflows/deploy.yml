@@ -14,11 +14,11 @@ jobs:
         env:
           APPLICATION_PROPERTIES: ${{ secrets.APPLICATION_PROPERTIES }} # GitHub Secrets에 저장
         with:
-          host: ${{ secrets.GCE_HOST }}          # GCE VM 외부 IP
-          username: ${{ secrets.GCE_USERNAME }}  # GCE VM 접속 username
-          key: ${{ secrets.GCE_PRIVATE_KEY }}    # 개인키(id_rsa) 내용
-          envs: APPLICATION_PROPERTIES           # 위 env를 원격 세션으로 전달
-          script_stop: true                      # 아래 명령어 중 실패 시 전체 실패
+          host: ${{ secrets.GCE_HOST }}
+          username: ${{ secrets.GCE_USERNAME }}
+          key: ${{ secrets.GCE_PRIVATE_KEY }}
+          envs: APPLICATION_PROPERTIES
+          script_stop: true
           script: |
             set -e
             cd /home/${{ secrets.GCE_USERNAME }}/exerciseRecordService
@@ -28,8 +28,7 @@ jobs:
             git checkout temp
             git pull --ff-only origin temp
 
-            # application.properties 적용
-            # 줄바꿈/특수문자 보존을 위해 printf 권장
+            # application.properties 적용 (GitHub Secret에서 내려쓰기)
             mkdir -p src/main/resources
             printf "%s" "$APPLICATION_PROPERTIES" > src/main/resources/application.properties
 
@@ -37,8 +36,24 @@ jobs:
             chmod +x ./gradlew || true
             ./gradlew clean build -x test
 
-            # 기존 프로세스 종료 (없어도 실패 처리하지 않음)
-            sudo fuser -k -n tcp 8080 || true
+            # 이전 HTTPS(443) 프로세스 종료 (있으면)
+            sudo fuser -k -n tcp 443 || true
 
-            # 새 JAR 실행
-            nohup java -jar build/libs/*SNAPSHOT.jar > ./output.log 2>&1 &
+            # (선택) 자바에 443 바인딩 권한 부여 - 비root 실행할 때만 필요
+            # sudo setcap 'cap_net_bind_service=+ep' "$(readlink -f "$(which java)")" || true
+
+            # keystore 읽기 + 443 바인딩을 위해 sudo로 실행
+            # 필요시 JDK/JRE 경로 조정
+            sudo nohup java -jar build/libs/*SNAPSHOT.jar > ./output.log 2>&1 &
+
+            # 배포 검증 (최대 10번, 2초 간격)
+            for i in {1..10}; do
+              if curl -skI https://xn--2y5bw4a.site | grep -qE '^HTTP/.* (200|301|302)'; then
+                echo "HTTPS health check OK"
+                exit 0
+              fi
+              sleep 2
+            done
+
+            echo "Health check failed"
+            exit 1
