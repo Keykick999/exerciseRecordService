@@ -209,6 +209,15 @@ public class ExerciseTypeService {
 
     @Transactional
     public String initializeDefaultExercises() {
+        // 1. 기본 근육들 먼저 보장
+        List<String> baseMuscles = List.of("등", "가슴", "하체", "이두", "삼두", "어깨", "복근");
+        baseMuscles.forEach(name -> {
+            muscleRepository.findByName(name).orElseGet(() ->
+                    muscleRepository.save(Muscle.builder().name(name).build())
+            );
+        });
+
+
         List<ExerciseSaveDto> exercises = List.of(
                 // 가슴
                 createDto("플랫 벤치프레스", List.of("가슴")),
