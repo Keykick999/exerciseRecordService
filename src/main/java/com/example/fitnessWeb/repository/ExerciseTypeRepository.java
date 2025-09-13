@@ -27,4 +27,8 @@ public interface ExerciseTypeRepository extends JpaRepository<ExerciseType, Long
             "LEFT JOIN FETCH e.exerciseMuscles em " +
             "LEFT JOIN FETCH em.muscle")
     List<ExerciseType> findAllWithMuscles();
+
+    @Query(value = "SELECT DISTINCT et FROM ExerciseType et LEFT JOIN FETCH et.exerciseMuscles",
+            countQuery = "SELECT COUNT(et) FROM ExerciseType et")
+    Page<ExerciseType> findAllWithMusclesUsingFetchJoin(Pageable pageable);
 }
