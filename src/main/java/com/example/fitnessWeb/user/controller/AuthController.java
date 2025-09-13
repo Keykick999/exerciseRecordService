@@ -26,8 +26,6 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@RequestBody @Valid LoginRequest req) {
-        System.out.println("userId = " + req.username());
-        System.out.println("password = " + req.password());
         return ResponseEntity.ok(auth.login(req));
     }
 
