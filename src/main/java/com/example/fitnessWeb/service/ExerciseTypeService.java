@@ -143,41 +143,40 @@ public class ExerciseTypeService {
 
     // 기존 MySQL -> ElasticSearch 동기화 메서드
     @Transactional(readOnly = true)
+    // @Transactional 어노테이션은 제거하거나 주석 처리합니다.
     public void syncAllExerciseTypesToElasticsearch() {
-        System.out.println("==> Elasticsearch 동기화를 시작합니다...");
+        System.out.println("==> Elasticsearch 동기화 (인덱스 삭제 생략 모드)를 시작합니다...");
 
-        // 1) 인덱스 삭제/재생성/매핑적용
-        IndexOperations indexOps = elasticsearchOperations.indexOps(ExerciseTypeDocument.class);
-        System.out.println("기존 인덱스 삭제 중...");
-        if (indexOps.exists()) {
-            indexOps.delete();
-        }
-        System.out.println("새 인덱스 생성 중...");
-        indexOps.create();
-        indexOps.putMapping(indexOps.createMapping());
+        // 1. 인덱스 삭제 및 재생성 로직을 완전히 제거했습니다.
+        // 기존 인덱스가 있다는 가정 하에 데이터를 덮어쓰거나 추가합니다.
 
         // ▼▼▼ 배치 처리 로직 ▼▼▼
         int pageNum = 0;
-        final int PAGE_SIZE = 10; // <<< 이 부분을 100에서 10으로 수정
+        final int PAGE_SIZE = 10;
         Page<ExerciseType> exercisePage;
 
-        System.out.println("DB에서 데이터를 페이지 단위로 조회하여 ES로 색인합니다...");
+        System.out.println("DB에서 데이터를 페이지 단위로 조회하여 ES에 덮어쓰기/추가합니다...");
 
         do {
             Pageable pageable = PageRequest.of(pageNum, PAGE_SIZE);
             // N+1 문제 해결을 위해 fetch join 쿼리 사용을 권장합니다.
+            // 예: exercisePage = exerciseTypeRepository.findAllWithMusclesUsingFetchJoin(pageable);
             exercisePage = exerciseTypeRepository.findAll(pageable);
 
             List<ExerciseType> exerciseTypesInPage = exercisePage.getContent();
 
+            // 처리할 데이터가 더 이상 없으면 루프를 종료합니다.
             if (exerciseTypesInPage.isEmpty()) {
-                System.out.println("더 이상 처리할 데이터가 없습니다.");
+                if (pageNum == 0) {
+                    System.out.println("DB에 동기화할 데이터가 없습니다.");
+                } else {
+                    System.out.println("모든 페이지 처리를 완료했습니다.");
+                }
                 break;
             }
 
             System.out.printf("==> %d 페이지 처리 중 (%d개 데이터 색인)%n", pageNum + 1, exerciseTypesInPage.size());
 
-            // 3) 현재 페이지의 데이터만 문서로 변환
             List<ExerciseTypeDocument> documents = exerciseTypesInPage.stream()
                     .map(e -> ExerciseTypeDocument.builder()
                             .id(e.getId().toString())
@@ -191,7 +190,6 @@ public class ExerciseTypeService {
                             .build())
                     .toList();
 
-            // 4) 현재 페이지만큼의 문서를 ES에 bulk 저장
             if (!documents.isEmpty()) {
                 exerciseTypeSearchRepository.saveAll(documents);
             }
@@ -202,12 +200,12 @@ public class ExerciseTypeService {
         // ▲▲▲ 배치 처리 로직 종료 ▲▲▲
 
 
-        // 5) 모든 작업 완료 후 인덱스 refresh
-        System.out.println("모든 데이터 처리 완료. 인덱스 refresh 중...");
+        // 2. 모든 작업 완료 후 인덱스 refresh는 그대로 수행합니다.
+        IndexOperations indexOps = elasticsearchOperations.indexOps(ExerciseTypeDocument.class);
+        System.out.println("인덱스 refresh 중...");
         indexOps.refresh();
         System.out.println("==> Elasticsearch 동기화 완료!");
     }
-
 
     @Transactional
     public String initializeDefaultExercises() {
