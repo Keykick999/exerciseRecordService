@@ -143,35 +143,30 @@ public class ExerciseTypeService {
 
     // 기존 MySQL -> ElasticSearch 동기화 메서드
     @Transactional(readOnly = true)
-    // @Transactional 어노테이션은 제거하거나 주석 처리합니다.
+    // @Transactional(readOnly = true) 어노테이션은 주석 처리하거나 제거합니다.
     public void syncAllExerciseTypesToElasticsearch() {
-        System.out.println("==> Elasticsearch 동기화 (인덱스 삭제 생략 모드)를 시작합니다...");
+        System.out.println("==> Elasticsearch 동기화 (N+1 해결 버전)를 시작합니다...");
 
-        // 1. 인덱스 삭제 및 재생성 로직을 완전히 제거했습니다.
-        // 기존 인덱스가 있다는 가정 하에 데이터를 덮어쓰거나 추가합니다.
+        // 인덱스 삭제 로직은 타임아웃을 유발할 수 있으므로 일단 생략합니다.
+        // IndexOperations indexOps = ...
 
-        // ▼▼▼ 배치 처리 로직 ▼▼▼
         int pageNum = 0;
         final int PAGE_SIZE = 10;
         Page<ExerciseType> exercisePage;
 
-        System.out.println("DB에서 데이터를 페이지 단위로 조회하여 ES에 덮어쓰기/추가합니다...");
+        System.out.println("DB에서 데이터를 페이지 단위(Fetch Join)로 조회하여 ES에 색인합니다...");
 
         do {
             Pageable pageable = PageRequest.of(pageNum, PAGE_SIZE);
-            // N+1 문제 해결을 위해 fetch join 쿼리 사용을 권장합니다.
-            // 예: exercisePage = exerciseTypeRepository.findAllWithMusclesUsingFetchJoin(pageable);
-            exercisePage = exerciseTypeRepository.findAll(pageable);
+
+            // ▼▼▼ N+1 문제를 해결한 새 메서드 호출 ▼▼▼
+            exercisePage = exerciseTypeRepository.findAllWithMusclesUsingFetchJoin(pageable);
 
             List<ExerciseType> exerciseTypesInPage = exercisePage.getContent();
 
-            // 처리할 데이터가 더 이상 없으면 루프를 종료합니다.
             if (exerciseTypesInPage.isEmpty()) {
-                if (pageNum == 0) {
-                    System.out.println("DB에 동기화할 데이터가 없습니다.");
-                } else {
-                    System.out.println("모든 페이지 처리를 완료했습니다.");
-                }
+                if (pageNum == 0) System.out.println("DB에 동기화할 데이터가 없습니다.");
+                else System.out.println("모든 페이지 처리를 완료했습니다.");
                 break;
             }
 
@@ -196,16 +191,21 @@ public class ExerciseTypeService {
 
             pageNum++;
 
+            // ▼▼▼ 서버 부하 감소를 위한 1초 대기 추가 ▼▼▼
+            try {
+                Thread.sleep(1000); // 1초 대기
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
         } while (exercisePage.hasNext());
-        // ▲▲▲ 배치 처리 로직 종료 ▲▲▲
 
-
-        // 2. 모든 작업 완료 후 인덱스 refresh는 그대로 수행합니다.
         IndexOperations indexOps = elasticsearchOperations.indexOps(ExerciseTypeDocument.class);
         System.out.println("인덱스 refresh 중...");
         indexOps.refresh();
         System.out.println("==> Elasticsearch 동기화 완료!");
     }
+
 
     @Transactional
     public String initializeDefaultExercises() {
