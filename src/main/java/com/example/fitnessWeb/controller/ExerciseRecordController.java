@@ -30,6 +30,7 @@ public class ExerciseRecordController {
     public ResponseEntity<String> save(Authentication auth,
                                        @RequestBody @Valid List<ExerciseSetDto> dto,
                                        @AuthenticationPrincipal UserDetails userDetails) {
+        System.out.println("dto = " + dto);
         service.saveRecord(userDetails.getUsername(), dto);
         return ResponseEntity.ok("운동 기록 저장 완료");
     }

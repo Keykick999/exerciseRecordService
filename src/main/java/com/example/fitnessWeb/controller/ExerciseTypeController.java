@@ -40,4 +40,10 @@ public class ExerciseTypeController {
         service.syncAllExerciseTypesToElasticsearch();
         return ResponseEntity.ok("Elasticsearch로 운동 종목 동기화 완료");
     }
+
+    @PostMapping("/init")
+    public ResponseEntity<String> initializeDefaultExercises() {
+        String resultMessage = service.initializeDefaultExercises();
+        return ResponseEntity.ok(resultMessage);
+    }
 }

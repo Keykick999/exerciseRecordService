@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 
@@ -173,5 +174,118 @@ public class ExerciseTypeService {
 
         // 5) 즉시 검색 가능하도록 refresh
         indexOps.refresh();
+    }
+
+    @Transactional
+    public String initializeDefaultExercises() {
+        List<ExerciseSaveDto> exercises = List.of(
+                // 가슴
+                createDto("플랫 벤치프레스", List.of("가슴")),
+                createDto("인클라인 벤치프레스", List.of("가슴")),
+                createDto("디클라인 벤치프레스", List.of("가슴")),
+                createDto("플랫 덤벨 프레스", List.of("가슴")),
+                createDto("인클라인 덤벨 프레스", List.of("가슴")),
+                createDto("딥스", List.of("가슴", "삼두")),
+                createDto("푸쉬업", List.of("가슴")),
+                createDto("케이블 크로스오버", List.of("가슴")),
+                createDto("덤벨 플라이", List.of("가슴")),
+                createDto("머신 체스트 프레스", List.of("가슴")),
+                // 등
+                createDto("컨벤셔널 데드리프트", List.of("등", "하체")),
+                createDto("풀업", List.of("등")),
+                createDto("랫풀다운", List.of("등")),
+                createDto("바벨 로우", List.of("등")),
+                createDto("덤벨 로우", List.of("등")),
+                createDto("T바 로우", List.of("등")),
+                createDto("시티드 케이블 로우", List.of("등")),
+                createDto("백 익스텐션", List.of("등")),
+                createDto("루마니안 데드리프트", List.of("하체", "등")),
+                createDto("친업", List.of("등")),
+                // 하체
+                createDto("스쿼트", List.of("하체")),
+                createDto("레그 프레스", List.of("하체")),
+                createDto("런지", List.of("하체")),
+                createDto("레그 익스텐션", List.of("하체")),
+                createDto("레그 컬", List.of("하체")),
+                createDto("스티프 레그 데드리프트", List.of("하체")),
+                createDto("힙 쓰러스트", List.of("하체")),
+                createDto("카프 레이즈", List.of("하체")),
+                createDto("핵 스쿼트", List.of("하체")),
+                createDto("고블릿 스쿼트", List.of("하체")),
+                // 어깨
+                createDto("오버헤드 프레스", List.of("어깨")),
+                createDto("덤벨 숄더 프레스", List.of("어깨")),
+                createDto("사이드 레터럴 레이즈", List.of("어깨")),
+                createDto("프론트 레이즈", List.of("어깨")),
+                createDto("벤트 오버 덤벨 레터럴 레이즈", List.of("어깨")),
+                createDto("페이스풀", List.of("어깨", "등")),
+                createDto("업라이트 로우", List.of("어깨")),
+                createDto("아놀드 프레스", List.of("어깨")),
+                createDto("머신 숄더 프레스", List.of("어깨")),
+                createDto("슈러그", List.of("어깨")),
+                // 삼두
+                createDto("클로즈 그립 벤치프레스", List.of("삼두")),
+                createDto("라잉 트라이셉스 익스텐션", List.of("삼두")),
+                createDto("케이블 푸쉬다운", List.of("삼두")),
+                createDto("오버헤드 덤벨 익스텐션", List.of("삼두")),
+                createDto("케이블 오버헤드 익스텐션", List.of("삼두")),
+                createDto("덤벨 킥백", List.of("삼두")),
+                createDto("벤치 딥스", List.of("삼두")),
+                createDto("다이아몬드 푸쉬업", List.of("삼두")),
+                createDto("원 암 덤벨 오버헤드 익스텐션", List.of("삼두")),
+                createDto("머신 트라이셉스 익스텐션", List.of("삼두")),
+                // 이두
+                createDto("바벨 컬", List.of("이두")),
+                createDto("덤벨 컬", List.of("이두")),
+                createDto("해머 컬", List.of("이두")),
+                createDto("프리처 컬", List.of("이두")),
+                createDto("인클라인 덤벨 컬", List.of("이두")),
+                createDto("컨센트레이션 컬", List.of("이두")),
+                createDto("케이블 컬", List.of("이두")),
+                createDto("리버스 컬", List.of("이두")),
+                createDto("드래그 컬", List.of("이두")),
+                createDto("머신 바이셉스 컬", List.of("이두")),
+                // 복근
+                createDto("크런치", List.of("복근")),
+                createDto("레그 레이즈", List.of("복근")),
+                createDto("플랭크", List.of("복근")),
+                createDto("행잉 레그 레이즈", List.of("복근")),
+                createDto("러시안 트위스트", List.of("복근")),
+                createDto("케이블 크런치", List.of("복근")),
+                createDto("AB 롤아웃", List.of("복근")),
+                createDto("바이시클 크런치", List.of("복근")),
+                createDto("마운틴 클라이머", List.of("복근")),
+                createDto("사이드 플랭크", List.of("복근"))
+        );
+
+        AtomicInteger successCount = new AtomicInteger(0);
+        AtomicInteger failureCount = new AtomicInteger(0);
+
+        exercises.forEach(dto -> {
+            try {
+                this.createExerciseType(dto); // Service 내의 메서드 호출
+                successCount.incrementAndGet();
+            } catch (Exception e) {
+                failureCount.incrementAndGet();
+                System.err.println("데이터 저장 실패: " + dto.getName() + ", 이유: " + e.getMessage());
+            }
+        });
+
+        return String.format(
+                "초기 데이터 DB 저장 완료: 총 %d건 시도, %d건 성공, %d건 실패 (중복 등)",
+                exercises.size(),
+                successCount.get(),
+                failureCount.get()
+        );
+    }
+
+    /**
+     * ExerciseSaveDto 생성을 위한 헬퍼 메서드
+     */
+    private ExerciseSaveDto createDto(String name, List<String> muscleGroups) {
+        ExerciseSaveDto dto = new ExerciseSaveDto();
+        dto.setName(name);
+        dto.setMuscleGroups(muscleGroups);
+        return dto;
     }
 }
