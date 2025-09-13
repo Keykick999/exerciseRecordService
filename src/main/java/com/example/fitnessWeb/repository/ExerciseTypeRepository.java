@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.HashSet;
 import java.util.List;
@@ -28,7 +29,9 @@ public interface ExerciseTypeRepository extends JpaRepository<ExerciseType, Long
             "LEFT JOIN FETCH em.muscle")
     List<ExerciseType> findAllWithMuscles();
 
-    @Query(value = "SELECT DISTINCT et FROM ExerciseType et LEFT JOIN FETCH et.exerciseMuscles",
-            countQuery = "SELECT COUNT(et) FROM ExerciseType et")
-    Page<ExerciseType> findAllWithMusclesUsingFetchJoin(Pageable pageable);
+    @Query("SELECT DISTINCT et FROM ExerciseType et " +
+            "LEFT JOIN FETCH et.exerciseMuscles em " +
+            "LEFT JOIN FETCH em.muscle " +
+            "WHERE et.id IN :ids")
+    List<ExerciseType> findWithMusclesByIdIn(@Param("ids") List<Long> ids);
 }

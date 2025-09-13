@@ -143,36 +143,37 @@ public class ExerciseTypeService {
 
     // 기존 MySQL -> ElasticSearch 동기화 메서드
     @Transactional(readOnly = true)
-    // @Transactional(readOnly = true) 어노테이션은 주석 처리하거나 제거합니다.
     public void syncAllExerciseTypesToElasticsearch() {
-        System.out.println("==> Elasticsearch 동기화 (N+1 해결 버전)를 시작합니다...");
-
-        // 인덱스 삭제 로직은 타임아웃을 유발할 수 있으므로 일단 생략합니다.
-        // IndexOperations indexOps = ...
+        System.out.println("==> Elasticsearch 동기화 (쿼리 분리 버전)를 시작합니다...");
 
         int pageNum = 0;
         final int PAGE_SIZE = 10;
-        Page<ExerciseType> exercisePage;
+        Page<ExerciseType> exerciseIdPage;
 
-        System.out.println("DB에서 데이터를 페이지 단위(Fetch Join)로 조회하여 ES에 색인합니다...");
+        System.out.println("DB에서 ID를 페이지 단위로 조회하여 ES에 색인합니다...");
 
         do {
+            // 1단계: ID만 페이징으로 조회 (매우 가볍고 빠름)
             Pageable pageable = PageRequest.of(pageNum, PAGE_SIZE);
+            exerciseIdPage = exerciseTypeRepository.findAll(pageable);
 
-            // ▼▼▼ N+1 문제를 해결한 새 메서드 호출 ▼▼▼
-            exercisePage = exerciseTypeRepository.findAllWithMusclesUsingFetchJoin(pageable);
+            List<ExerciseType> exercisesOnPage = exerciseIdPage.getContent();
 
-            List<ExerciseType> exerciseTypesInPage = exercisePage.getContent();
-
-            if (exerciseTypesInPage.isEmpty()) {
+            if (exercisesOnPage.isEmpty()) {
                 if (pageNum == 0) System.out.println("DB에 동기화할 데이터가 없습니다.");
                 else System.out.println("모든 페이지 처리를 완료했습니다.");
                 break;
             }
 
-            System.out.printf("==> %d 페이지 처리 중 (%d개 데이터 색인)%n", pageNum + 1, exerciseTypesInPage.size());
+            // 현재 페이지의 ID 목록만 추출
+            List<Long> ids = exercisesOnPage.stream().map(ExerciseType::getId).toList();
 
-            List<ExerciseTypeDocument> documents = exerciseTypesInPage.stream()
+            // 2단계: 추출된 ID 목록을 사용해 fetch join으로 상세 데이터 조회 (N+1 해결)
+            List<ExerciseType> fullyFetchedExercises = exerciseTypeRepository.findWithMusclesByIdIn(ids);
+
+            System.out.printf("==> %d 페이지 처리 중 (%d개 데이터 색인)%n", pageNum + 1, fullyFetchedExercises.size());
+
+            List<ExerciseTypeDocument> documents = fullyFetchedExercises.stream()
                     .map(e -> ExerciseTypeDocument.builder()
                             .id(e.getId().toString())
                             .name(e.getName())
@@ -191,21 +192,19 @@ public class ExerciseTypeService {
 
             pageNum++;
 
-            // ▼▼▼ 서버 부하 감소를 위한 1초 대기 추가 ▼▼▼
             try {
                 Thread.sleep(1000); // 1초 대기
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
 
-        } while (exercisePage.hasNext());
+        } while (exerciseIdPage.hasNext());
 
         IndexOperations indexOps = elasticsearchOperations.indexOps(ExerciseTypeDocument.class);
         System.out.println("인덱스 refresh 중...");
         indexOps.refresh();
         System.out.println("==> Elasticsearch 동기화 완료!");
     }
-
 
     @Transactional
     public String initializeDefaultExercises() {
