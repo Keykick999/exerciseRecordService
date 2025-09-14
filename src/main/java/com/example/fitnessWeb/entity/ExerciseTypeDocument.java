@@ -8,7 +8,7 @@ import org.springframework.data.elasticsearch.annotations.Document;
 
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@Document(indexName = "exercise-type")
+@Document(indexName = "exercise_type")
 @Getter
 @Setter
 @NoArgsConstructor
