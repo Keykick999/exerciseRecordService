@@ -3,8 +3,8 @@ package com.example.fitnessWeb.entity;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.elasticsearch.annotations.Document;
 import java.util.List;
+import org.springframework.data.elasticsearch.annotations.Document;
 
 
 @JsonIgnoreProperties(ignoreUnknown = true)
