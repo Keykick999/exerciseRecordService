@@ -17,7 +17,7 @@ import java.util.List;
 public class ExerciseTypeDocument {
 
     @Id
-    private String id; // Elasticsearch는 보통 String ID를 씁니다.
+    private String id;
 
     private String name;
 
