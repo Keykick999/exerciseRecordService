@@ -21,7 +21,6 @@ public class ChatController {
 
     @PostMapping
     public ResponseEntity<ChatResponse> askCoach(Authentication auth, @RequestBody ChatRequest request) {
-        System.out.println("request = " + request);
         return ResponseEntity.ok(chatService.askModel(auth.getName(), request.getMessage()));
     }
 
