@@ -112,8 +112,4 @@ public class AuthService {
         String username = jwt.getUsername(refresh);
         store.revokeRefresh(username, refresh);
     }
-
-    public void logoutAll(String username) {
-        store.revokeAll(username);
-    }
 }

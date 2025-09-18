@@ -5,9 +5,8 @@ import com.example.fitnessWeb.dto.ExerciseSetDetailDto;
 import com.example.fitnessWeb.entity.*;
 import com.example.fitnessWeb.user.entity.QUser;
 import com.querydsl.core.Tuple;
-import com.querydsl.core.types.Order;
-import com.querydsl.core.types.OrderSpecifier;
-import com.querydsl.core.types.dsl.PathBuilder;
+import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,41 +26,57 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
             String userId,
             LocalDateTime startDate,
             LocalDateTime endDate,
-            String exerciseName,
+            String exerciseName,  // exerciseName을 String으로 변경
             List<String> muscleGroupList,
             Pageable pageable) {
 
+        // QueryDSL 객체 초기화
         QExerciseRecord record = QExerciseRecord.exerciseRecord;
         QExerciseSet set = QExerciseSet.exerciseSet;
         QExerciseType type = QExerciseType.exerciseType;
         QExerciseMuscle em = QExerciseMuscle.exerciseMuscle;
         QMuscle m = QMuscle.muscle;
 
-        List<Long> recordIds = queryFactory
-                .select(record.id)
-                .distinct()
-                .from(record)
-                .join(record.sets, set)
-                .join(set.exerciseType, type)
-                .join(type.exerciseMuscles, em)
-                .join(em.muscle, m)
-                .where(
-                        record.user.userId.eq(userId),
-                        startDate != null ? record.createdAt.goe(startDate) : null,
-                        endDate != null ? record.createdAt.loe(endDate) : null,
-                        exerciseName != null ? type.name.contains(exerciseName) : null,
-                        (muscleGroupList != null && !muscleGroupList.isEmpty())
-                                ? m.name.in(muscleGroupList)
-                                : null
-                )
-                .orderBy(getOrderSpecifiers(pageable))
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+        // 조건 생성
+        BooleanExpression condition = buildCondition(userId, startDate, endDate, exerciseName, muscleGroupList, record, set, type, em, m);
 
-        if (recordIds.isEmpty()) {
-            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+        // 1. 운동 기록과 부위를 한 번에 조회
+        List<ExerciseRecordResponseDto> content = fetchExerciseRecordsWithMuscles(condition, pageable, record, set, type, em, m);
+
+        // 2. 총 개수 조회
+        Long total = fetchTotalCount(condition, record, set, type, em, m);
+
+        return new PageImpl<>(content, pageable, total == null ? 0 : total);
+    }
+
+    // 동적 조건 생성
+    private BooleanExpression buildCondition(String userId, LocalDateTime startDate, LocalDateTime endDate,
+                                             String exerciseName, List<String> muscleGroupList,
+                                             QExerciseRecord record, QExerciseSet set, QExerciseType type,
+                                             QExerciseMuscle em, QMuscle m) {
+
+        BooleanExpression condition = record.user.userId.eq(userId);
+
+        if (startDate != null) {
+            condition = condition.and(record.createdAt.goe(startDate));
         }
+        if (endDate != null) {
+            condition = condition.and(record.createdAt.loe(endDate));
+        }
+        if (exerciseName != null && !exerciseName.isEmpty()) {
+            condition = condition.and(type.name.eq(exerciseName));  // String 비교, eq 사용
+        }
+        if (muscleGroupList != null && !muscleGroupList.isEmpty()) {
+            condition = condition.and(m.name.in(muscleGroupList));
+        }
+
+        return condition;
+    }
+
+    // 운동 기록과 부위를 한 번에 조회 (DTO로 직접 매핑)
+    private List<ExerciseRecordResponseDto> fetchExerciseRecordsWithMuscles(BooleanExpression condition, Pageable pageable,
+                                                                            QExerciseRecord record, QExerciseSet set,
+                                                                            QExerciseType type, QExerciseMuscle em, QMuscle m) {
 
         List<Tuple> tuples = queryFactory
                 .select(record.id, record.createdAt, m.name)
@@ -70,57 +85,55 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
                 .join(set.exerciseType, type)
                 .join(type.exerciseMuscles, em)
                 .join(em.muscle, m)
-                .where(record.id.in(recordIds))
+                .where(condition)
+                .orderBy(record.createdAt.desc())  // 정렬
+                .offset(pageable.getOffset())
+                .limit(pageable.getPageSize())
                 .fetch();
 
+        // 결과를 DTO로 변환 (ID별로 muscleGroupSet 처리)
         Map<Long, ExerciseRecordResponseDto> grouped = new LinkedHashMap<>();
         for (Tuple tuple : tuples) {
             Long recordId = tuple.get(record.id);
             LocalDateTime createdAt = tuple.get(record.createdAt);
             String muscle = tuple.get(m.name);
+
+            // ID별로 부위 정보를 Set에 추가
             grouped.computeIfAbsent(recordId, id -> new ExerciseRecordResponseDto(id, createdAt))
                     .getMuscleGroupSet().add(muscle);
         }
 
-        List<ExerciseRecordResponseDto> content = grouped.values().stream()
+        // DTO로 변환 (Set을 String으로 변환)
+        return grouped.values().stream()
                 .map(dto -> new ExerciseRecordResponseDto(
                         dto.getCreatedAt(),
-                        String.join(", ", dto.getMuscleGroupSet()),
+                        String.join(", ", dto.getMuscleGroupSet()),  // Set을 String으로 변환 (`, `로 구분)
                         dto.getExerciseRecordId()
                 ))
                 .collect(Collectors.toList());
+    }
 
-        Long total = queryFactory
+
+    // 총 개수 조회
+    private Long fetchTotalCount(BooleanExpression condition, QExerciseRecord record,
+                                 QExerciseSet set, QExerciseType type,
+                                 QExerciseMuscle em, QMuscle m) {
+
+        JPAQuery<Long> query = queryFactory
                 .select(record.id.countDistinct())
                 .from(record)
                 .join(record.sets, set)
                 .join(set.exerciseType, type)
                 .join(type.exerciseMuscles, em)
                 .join(em.muscle, m)
-                .where(
-                        record.user.userId.eq(userId),
-                        startDate != null ? record.createdAt.goe(startDate) : null,
-                        endDate != null ? record.createdAt.loe(endDate) : null,
-                        exerciseName != null ? type.name.contains(exerciseName) : null,
-                        (muscleGroupList != null && !muscleGroupList.isEmpty())
-                                ? m.name.in(muscleGroupList)
-                                : null
-                )
-                .fetchOne();
+                .where(condition);
 
-        return new PageImpl<>(content, pageable, total == null ? 0 : total);
+        // 쿼리 출력 (실제 날아가는 SQL 확인)
+        System.out.println("Generated Query for Total Count: " + query.toString());
+
+        return query.fetchOne();
     }
 
-        private OrderSpecifier<?>[] getOrderSpecifiers(Pageable pageable) {
-        PathBuilder<?> path = new PathBuilder<>(QExerciseRecord.exerciseRecord.getType(), QExerciseRecord.exerciseRecord.getMetadata());
-
-        return pageable.getSort().stream()
-                .map(order -> {
-                    Order direction = order.isAscending() ? Order.ASC : Order.DESC;
-                    return new OrderSpecifier(direction, path.get(order.getProperty()));
-                })
-                .toArray(OrderSpecifier[]::new);
-    }
 
 
     @Override

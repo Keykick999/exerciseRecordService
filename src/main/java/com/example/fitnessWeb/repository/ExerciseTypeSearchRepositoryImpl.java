@@ -19,15 +19,29 @@ import java.util.Set;
 @Repository
 public class ExerciseTypeSearchRepositoryImpl implements ExerciseTypeSearchRepositoryCustom {
 
-    private final ElasticsearchClient elasticsearchClient; // RestClient 사용
+    private final ElasticsearchClient elasticsearchClient;
 
     @Override
     public Page<ExerciseTypeDocument> searchByNameAndMuscles(
             String name, Set<String> muscleGroups, Pageable pageable) throws IOException {
 
+        BoolQuery boolQuery = buildBoolQuery(name, muscleGroups);
+        SearchRequest request = buildSearchRequest(boolQuery, pageable);
+
+        SearchResponse<ExerciseTypeDocument> response =
+                elasticsearchClient.search(request, ExerciseTypeDocument.class);
+
+        List<ExerciseTypeDocument> results = response.hits().hits()
+                .stream()
+                .map(h -> h.source())
+                .toList();
+
+        return new PageImpl<>(results, pageable, response.hits().total().value());
+    }
+
+    private BoolQuery buildBoolQuery(String name, Set<String> muscleGroups) {
         BoolQuery.Builder boolQuery = new BoolQuery.Builder();
 
-        // ① 이름 검색 (기존 그대로)
         if (name != null && !name.isBlank()) {
             boolQuery.must(m -> m
                     .queryString(q -> q
@@ -37,9 +51,7 @@ public class ExerciseTypeSearchRepositoryImpl implements ExerciseTypeSearchRepos
             );
         }
 
-        // ② 부위 검색: terms 쿼리 사용
         if (muscleGroups != null && !muscleGroups.isEmpty()) {
-            // Set<String> → List<FieldValue> 변환
             List<FieldValue> values = muscleGroups.stream()
                     .map(FieldValue::of)
                     .toList();
@@ -52,20 +64,15 @@ public class ExerciseTypeSearchRepositoryImpl implements ExerciseTypeSearchRepos
             );
         }
 
-        // ③ SearchRequest 구성 (기존 그대로)
-        SearchRequest request = SearchRequest.of(s -> s
+        return boolQuery.build();
+    }
+
+    private SearchRequest buildSearchRequest(BoolQuery boolQuery, Pageable pageable) {
+        return SearchRequest.of(s -> s
                 .index("exercise-type")
-                .query(boolQuery.build()._toQuery())
+                .query(boolQuery._toQuery())
                 .from((int) pageable.getOffset())
                 .size(pageable.getPageSize())
         );
-
-        SearchResponse<ExerciseTypeDocument> response =
-                elasticsearchClient.search(request, ExerciseTypeDocument.class);
-
-        List<ExerciseTypeDocument> results = response.hits().hits()
-                .stream().map(h -> h.source()).toList();
-
-        return new PageImpl<>(results, pageable, response.hits().total().value());
     }
 }

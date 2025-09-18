@@ -41,7 +41,6 @@ public class ViewController {
 
     @GetMapping("/exercise-record-detail/{exerciseRecordId}")
     public String exerciseRecordDetail(Model model, @PathVariable Long exerciseRecordId) {
-        System.out.println("요청");
         model.addAttribute("exerciseRecordId", exerciseRecordId);
         return "exercise-record-detail";
     }

@@ -39,11 +39,4 @@ public class AuthController {
         auth.logout(req);
         return ResponseEntity.noContent().build();
     }
-
-    @PostMapping("/logout-all")
-    public ResponseEntity<Void> logoutAll(@RequestBody(required = false) String ignore) {
-        String username = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        auth.logoutAll(username);
-        return ResponseEntity.noContent().build();
-    }
 }

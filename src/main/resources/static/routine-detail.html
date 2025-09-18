@@ -539,7 +539,11 @@
             }
 
             createExerciseGroup(exerciseId, exerciseName);
-            $('#exerciseModal').modal('hide');
+
+
+            $('#exerciseModal').on('hidden.bs.modal', function () {
+                $('#saveBtn').trigger('focus'); // 닫힌 후 저장 버튼으로 포커스 이동
+            });
         });
     });
 </script>

@@ -23,7 +23,6 @@ public class ExerciseVideoController {
 
     @PostMapping("/search")
     public Page<ExerciseVideoResponse> search(@RequestBody ExerciseVideoSearchRequest request, Pageable pageable) {
-        System.out.println("영상 검색");
         return videoService.search(request, pageable);
     }
 }
