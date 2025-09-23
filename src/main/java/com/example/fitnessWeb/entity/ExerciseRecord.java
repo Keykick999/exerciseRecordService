@@ -9,8 +9,8 @@ import java.util.List;
 @Entity
 @Getter @Setter
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @Table(indexes = {
         @Index(name = "idx_exerciserecord_user_id_created_at", columnList = "user_id, created_at")
 })
