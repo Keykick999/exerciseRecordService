@@ -5,6 +5,7 @@ import com.example.fitnessWeb.entity.ExerciseVideoType;
 import com.example.fitnessWeb.entity.QExerciseVideo;
 import com.example.fitnessWeb.entity.QExerciseVideoDetail;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
@@ -30,14 +31,17 @@ public class ExerciseVideoRepositoryCustomImpl implements ExerciseVideoRepositor
         BooleanExpression condition = createBaseCondition(muscleGroups, exerciseNames, athleteNames, type, video, detail);
 
         // 쿼리 빌드
-        List<ExerciseVideo> content = queryFactory
+        JPAQuery<ExerciseVideo> query = queryFactory
                 .selectFrom(video)
                 .join(video.details, detail).fetchJoin()  // fetchJoin을 사용하여 N+1 문제 해결
                 .where(condition)
                 .distinct()
                 .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
+                .limit(pageable.getPageSize());
+
+        System.out.println("Generated SQL: " + query.toString()); // 여기서 SQL 확인
+
+        List<ExerciseVideo> content = query.fetch();
 
         // 총 갯수 계산
         Long total = Optional.ofNullable(queryFactory

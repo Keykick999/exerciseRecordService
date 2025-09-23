@@ -8,6 +8,9 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(indexes = {
+        @Index(name = "idx_exerciseset_record_type", columnList = "exercise_record_id, exercise_type_id")
+})
 public class ExerciseSet {
 
     @Id

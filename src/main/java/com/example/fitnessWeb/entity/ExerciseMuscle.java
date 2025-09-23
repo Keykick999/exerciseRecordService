@@ -11,7 +11,9 @@ import lombok.*;
 @Builder
 @Table(uniqueConstraints = {
         @UniqueConstraint(columnNames = {"exercise_type_id", "muscle_id"})
-})
+},
+indexes = {
+        @Index(name = "idx_exercisemuscle_type_muscle", columnList = "exercise_type_id, muscle_id")})
 public class ExerciseMuscle {
 
     @Id

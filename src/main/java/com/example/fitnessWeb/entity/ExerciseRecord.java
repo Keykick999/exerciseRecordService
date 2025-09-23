@@ -11,6 +11,9 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(indexes = {
+        @Index(name = "idx_exerciserecord_user_id_created_at", columnList = "user_id, created_at")
+})
 public class ExerciseRecord {
 
     @Id
