@@ -1,14 +1,14 @@
 //package com.example.fitnessWeb.service;
 //
-//import com.example.fitnessWeb.dto.ExerciseRecordResponseDto;
-//import com.example.fitnessWeb.dto.ExerciseSetDetailDto;
-//import com.example.fitnessWeb.dto.ExerciseSetDto;
-//import com.example.fitnessWeb.entity.ExerciseRecord;
-//import com.example.fitnessWeb.entity.ExerciseType;
+//import com.example.fitnessWeb.exerciseRecord.dto.ExerciseRecordResponseDto;
+//import com.example.fitnessWeb.exerciseRecord.dto.ExerciseSetDetailDto;
+//import com.example.fitnessWeb.exerciseRecord.dto.ExerciseSetDto;
+//import com.example.fitnessWeb.exerciseRecord.domain.ExerciseRecord;
+//import com.example.fitnessWeb.exerciseType.domain.ExerciseType;
 //import com.example.fitnessWeb.entity.User;
 //import com.example.fitnessWeb.exception.*;
-//import com.example.fitnessWeb.repository.ExerciseRecordRepository;
-//import com.example.fitnessWeb.repository.ExerciseTypeRepository;
+//import com.example.fitnessWeb.exerciseRecord.repository.ExerciseRecordRepository;
+//import com.example.fitnessWeb.exerciseType.repository.ExerciseTypeRepository;
 //import com.example.fitnessWeb.repository.UserRepository;
 //import org.junit.jupiter.api.BeforeEach;
 //import org.junit.jupiter.api.DisplayName;

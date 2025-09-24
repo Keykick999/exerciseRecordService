@@ -1,0 +1,49 @@
+package com.example.fitnessWeb.exerciseType.controller;
+
+import com.example.fitnessWeb.exerciseType.dto.ExerciseSaveDto;
+import com.example.fitnessWeb.exerciseType.dto.ExerciseTypeResponseDto;
+import com.example.fitnessWeb.exerciseType.service.ExerciseTypeService;
+import lombok.RequiredArgsConstructor;
+import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import java.io.IOException;
+import java.util.HashSet;
+
+@RestController
+@RequestMapping("/api/exercise-types")
+@RequiredArgsConstructor
+public class ExerciseTypeController {
+
+    private final ExerciseTypeService service;
+
+    @PostMapping
+    public ResponseEntity<String> create(@RequestBody @Valid ExerciseSaveDto dto) {
+        service.createExerciseType(dto);
+        return ResponseEntity.ok("운동 종류 등록 완료");
+    }
+
+
+    // 운동 검색(부위명, 종목명)
+    @GetMapping
+    public ResponseEntity<Page<ExerciseTypeResponseDto>> getAll(@RequestParam(value = "name", required = false) String name,
+                                                                @RequestParam(value = "muscleGroup", required = false) HashSet<String> muscleGroups,
+                                                                @RequestParam(value = "page", defaultValue = "0") int page,
+                                                                @RequestParam(value = "size", defaultValue = "10") int size) throws IOException {
+        return ResponseEntity.ok(service.searchExercise(name, muscleGroups, page, size));
+    }
+
+
+    @PostMapping("/sync-to-es")
+    public ResponseEntity<String> syncToElasticsearch() {
+        service.syncAllExerciseTypesToElasticsearch();
+        return ResponseEntity.ok("Elasticsearch로 운동 종목 동기화 완료");
+    }
+
+    @PostMapping("/init")
+    public ResponseEntity<String> initializeDefaultExercises() {
+        String resultMessage = service.initializeDefaultExercises();
+        return ResponseEntity.ok(resultMessage);
+    }
+}

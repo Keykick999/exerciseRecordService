@@ -1,0 +1,28 @@
+package com.example.fitnessWeb.exerciseVideo.controller;
+
+import com.example.fitnessWeb.exerciseVideo.dto.ExerciseVideoResponse;
+import com.example.fitnessWeb.exerciseVideo.dto.ExerciseVideoSaveRequest;
+import com.example.fitnessWeb.exerciseVideo.dto.ExerciseVideoSearchRequest;
+import com.example.fitnessWeb.exerciseVideo.service.ExerciseVideoService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/videos")
+@RequiredArgsConstructor
+public class ExerciseVideoController {
+
+    private final ExerciseVideoService videoService;
+
+    @PostMapping
+    public ExerciseVideoResponse save(@RequestBody ExerciseVideoSaveRequest request) {
+        return videoService.save(request);
+    }
+
+    @PostMapping("/search")
+    public Page<ExerciseVideoResponse> search(@RequestBody ExerciseVideoSearchRequest request, Pageable pageable) {
+        return videoService.search(request, pageable);
+    }
+}

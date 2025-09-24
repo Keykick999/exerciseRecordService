@@ -1,10 +1,10 @@
 package com.example.fitnessWeb.user.service;
 
 import com.example.fitnessWeb.email.service.EmailVerificationService;
-import com.example.fitnessWeb.exception.DuplicateEmailException;
-import com.example.fitnessWeb.exception.DuplicateUserIdException;
-import com.example.fitnessWeb.exception.DuplicateUserNameException;
-import com.example.fitnessWeb.exception.InvalidRefreshTokenException;
+import com.example.fitnessWeb.common.exception.DuplicateEmailException;
+import com.example.fitnessWeb.common.exception.DuplicateUserIdException;
+import com.example.fitnessWeb.common.exception.DuplicateUserNameException;
+import com.example.fitnessWeb.common.exception.InvalidRefreshTokenException;
 import com.example.fitnessWeb.user.dto.*;
 import com.example.fitnessWeb.user.entity.User;
 import com.example.fitnessWeb.user.jwt.JwtService;

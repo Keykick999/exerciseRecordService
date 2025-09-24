@@ -1,10 +1,10 @@
 //package com.example.fitnessWeb.service;
 //
-//import com.example.fitnessWeb.entity.ExerciseType;
-//import com.example.fitnessWeb.entity.ExerciseTypeDocument;
-//import com.example.fitnessWeb.repository.ExerciseSearchTermRepository;
-//import com.example.fitnessWeb.repository.ExerciseTypeRepository;
-//import com.example.fitnessWeb.repository.ExerciseTypeSearchRepository;
+//import com.example.fitnessWeb.exerciseType.domain.ExerciseType;
+//import com.example.fitnessWeb.exerciseType.domain.ExerciseTypeDocument;
+//import com.example.fitnessWeb.exerciseType.repository.ExerciseSearchTermRepository;
+//import com.example.fitnessWeb.exerciseType.repository.ExerciseTypeRepository;
+//import com.example.fitnessWeb.exerciseType.repository.ExerciseTypeSearchRepository;
 //import org.junit.jupiter.api.Test;
 //import org.junit.jupiter.api.extension.ExtendWith;
 //import org.mockito.*;

@@ -1,7 +1,7 @@
 package com.example.fitnessWeb.email.service;
 
-import com.example.fitnessWeb.exception.EmailNotVerifiedException;
-import com.example.fitnessWeb.exception.InvalidVerificationCodeException;
+import com.example.fitnessWeb.common.exception.EmailNotVerifiedException;
+import com.example.fitnessWeb.common.exception.InvalidVerificationCodeException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
