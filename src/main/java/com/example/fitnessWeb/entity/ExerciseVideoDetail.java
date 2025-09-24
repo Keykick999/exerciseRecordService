@@ -9,6 +9,14 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(
+        indexes = {
+                @Index(name = "idx_video_id", columnList = "video_id"),
+                @Index(name = "idx_muscle_group", columnList = "muscleGroup"),
+                @Index(name = "idx_exercise_name", columnList = "exerciseName"),
+                @Index(name = "idx_athlete_name", columnList = "athleteName"),
+        }
+)
 public class ExerciseVideoDetail {
 
     @Id
