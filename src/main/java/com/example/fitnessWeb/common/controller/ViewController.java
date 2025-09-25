@@ -59,4 +59,9 @@ public class ViewController {
     public String workoutVideos() {
         return "workout-videos";
     }
+
+    @GetMapping("/analysis")
+    public String analysis() {
+        return "analytics";
+    }
 }

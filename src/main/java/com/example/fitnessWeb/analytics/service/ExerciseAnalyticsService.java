@@ -1,14 +1,15 @@
 package com.example.fitnessWeb.analytics.service;
 
+import com.example.fitnessWeb.analytics.dto.ExerciseTypeVolumeDto;
 import com.example.fitnessWeb.analytics.dto.MuscleBalanceResponse;
 import com.example.fitnessWeb.analytics.dto.WeeklyVolumeResponseDto;
+import com.example.fitnessWeb.analytics.projection.MuscleBalanceDto;
+import com.example.fitnessWeb.analytics.repository.AnalyticsNativeRepository;
 import com.example.fitnessWeb.user.entity.User;
 import com.example.fitnessWeb.common.exception.SizeOutOfRangeException;
 import com.example.fitnessWeb.common.exception.UserNotFoundException;
 import com.example.fitnessWeb.analytics.projection.MaxRepsRow;
-import com.example.fitnessWeb.analytics.projection.MaxVolumeSetRow;
 import com.example.fitnessWeb.analytics.projection.MaxWeightRepsRow;
-import com.example.fitnessWeb.analytics.projection.MuscleBalanceRow;
 import com.example.fitnessWeb.analytics.repository.AnalyticsRepository;
 import com.example.fitnessWeb.exerciseRecord.repository.ExerciseRecordRepository;
 import com.example.fitnessWeb.user.repository.UserRepository;
@@ -27,6 +28,8 @@ public class ExerciseAnalyticsService {
     private final ExerciseRecordRepository recordRepo;
 
     private final AnalyticsRepository analyticsRepository;
+    private final AnalyticsNativeRepository analyticsNativeRepository;
+
 
     private final UserRepository userRepository;
 
@@ -36,7 +39,7 @@ public class ExerciseAnalyticsService {
 
         LocalDate target = (date != null) ? date : LocalDate.now();
 
-        return recordRepo.findWeeklyVolumeForUserAndDate(userId, target)
+        return analyticsRepository.findWeeklyVolumeForUserAndDate(userId, target)
                 .map(p -> WeeklyVolumeResponseDto.builder()
                         .yearWeek(p.getYearWeek())
                         .weeklyVolume(p.getWeeklyVolume() == null ? 0.0 : p.getWeeklyVolume())
@@ -63,7 +66,7 @@ public class ExerciseAnalyticsService {
     public List<MaxRepsRow> getRecentMaxRepsByWeight(
             String userId,
             Long exerciseTypeId,
-            Integer weight,
+            Double weight,
             Integer size
     ) {
         // ---- 비즈니스 규칙 검증 ----
@@ -90,17 +93,19 @@ public class ExerciseAnalyticsService {
     public MuscleBalanceResponse getMuscleBalance(String userId,
                                                   LocalDate start,
                                                   LocalDate endExclusive) {
+        User user = userRepository.findById(userId).orElseThrow(UserNotFoundException::new);
+
         LocalDate effectiveStart = (start != null) ? start : LocalDate.now().minusWeeks(4);
         LocalDate effectiveEndEx = (endExclusive != null) ? endExclusive : LocalDate.now().plusDays(1);
 
         LocalDateTime s = effectiveStart.atStartOfDay();
         LocalDateTime e = effectiveEndEx.atStartOfDay();
 
-        List<MuscleBalanceRow> rows = analyticsRepository.findMuscleBalance(userId, s, e);
+        List<MuscleBalanceDto> rows = analyticsRepository.findMuscleBalance(userId, s, e);
 
-        long total = rows.stream()
+        double total = rows.stream()
                 .map(r -> r.getTotalVolume() == null ? 0L : r.getTotalVolume())
-                .findFirst().orElse(0L);
+                .findFirst().orElse(0.0);
 
         List<MuscleBalanceResponse.Item> items = rows.stream()
                 .map(r -> new MuscleBalanceResponse.Item(
@@ -112,7 +117,7 @@ public class ExerciseAnalyticsService {
                 .toList();
 
         return new MuscleBalanceResponse(
-                userId,
+                user.getUserName(),
                 effectiveStart.toString(),
                 effectiveEndEx.toString(),
                 total,
@@ -133,41 +138,40 @@ public class ExerciseAnalyticsService {
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        return analyticsRepository.findMaxWeightRepsHistory(
-                user.getUserId(),
-                exerciseTypeId,
-                PageRequest.of(0, size)
-        );
+        return analyticsNativeRepository.findMaxWeightRepsHistoryNative(userId, exerciseTypeId, size, 0);
     }
 
 
     /**
-     * 운동기록별 최대 볼륨 세트를 최근 size회 조회 (옵션: 종목/기간 필터)
+     * 특정 사용자의 특정 운동 타입에 대해 기간 내 전체 볼륨과
+     * 무게별 퍼센트 정보를 계산합니다.
+     *
+     * @param userId         사용자 ID
+     * @param exerciseTypeId 운동 타입 ID
+     * @param start          조회 시작 날짜 (inclusive, nullable)
+     * @param endExclusive   조회 종료 날짜 (exclusive, nullable)
+     * @return ExerciseTypeVolumeDto (전체 볼륨 + 무게별 퍼센트)
      */
-    public List<MaxVolumeSetRow> getMaxVolumeSets(
+    public ExerciseTypeVolumeDto getExerciseTypeVolume(
             String userId,
-            Long exerciseTypeId,         // nullable
-            LocalDate start,             // nullable (일자 기준 inclusive)
-            LocalDate endExclusive,      // nullable (일자 기준 exclusive)
-            Integer size                 // 1~30
+            Long exerciseTypeId,
+            LocalDate start,
+            LocalDate endExclusive
     ) {
-
-        if (size < 1 || size > 30) throw new SizeOutOfRangeException("size는 1이상 30이하만 허용됩니다.");
-
         // 사용자 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        // 날짜 경계 변환 (nullable 허용)
+        // LocalDate -> LocalDateTime 변환 (nullable 허용)
         LocalDateTime startDateTime = start != null ? start.atStartOfDay() : null;
         LocalDateTime endDateTime = endExclusive != null ? endExclusive.atStartOfDay() : null;
 
-        return analyticsRepository.findMaxVolumeSets(
+        // Repository 호출
+        return analyticsRepository.findExerciseTypeVolume(
                 user.getUserId(),
                 exerciseTypeId,
                 startDateTime,
-                endDateTime,
-                PageRequest.of(0, size)
+                endDateTime
         );
     }
 }

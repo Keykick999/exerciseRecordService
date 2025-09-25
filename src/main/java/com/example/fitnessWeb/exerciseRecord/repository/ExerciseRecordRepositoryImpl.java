@@ -1,8 +1,12 @@
 package com.example.fitnessWeb.exerciseRecord.repository;
 
+import com.example.fitnessWeb.exerciseRecord.domain.QExerciseRecord;
+import com.example.fitnessWeb.exerciseRecord.domain.QExerciseSet;
 import com.example.fitnessWeb.exerciseRecord.dto.ExerciseRecordResponseDto;
 import com.example.fitnessWeb.exerciseRecord.dto.ExerciseSetDetailDto;
-import com.example.fitnessWeb.entity.*;
+import com.example.fitnessWeb.exerciseType.domain.QExerciseMuscle;
+import com.example.fitnessWeb.exerciseType.domain.QExerciseType;
+import com.example.fitnessWeb.exerciseType.domain.QMuscle;
 import com.example.fitnessWeb.user.entity.QUser;
 import com.querydsl.core.types.Projections;
 import com.querydsl.core.types.dsl.BooleanExpression;

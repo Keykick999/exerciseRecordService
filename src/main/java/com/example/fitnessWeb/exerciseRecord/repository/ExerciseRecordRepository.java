@@ -1,6 +1,5 @@
 package com.example.fitnessWeb.exerciseRecord.repository;
 
-import com.example.fitnessWeb.exerciseRecord.projection.WeeklyVolumeProjection;
 import com.example.fitnessWeb.exerciseRecord.domain.ExerciseRecord;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -28,21 +27,21 @@ public interface ExerciseRecordRepository extends JpaRepository<ExerciseRecord, 
 //            @Param("username") String username,
 //            @Param("targetDate") LocalDate targetDate
 //    );
+//
 
-
-    @Query("""
-    SELECT 
-        (YEAR(er.createdAt) * 100 + FUNCTION('WEEK', er.createdAt, 1)) AS yearWeek,
-        SUM(es.weight * es.reps) AS weeklyVolume
-    FROM User u
-    JOIN ExerciseRecord er
-    JOIN er.sets es
-    WHERE u.userId = :userId
-      AND FUNCTION('YEARWEEK', er.createdAt, 1) = FUNCTION('YEARWEEK', :targetDate, 1)
-    GROUP BY YEAR(er.createdAt), FUNCTION('WEEK', er.createdAt, 1)
-""")
-    Optional<WeeklyVolumeProjection> findWeeklyVolumeForUserAndDate(
-            @Param("userId") String userId,
-            @Param("targetDate") LocalDate targetDate
-    );
+//    @Query("""
+//    SELECT
+//        (YEAR(er.createdAt) * 100 + FUNCTION('WEEK', er.createdAt)) AS yearWeek,
+//        SUM(es.weight * es.reps) AS weeklyVolume
+//    FROM User u
+//    JOIN ExerciseRecord er
+//    JOIN er.sets es
+//    WHERE u.userId = :userId
+//      AND FUNCTION('YEARWEEK', er.createdAt) = FUNCTION('YEARWEEK', :targetDate)
+//    GROUP BY YEAR(er.createdAt), FUNCTION('WEEK', er.createdAt)
+//""")
+//    Optional<WeeklyVolumeProjection> findWeeklyVolumeForUserAndDate(
+//            @Param("userId") String userId,
+//            @Param("targetDate") LocalDate targetDate
+//    );
 }

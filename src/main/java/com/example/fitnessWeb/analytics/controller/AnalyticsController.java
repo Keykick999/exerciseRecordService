@@ -1,9 +1,9 @@
 package com.example.fitnessWeb.analytics.controller;
 
+import com.example.fitnessWeb.analytics.dto.ExerciseTypeVolumeDto;
 import com.example.fitnessWeb.analytics.dto.MuscleBalanceResponse;
 import com.example.fitnessWeb.analytics.dto.WeeklyVolumeResponseDto;
 import com.example.fitnessWeb.analytics.projection.MaxRepsRow;
-import com.example.fitnessWeb.analytics.projection.MaxVolumeSetRow;
 import com.example.fitnessWeb.analytics.projection.MaxWeightRepsRow;
 import com.example.fitnessWeb.analytics.service.ExerciseAnalyticsService;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +26,7 @@ public class AnalyticsController {
 
     private final ExerciseAnalyticsService analyticsService;
 
-    // 이번주 볼륨
+    // 주차별 볼륨
     @GetMapping("/weekly-volume/me")
     public ResponseEntity<WeeklyVolumeResponseDto> weeklyVolumeMe(
             Authentication auth, // 인증 사용자
@@ -43,7 +43,7 @@ public class AnalyticsController {
     public ResponseEntity<List<MaxRepsRow>> getRecentMaxRepsByWeight(
             @AuthenticationPrincipal UserDetails user,
             @RequestParam("exerciseTypeId") Long exerciseTypeId,
-            @RequestParam("weight") Integer weight,
+            @RequestParam("weight") Double weight,
             @RequestParam(name = "size", defaultValue = "5") Integer size
     ) {
         List<MaxRepsRow> result = analyticsService.getRecentMaxRepsByWeight(
@@ -84,26 +84,29 @@ public class AnalyticsController {
 
 
     /**
-     * 운동기록 단위로 "최대 볼륨 세트" 조회 (옵션: 종목/기간)
-     * 예) GET /analytics/max-volume-sets?exerciseTypeId=38&size=5g
-     *    GET /analytics/max-volume-sets?size=10&start=2025-08-01&end=2025-09-01
+     * 특정 사용자의 특정 운동 타입에 대한 기간 내 전체 볼륨과
+     * 각 무게별 퍼센트 정보를 조회합니다.
+     *
+     * @param auth           인증 정보 (사용자 ID 추출)
+     * @param exerciseTypeId 운동 타입 ID (필수)
+     * @param start          조회 시작 날짜 (inclusive, nullable)
+     * @param endExclusive   조회 종료 날짜 (exclusive, nullable)
+     * @return 기간 내 운동 타입 전체 볼륨과 무게별 퍼센트 DTO
      */
-    @GetMapping("/max-volume-sets")
-    public ResponseEntity<List<MaxVolumeSetRow>> getMaxVolumeSets(
+    @GetMapping("/exercise-type-volume")
+    public ResponseEntity<ExerciseTypeVolumeDto> getExerciseTypeVolume(
             Authentication auth,
-            @RequestParam(name = "exerciseTypeId", required = false) Long exerciseTypeId,
+            @RequestParam(name = "exerciseTypeId") Long exerciseTypeId,
             @RequestParam(name = "start", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam(name = "end", required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endExclusive,
-            @RequestParam(name = "size", defaultValue = "5") Integer size
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endExclusive
     ) {
-        List<MaxVolumeSetRow> result = analyticsService.getMaxVolumeSets(
+        ExerciseTypeVolumeDto result = analyticsService.getExerciseTypeVolume(
                 auth.getName(),
                 exerciseTypeId,
                 start,
-                endExclusive,
-                size
+                endExclusive
         );
         return ResponseEntity.ok(result);
     }

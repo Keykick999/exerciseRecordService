@@ -55,7 +55,8 @@ public class SecurityConfig {
                                 "/routineChat",
                                 "/speech",
                                 "/chat",
-                                "/workoutVideos"
+                                "/workoutVideos",
+                                "/analysis"
                         ).permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/exercise-types").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/exercise-types/**").permitAll()
