@@ -5,6 +5,7 @@ import com.example.fitnessWeb.analytics.dto.MuscleBalanceResponse;
 import com.example.fitnessWeb.analytics.dto.WeeklyVolumeResponseDto;
 import com.example.fitnessWeb.analytics.projection.MuscleBalanceDto;
 import com.example.fitnessWeb.analytics.repository.AnalyticsNativeRepository;
+import com.example.fitnessWeb.exerciseRecord.projection.WeeklyVolumeDto;
 import com.example.fitnessWeb.user.entity.User;
 import com.example.fitnessWeb.common.exception.SizeOutOfRangeException;
 import com.example.fitnessWeb.common.exception.UserNotFoundException;
@@ -20,6 +21,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -33,22 +35,40 @@ public class ExerciseAnalyticsService {
 
     private final UserRepository userRepository;
 
-    public WeeklyVolumeResponseDto getWeeklyVolumeFor(String userId, LocalDate date) {
-        userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+    public List<WeeklyVolumeResponseDto> getWeeklyVolumesForRange(String userId, LocalDate start, LocalDate end) {
+        // 1) Repository 호출 → 실제 데이터가 있는 주차만 가져옴 (비어있는 주차는 없음)
+        List<WeeklyVolumeDto> raw = analyticsRepository.findWeeklyVolumeForUserAndRange(userId, start, end);
 
-        LocalDate target = (date != null) ? date : LocalDate.now();
+        // 2) 가져온 결과를 Map으로 변환 (yearWeek → volume)
+        Map<Integer, Double> volumeMap = raw.stream()
+                .collect(Collectors.toMap(WeeklyVolumeDto::getYearWeek, WeeklyVolumeDto::getWeeklyVolume));
 
-        return analyticsRepository.findWeeklyVolumeForUserAndDate(userId, target)
-                .map(p -> WeeklyVolumeResponseDto.builder()
-                        .yearWeek(p.getYearWeek())
-                        .weeklyVolume(p.getWeeklyVolume() == null ? 0.0 : p.getWeeklyVolume())
-                        .build())
-                .orElseGet(() -> WeeklyVolumeResponseDto.builder()
-                        .yearWeek(yearWeekIso(target))
-                        .weeklyVolume(0.0)
-                        .build());
+        List<WeeklyVolumeResponseDto> result = new ArrayList<>();
+
+        // 3) 시작 주차의 "월요일"부터 끝 날짜까지 모든 주차 번호(yearWeek) 생성
+        WeekFields wf = WeekFields.ISO; // ISO 주차 (월요일 시작)
+        LocalDate cursor = start.with(wf.dayOfWeek(), 1); // 시작 주차의 월요일로 맞춤
+
+        while (!cursor.isAfter(end)) {
+            // 현재 cursor가 속한 주차 번호 계산 (예: 202501, 202502 ...)
+            int yw = cursor.get(wf.weekBasedYear()) * 100 + cursor.get(wf.weekOfWeekBasedYear());
+
+            // 4) Map에서 해당 주차의 볼륨 조회 (없으면 0.0으로 기본값 설정)
+            double vol = volumeMap.getOrDefault(yw, 0.0);
+
+            // 5) 최종 결과 리스트에 추가
+            result.add(new WeeklyVolumeResponseDto(yw, vol));
+
+            // 6) 다음 주차로 이동
+            cursor = cursor.plusWeeks(1);
+        }
+
+        // 7) 모든 주차에 대해 데이터가 채워진 결과 반환
+        return result;
     }
+
+
+
 
 
     private int yearWeekIso(LocalDate date) {

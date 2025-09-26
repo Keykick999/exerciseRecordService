@@ -28,14 +28,14 @@ public class AnalyticsController {
 
     // 주차별 볼륨
     @GetMapping("/weekly-volume/me")
-    public ResponseEntity<WeeklyVolumeResponseDto> weeklyVolumeMe(
-            Authentication auth, // 인증 사용자
-            @RequestParam(required = false)
-            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
+    public ResponseEntity<List<WeeklyVolumeResponseDto>> weeklyVolumeMe(
+            Authentication auth,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end
     ) {
-        WeeklyVolumeResponseDto dto =
-                analyticsService.getWeeklyVolumeFor(auth.getName(), date);
-        return ResponseEntity.ok(dto);
+        List<WeeklyVolumeResponseDto> dtoList =
+                analyticsService.getWeeklyVolumesForRange(auth.getName(), start, end);
+        return ResponseEntity.ok(dtoList);
     }
 
 

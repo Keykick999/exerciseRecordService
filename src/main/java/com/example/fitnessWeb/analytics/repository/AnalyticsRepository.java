@@ -13,6 +13,7 @@ import com.example.fitnessWeb.exerciseType.domain.QExerciseType;
 import com.example.fitnessWeb.exerciseType.domain.QMuscle;
 import com.example.fitnessWeb.user.entity.QUser;
 import com.querydsl.core.types.Projections;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberTemplate;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +23,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
+
 
 @Repository
 @RequiredArgsConstructor
@@ -39,38 +40,32 @@ public class AnalyticsRepository {
     private final QUser u = QUser.user;
 
 
-    public Optional<WeeklyVolumeDto> findWeeklyVolumeForUserAndDate(String userId, LocalDate targetDate) {
-        // MySQL의 YEARWEEK(date, 1) 모드는 ISO 8601 표준과 동일
+    public List<WeeklyVolumeDto> findWeeklyVolumeForUserAndRange(String userId, LocalDate start, LocalDate end) {
         WeekFields weekFields = WeekFields.ISO;
-        int year = targetDate.get(weekFields.weekBasedYear());
-        int week = targetDate.get(weekFields.weekOfWeekBasedYear());
-        int targetYearWeek = year * 100 + week; // ex: 202537
+        int startYW = start.get(weekFields.weekBasedYear()) * 100 + start.get(weekFields.weekOfWeekBasedYear());
+        int endYW   = end.get(weekFields.weekBasedYear())   * 100 + end.get(weekFields.weekOfWeekBasedYear());
 
-        // DB의 createdAt 컬럼을 YEARWEEK으로 변환하는 표현식은 그대로 사용
-        NumberTemplate<Integer> yearWeekExpr = com.querydsl.core.types.dsl.Expressions.numberTemplate(
+        NumberTemplate<Integer> yearWeekExpr = Expressions.numberTemplate(
                 Integer.class,
                 "FUNCTION('YEARWEEK',{0},1)", er.createdAt
         );
 
-        // targetDate를 DB에서 변환하던 표현식은 삭제
-
-        return Optional.ofNullable(
-                queryFactory
-                        .select(com.querydsl.core.types.Projections.constructor(
-                                WeeklyVolumeDto.class,
-                                yearWeekExpr,
-                                es.weight.multiply(es.reps).sum()
-                        ))
-                        .from(er)
-                        .join(er.sets, es)
-                        .join(er.user, u)
-                        .where(
-                                u.userId.eq(userId)
-                                        .and(yearWeekExpr.eq(targetYearWeek))
-                        )
-                        .groupBy(yearWeekExpr)
-                        .fetchOne()
-        );
+        return queryFactory
+                .select(Projections.constructor(
+                        WeeklyVolumeDto.class,
+                        yearWeekExpr,
+                        es.weight.multiply(es.reps).sum()
+                ))
+                .from(er)
+                .join(er.sets, es)
+                .join(er.user, u)
+                .where(
+                        u.userId.eq(userId)
+                                .and(yearWeekExpr.between(startYW, endYW))
+                )
+                .groupBy(yearWeekExpr)
+                .orderBy(yearWeekExpr.asc())
+                .fetch();
     }
 
     /** 근육별 볼륨 비율 조회 */
