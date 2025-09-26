@@ -4,7 +4,7 @@ import com.example.fitnessWeb.analytics.projection.MaxWeightRepsRow;
 import java.util.List;
 
 public interface AnalyticsNativeRepository {
-    List<MaxWeightRepsRow> findMaxWeightRepsHistoryNative(
+    List<MaxWeightRepsRow> findMaxWeightRepsHistory(
             String userId,
             Long exerciseTypeId,
             int limit,

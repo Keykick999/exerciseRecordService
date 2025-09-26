@@ -18,7 +18,7 @@ public class AnalyticsNativeRepositoryImpl implements AnalyticsNativeRepository 
     private EntityManager em;
 
     @Override
-    public List<MaxWeightRepsRow> findMaxWeightRepsHistoryNative(
+    public List<MaxWeightRepsRow> findMaxWeightRepsHistory(
             String userId,
             Long exerciseTypeId,
             int limit,
@@ -42,7 +42,7 @@ public class AnalyticsNativeRepositoryImpl implements AnalyticsNativeRepository 
                   and es.exercise_type_id = :exerciseTypeId
             ) t
             where rn = 1
-            order by created_at desc, record_id desc
+            order by created_at asc, record_id asc
             limit :limit offset :offset
         """;
 

@@ -135,10 +135,10 @@ public class ExerciseAnalyticsService {
     ) {
         if (size < 1 || size > 30) throw new SizeOutOfRangeException("size는 1이상 30이하만 허용됩니다.");
 
-        User user = userRepository.findById(userId)
+        userRepository.findById(userId)
                 .orElseThrow(UserNotFoundException::new);
 
-        return analyticsNativeRepository.findMaxWeightRepsHistoryNative(userId, exerciseTypeId, size, 0);
+        return analyticsNativeRepository.findMaxWeightRepsHistory(userId, exerciseTypeId, size, 0);
     }
 
 

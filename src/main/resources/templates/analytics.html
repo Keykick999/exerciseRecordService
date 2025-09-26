@@ -6,98 +6,59 @@
   <title>운동 분석</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
   <script src="/js/auth.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
-    /* 전체적인 페이지 스타일 개선 */
     body {
-      background-color: #f8f9fa; /* 부드러운 배경색 */
-      color: #343a40;
+      background: url('https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+      background-size: cover;   /* 화면 크기에 맞게 꽉 채움 */
+      color: #343a40;           /* 텍스트 색상 유지 */
     }
 
-    /* 카드 컴포넌트 스타일 */
-    .card {
-      border: none; /* 기본 테두리 제거 */
-      border-radius: 0.75rem; /* 둥근 모서리 */
-      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-      height: 100%; /* 그리드 컬럼 높이를 맞추기 위함 */
+    .navbar {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+      backdrop-filter: blur(8px);
     }
 
-    .card:hover {
-      transform: translateY(-5px); /* 호버 시 살짝 위로 이동 */
-      box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+    .navbar-brand {
+      font-weight: bold;
+      color: #0d6efd !important;
     }
 
-    .card-header {
-      background-color: #ffffff;
-      border-bottom: 1px solid #dee2e6;
-      font-weight: 600;
-      padding: 1rem 1.25rem;
+    .navbar-nav .nav-link {
+      color: #ffffff !important;
     }
 
-    /* 페이지 제목 스타일 */
-    h1 {
-      color: #212529;
-      font-weight: 700;
+    .navbar-nav .nav-link:hover {
+      color: #ccccff !important;
     }
 
-    /* 테이블 행 스타일 */
-    .table-hover tbody tr {
-      transition: background-color 0.2s ease, transform 0.2s ease;
+    label, .form-label {
+      color: #eeeeee;
+      font-weight: 500;
     }
-
-    .table-hover tbody tr:hover {
-      background-color: #e9ecef;
-      cursor: pointer;
-      transform: scale(1.015); /* 호버 시 행을 살짝 확대 */
-    }
-
-    .table {
-      margin-bottom: 0; /* 카드 내에서 불필요한 하단 마진 제거 */
-    }
-
-    /* 테이블을 감싸는 div에 대한 스타일 (카드 body 패딩 제거) */
-    .table-container {
-      padding: 0;
-      overflow-x: auto; /* 내용이 넘칠 경우 가로 스크롤 생성 */
-    }
-
-    /* 버튼 스타일 */
-    .btn-primary {
-      background-color: #0d6efd;
-      border: none;
-      transition: background-color 0.2s;
-    }
-
-    .btn-primary:hover {
-      background-color: #0b5ed7;
-    }
-
   </style>
 </head>
 <body>
 <div th:replace="fragments/navbar :: body"></div>
 
 <div class="container my-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="mb-0"><i class="bi bi-graph-up-arrow me-2"></i>운동 기록 분석</h1>
-  </div>
+  <h1 class="mb-4 text-white"><i class="bi bi-graph-up-arrow me-2"></i>운동 기록 분석</h1>
 
+  <!-- 이번 주 볼륨 & 부위별 밸런스 -->
   <div class="row g-4 mb-4">
-    <div class="col-lg-6">
-      <div class="card shadow-sm">
-        <div class="card-header">
-          <h5 class="card-title mb-0">이번 주 볼륨</h5>
-        </div>
+    <div class="col-lg-6 col-md-12">
+      <div class="card shadow-sm h-100">
+        <div class="card-header">이번 주 볼륨</div>
         <div class="card-body">
-          <canvas id="weeklyVolumeChart"></canvas>
+          <canvas id="weeklyVolumeChart" style="height:300px"></canvas>
         </div>
       </div>
     </div>
-    <div class="col-lg-6">
-      <div class="card shadow-sm">
-        <div class="card-header">
-          <h5 class="card-title mb-0">부위별 볼륨 밸런스</h5>
-        </div>
+    <div class="col-lg-6 col-md-12">
+      <div class="card shadow-sm h-100">
+        <div class="card-header">부위별 볼륨 밸런스</div>
         <div class="card-body d-flex justify-content-center align-items-center">
           <div style="position: relative; height:300px; width:300px">
             <canvas id="muscleBalanceChart"></canvas>
@@ -107,215 +68,246 @@
     </div>
   </div>
 
+
+
+  <!-- 1. 무게별 최대 Reps -->
   <div class="card shadow-sm mb-4">
-    <div class="card-header">
-      <h5 class="card-title mb-0"><i class="bi bi-search me-2"></i>개별 운동 분석 조회</h5>
-    </div>
+    <div class="card-header">무게별 최대 Reps</div>
     <div class="card-body">
       <div class="row g-3 align-items-end">
         <div class="col-md-6">
-          <label for="exerciseSelect" class="form-label">운동 선택</label>
-          <select id="exerciseSelect" class="form-select">
-            <option value="" selected>분석할 운동을 선택하세요</option>
-          </select>
+          <label class="form-label text-dark">운동 선택</label>
+          <select id="exerciseSelectReps" class="form-select"><option value="">운동 선택</option></select>
         </div>
         <div class="col-md-4">
-          <label for="weightInput" class="form-label">무게 (kg)</label>
-          <input type="number" id="weightInput" class="form-control" placeholder="특정 무게의 최대 Reps 조회 시 입력">
+          <label class="form-label text-dark">무게 (kg)</label>
+          <input type="number" id="weightInputReps" class="form-control">
         </div>
         <div class="col-md-2">
-          <button class="btn btn-primary w-100" id="loadAnalyticsBtn">조회</button>
+          <button class="btn btn-primary w-100" id="btnReps">분석</button>
         </div>
       </div>
+      <div class="mt-4"><canvas id="maxRepsChart"></canvas></div>
     </div>
   </div>
 
-  <div class="row g-4">
-    <div class="col-lg-4">
-      <div class="card shadow-sm">
-        <div class="card-header">
-          <h5 class="card-title mb-0">최대 Reps (무게별)</h5>
+  <!-- 2. 최대 무게 & Reps -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header">최대 무게 & Reps</div>
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-6">
+          <label class="form-label text-dark">운동 선택</label>
+          <select id="exerciseSelectMax" class="form-select"><option value="">운동 선택</option></select>
         </div>
-        <div class="card-body table-container">
-          <table class="table table-hover" id="maxRepsByWeightTable">
-            <thead>
-            <tr>
-              <th>날짜</th>
-              <th>최대 Reps</th>
-            </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div class="col-md-4">
+          <label class="form-label text-dark">최근 N회</label>
+          <input type="number" id="sizeInputMax" class="form-control" placeholder="예: 5">
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-primary w-100" id="btnMax">분석</button>
         </div>
       </div>
+      <div class="mt-4"><canvas id="maxWeightChart"></canvas></div>
     </div>
-    <div class="col-lg-4">
-      <div class="card shadow-sm">
-        <div class="card-header">
-          <h5 class="card-title mb-0">최대 무게 & Reps</h5>
+  </div>
+
+  <!-- 3. 운동 타입별 볼륨 -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-header">운동 타입별 볼륨 분석</div>
+    <div class="card-body">
+      <div class="row g-3 align-items-end">
+        <div class="col-md-4">
+          <label class="form-label text-dark">운동 선택</label>
+          <select id="exerciseSelectVolume" class="form-select"><option value="">운동 선택</option></select>
         </div>
-        <div class="card-body table-container">
-          <table class="table table-hover" id="maxWeightRepsTable">
-            <thead>
-            <tr>
-              <th>날짜</th>
-              <th>최대 무게</th>
-              <th>최대 Reps</th>
-            </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div class="col-md-3">
+          <label class="form-label text-dark">시작 날짜</label>
+          <input type="date" id="startDate" class="form-control">
         </div>
-      </div>
-    </div>
-    <div class="col-lg-4">
-      <div class="card shadow-sm">
-        <div class="card-header">
-          <h5 class="card-title mb-0">최대 볼륨 세트</h5>
+        <div class="col-md-3">
+          <label class="form-label text-dark">종료 날짜</label>
+          <input type="date" id="endDate" class="form-control">
         </div>
-        <div class="card-body table-container">
-          <table class="table table-hover" id="maxVolumeSetsTable">
-            <thead>
-            <tr>
-              <th>날짜</th>
-              <th>볼륨</th>
-              <th>무게</th>
-              <th>Reps</th>
-            </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div class="col-md-2">
+          <button class="btn btn-primary w-100" id="btnVolume">분석</button>
         </div>
       </div>
+      <div class="mt-4"><canvas id="volumeChart"></canvas></div>
     </div>
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
   const token = localStorage.getItem('accessToken');
   const authHeader = { Authorization: `Bearer ${token}` };
+
+  // 중앙 텍스트 플러그인
+  const CenterTextPlugin = {
+    id: 'centerText',
+    beforeDraw(chart, args, options) {
+      if (!options.text) return;
+      const {ctx, chartArea: {left, right, top, bottom}, width} = chart;
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const fontSize = Math.max(14, Math.round(width / 18));
+      ctx.font = `600 ${fontSize}px Arial`;
+      ctx.fillStyle = options.color || '#111';
+      ctx.fillText(options.text, (left+right)/2, (top+bottom)/2);
+      ctx.restore();
+    }
+  };
 
   // 운동 목록 불러오기
   fetch('/api/exercise-types?size=50', { headers: authHeader })
           .then(res => res.json())
           .then(data => {
-            const select = document.getElementById('exerciseSelect');
-            data.content.forEach(item => {
-              const opt = document.createElement('option');
-              opt.value = item.id;
-              opt.textContent = item.name;
-              select.appendChild(opt);
-            });
-          });
-
-  // 이번 주 볼륨 차트
-  fetch('/analytics/weekly-volume/me', { headers: authHeader })
-          .then(res => res.json())
-          .then(data => {
-            new Chart(document.getElementById('weeklyVolumeChart'), {
-              type: 'bar',
-              data: {
-                labels: [data.yearWeek],
-                datasets: [{
-                  label: '주간 볼륨 (kg)',
-                  data: [data.weeklyVolume],
-                  backgroundColor: 'rgba(54, 162, 235, 0.6)',
-                  borderColor: 'rgba(54, 162, 235, 1)',
-                  borderWidth: 1
-                }]
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false
-              }
-            });
-          });
-
-  // 부위별 볼륨 밸런스 차트
-  fetch('/analytics/muscle-balance', { headers: authHeader })
-          .then(res => res.json())
-          .then(data => {
-            new Chart(document.getElementById('muscleBalanceChart'), {
-              type: 'pie',
-              data: {
-                labels: data.byMuscle.map(m => m.muscle),
-                datasets: [{
-                  data: data.byMuscle.map(m => m.volume),
-                  backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
-                  hoverOffset: 4
-                }]
-              },
-              options: {
-                responsive: true,
-                maintainAspectRatio: false
-              }
-            });
-          });
-
-  // 테이블 데이터 로드 함수
-  const loadTableData = (endpoint, tableId, rowGenerator) => {
-    fetch(endpoint, { headers: authHeader })
-            .then(res => {
-              if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-              return res.json();
-            })
-            .then(rows => {
-              const tbody = document.querySelector(`#${tableId} tbody`);
-              tbody.innerHTML = ''; // 기존 데이터 초기화
-              if (rows.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="100%" class="text-center text-muted">데이터가 없습니다.</td></tr>`;
-                return;
-              }
-              rows.forEach(r => {
-                const tr = document.createElement('tr');
-                tr.onclick = () => location.href = `/exercise-record-detail/${r.recordId}`;
-                tr.innerHTML = rowGenerator(r);
-                tbody.appendChild(tr);
+            ['exerciseSelectReps','exerciseSelectMax','exerciseSelectVolume'].forEach(id=>{
+              const select = document.getElementById(id);
+              data.content.forEach(item => {
+                const opt = document.createElement('option');
+                opt.value = item.id; opt.textContent = item.name;
+                select.appendChild(opt);
               });
-            })
-            .catch(error => {
-              const tbody = document.querySelector(`#${tableId} tbody`);
-              tbody.innerHTML = `<tr><td colspan="100%" class="text-center text-danger">데이터 로드 실패</td></tr>`;
-              console.error('Error fetching data for ' + tableId, error);
             });
-  };
+          });
 
-  // '조회' 버튼 클릭 이벤트
-  document.getElementById('loadAnalyticsBtn').addEventListener('click', () => {
-    const exerciseId = document.getElementById('exerciseSelect').value;
-    const weight = document.getElementById('weightInput').value;
+  // ---------------- 자동 로딩 ----------------
+  document.addEventListener('DOMContentLoaded', () => {
+    // 이번 주 볼륨
+    fetch('/analytics/weekly-volume/me', { headers: authHeader })
+            .then(res => res.json())
+            .then(data => {
+              const now = new Date();
+              const year = now.getFullYear();
+              const month = now.getMonth() + 1;
+              const day = now.getDate();
+              const firstDay = new Date(year, month - 1, 1);
+              const weekOfMonth = Math.ceil((day + firstDay.getDay() - 1) / 7);
+              const label = `${year}년 ${month}월 ${weekOfMonth}주차`;
 
-    if (!exerciseId) {
-      alert('운동을 선택하세요.');
-      return;
-    }
+              new Chart(document.getElementById('weeklyVolumeChart'), {
+                type: 'bar',
+                data: {
+                  labels: [label],
+                  datasets: [{
+                    label: '주간 볼륨 (kg)',
+                    data: [data.weeklyVolume],
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                  }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+              });
+            });
 
-    // max-reps-by-weight
-    if (weight) {
-      loadTableData(
-              `/analytics/max-reps-by-weight?exerciseTypeId=${exerciseId}&weight=${weight}`,
-              'maxRepsByWeightTable',
-              r => `<td>${r.workoutDate}</td><td>${r.maxReps} 회</td>`
-      );
-    } else {
-      // 무게 미입력 시 테이블 초기화
-      document.querySelector('#maxRepsByWeightTable tbody').innerHTML = `<tr><td colspan="2" class="text-center text-muted">조회할 무게를 입력하세요.</td></tr>`;
-    }
+    // 부위별 볼륨 밸런스
+    fetch('/analytics/muscle-balance', { headers: authHeader })
+            .then(res => res.json())
+            .then(data => {
+              new Chart(document.getElementById('muscleBalanceChart'), {
+                type: 'pie',
+                data: {
+                  labels: data.byMuscle.map(m => m.muscle),
+                  datasets: [{
+                    data: data.byMuscle.map(m => m.volume),
+                    backgroundColor: ['#36A2EB','#FF6384','#FFCE56','#4BC0C0','#9966FF','#FF9F40'],
+                    hoverOffset: 4
+                  }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+              });
+            });
+  });
 
-    // max-weight-reps
-    loadTableData(
-            `/analytics/max-weight-reps?exerciseTypeId=${exerciseId}`,
-            'maxWeightRepsTable',
-            r => `<td>${r.workoutDate}</td><td>${r.maxWeight} kg</td><td>${r.maxReps} 회</td>`
-    );
+  // ---------------- 버튼 동작 ----------------
+  let maxRepsChart, maxWeightChart, volumeChart;
 
-    // max-volume-sets
-    loadTableData(
-            `/analytics/max-volume-sets?exerciseTypeId=${exerciseId}`,
-            'maxVolumeSetsTable',
-            r => `<td>${r.createdAt}</td><td>${r.volume} kg</td><td>${r.weight} kg</td><td>${r.reps} 회</td>`
-    );
+  // 1. 무게별 최대 Reps
+  document.getElementById('btnReps').addEventListener('click', ()=>{
+    const exId = document.getElementById('exerciseSelectReps').value;
+    const weight = document.getElementById('weightInputReps').value;
+    if(!exId || !weight){ alert("운동과 무게를 선택하세요"); return; }
+
+    fetch(`/analytics/max-reps-by-weight?exerciseTypeId=${exId}&weight=${weight}`,{headers:authHeader})
+            .then(res=>res.json())
+            .then(data=>{
+              const labels = data.map(r=> new Date(r.createdAt).toLocaleDateString());
+              const values = data.map(r=> r.maxReps);
+              if(maxRepsChart) maxRepsChart.destroy();
+              maxRepsChart = new Chart(document.getElementById('maxRepsChart'),{
+                type:'line',
+                data:{ labels, datasets:[{ label:'최대 Reps', data:values, borderColor:'blue', fill:false }] }
+              });
+            });
+  });
+
+  // 2. 최대 무게 & Reps
+  document.getElementById('btnMax').addEventListener('click', ()=>{
+    const exId = document.getElementById('exerciseSelectMax').value;
+    const size = document.getElementById('sizeInputMax').value || 5;
+    if(!exId){ alert("운동을 선택하세요"); return; }
+
+    fetch(`/analytics/max-weight-reps?exerciseTypeId=${exId}&size=${size}`,{headers:authHeader})
+            .then(res=>res.json())
+            .then(data=>{
+              const labels = data.map(r=> new Date(r.createdAt).toLocaleDateString());
+              const weights = data.map(r=> r.weight);
+              const reps = data.map(r=> r.reps);
+              if(maxWeightChart) maxWeightChart.destroy();
+              maxWeightChart = new Chart(document.getElementById('maxWeightChart'),{
+                type:'line',
+                data:{
+                  labels,
+                  datasets:[
+                    { label:'무게(kg)', data:weights, borderColor:'red', yAxisID:'y1' },
+                    { label:'Reps', data:reps, borderColor:'green', yAxisID:'y2' }
+                  ]
+                },
+                options:{ responsive:true, scales:{ y1:{type:'linear',position:'left'}, y2:{type:'linear',position:'right'} } }
+              });
+            });
+  });
+
+  // 3. 운동 타입별 볼륨 (도넛 차트 + 중앙에 총 볼륨)
+  document.getElementById('btnVolume').addEventListener('click', ()=>{
+    const exId = document.getElementById('exerciseSelectVolume').value;
+    const start = document.getElementById('startDate').value;
+    const end = document.getElementById('endDate').value;
+    if(!exId){ alert("운동을 선택하세요"); return; }
+
+    let url = `/analytics/exercise-type-volume?exerciseTypeId=${exId}`;
+    if(start) url += `&start=${start}`;
+    if(end) url += `&end=${end}`;
+
+    fetch(url,{headers:authHeader})
+            .then(res=>res.json())
+            .then(data=>{
+              const labels = data.weightVolumes.map(w=>`${w.weight}kg`);
+              const values = data.weightVolumes.map(w=>w.percentage);
+              if(volumeChart) volumeChart.destroy();
+              volumeChart = new Chart(document.getElementById('volumeChart'),{
+                type:'doughnut',
+                data:{
+                  labels,
+                  datasets:[{
+                    data:values,
+                    backgroundColor:['#36A2EB','#FF6384','#FFCE56','#4BC0C0','#9966FF','#FF9F40']
+                  }]
+                },
+                options:{
+                  responsive:true,
+                  cutout:'70%',
+                  plugins:{
+                    legend:{ position:'bottom' },
+                    centerText:{ text:`총 볼륨 ${data.totalVolume.toLocaleString()} kg` }
+                  }
+                },
+                plugins:[CenterTextPlugin]  // 플러그인 적용
+              });
+            });
   });
 </script>
 </body>

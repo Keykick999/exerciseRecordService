@@ -127,7 +127,7 @@ public class AnalyticsRepository {
                         .and(es.weight.eq(weight))
                 )
                 .groupBy(er.id, er.createdAt)
-                .orderBy(er.createdAt.desc(), er.id.desc())
+                .orderBy(er.createdAt.asc(), er.id.asc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
