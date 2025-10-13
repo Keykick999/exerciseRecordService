@@ -3,7 +3,7 @@ package com.example.fitnessWeb.analytics.repository;
 import com.example.fitnessWeb.analytics.dto.ExerciseTypeVolumeDto;
 import com.example.fitnessWeb.analytics.projection.MaxRepsRow;
 import com.example.fitnessWeb.analytics.projection.MaxVolumeSetRow;
-import com.example.fitnessWeb.analytics.projection.MuscleBalanceDto;
+import com.example.fitnessWeb.analytics.dto.MuscleBalanceDto;
 import com.example.fitnessWeb.exerciseRecord.domain.ExerciseSet;
 import com.example.fitnessWeb.exerciseRecord.domain.QExerciseRecord;
 import com.example.fitnessWeb.exerciseRecord.domain.QExerciseSet;

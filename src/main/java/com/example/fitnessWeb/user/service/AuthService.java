@@ -53,6 +53,8 @@ public class AuthService {
         u.setPassword(passwordEncoder.encode(req.password()));
         u.setUserName(req.userName()); // username 저장
         u.setEmail(req.email());
+        u.setXp(0);
+        u.setLevel(1);
         users.save(u);
 
         return u.getUserId();

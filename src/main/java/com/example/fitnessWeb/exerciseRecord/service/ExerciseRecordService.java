@@ -7,6 +7,7 @@ import com.example.fitnessWeb.exerciseRecord.dto.ExerciseRecordResponseDto;
 import com.example.fitnessWeb.exerciseRecord.dto.ExerciseSetDetailDto;
 import com.example.fitnessWeb.exerciseRecord.dto.ExerciseSetDto;
 import com.example.fitnessWeb.exerciseType.domain.ExerciseType;
+import com.example.fitnessWeb.level.service.LevelService;
 import com.example.fitnessWeb.user.entity.User;
 import com.example.fitnessWeb.exerciseRecord.repository.ExerciseRecordRepository;
 import com.example.fitnessWeb.exerciseType.repository.ExerciseTypeRepository;
@@ -28,6 +29,7 @@ public class ExerciseRecordService {
     private final ExerciseTypeRepository exerciseTypeRepository;
     private final ExerciseRecordRepository exerciseRecordRepository;
     private final UserRepository userRepository;
+    private final LevelService levelService;
 
     // 운동 기록 저장
     @Transactional
@@ -64,6 +66,9 @@ public class ExerciseRecordService {
 
         record.setSets(sets);
         exerciseRecordRepository.save(record);
+
+        // 운동 기록 저장 후 Level 처리
+        levelService.processLevel(user, dto);
     }
 
     // 운동 기록 전체 조회

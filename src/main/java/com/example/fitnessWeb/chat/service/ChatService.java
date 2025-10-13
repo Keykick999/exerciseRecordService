@@ -129,6 +129,7 @@ public class ChatService {
         // 1. User 엔티티 조회
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException());
+        
         // 2. 페이지 요청
         Pageable pg = PageRequest.of(page, 10);
 

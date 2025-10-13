@@ -1,4 +1,4 @@
-package com.example.fitnessWeb.analytics.projection;
+package com.example.fitnessWeb.analytics.dto;
 
 import lombok.Getter;
 import lombok.Setter;

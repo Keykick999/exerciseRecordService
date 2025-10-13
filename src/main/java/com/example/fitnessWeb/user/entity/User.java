@@ -30,6 +30,16 @@ public class User {
 
     private LocalDateTime createdAt;
 
+    @Column(name = "level", nullable = false)
+    private int level = 1;
+
+    @Column(name = "xp", nullable = false)
+    private int xp = 0;
+
+    public void addXp(int amount) {
+        this.xp += amount;
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();

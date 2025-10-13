@@ -3,7 +3,7 @@ package com.example.fitnessWeb.analytics.service;
 import com.example.fitnessWeb.analytics.dto.ExerciseTypeVolumeDto;
 import com.example.fitnessWeb.analytics.dto.MuscleBalanceResponse;
 import com.example.fitnessWeb.analytics.dto.WeeklyVolumeResponseDto;
-import com.example.fitnessWeb.analytics.projection.MuscleBalanceDto;
+import com.example.fitnessWeb.analytics.dto.MuscleBalanceDto;
 import com.example.fitnessWeb.analytics.repository.AnalyticsNativeRepository;
 import com.example.fitnessWeb.exerciseRecord.projection.WeeklyVolumeDto;
 import com.example.fitnessWeb.user.entity.User;
