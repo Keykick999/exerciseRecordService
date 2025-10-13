@@ -3,7 +3,7 @@ name: Deploy To GCE VM
 on:
   push:
     branches:
-      - temp
+      - refactor
 
 jobs:
   deploy:
