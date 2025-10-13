@@ -17,23 +17,29 @@
             padding: 0;
         }
 
-        .navbar {
-            background-color: rgba(255, 255, 255, 0.05) !important;
-            backdrop-filter: blur(8px);
-        }
-
-        .navbar-brand {
-            font-weight: bold;
+        /* 브랜드 컬러/두께 */
+        .navbar .navbar-brand{
+            font-weight: 700;
             color: #0d6efd !important;
         }
 
-        .navbar-nav .nav-link {
+        /* 링크 색상 & 호버 */
+        .navbar .nav-link{
             color: #ffffff !important;
         }
-
-        .navbar-nav .nav-link:hover {
+        .navbar .nav-link:hover{
             color: #ccccff !important;
         }
+
+        /* 모바일 토글 버튼(어두운 배경에서 보이도록) */
+        .navbar .navbar-toggler{
+            border-color: rgba(255,255,255,.25);
+        }
+        .navbar .navbar-toggler-icon{
+            filter: invert(1) brightness(1.6); /* 밝게 */
+            opacity: .9;
+        }
+
 
         .container {
             background-color: rgba(0, 0, 0, 0.75);
@@ -165,10 +171,9 @@
 </head>
 <body>
 
-<!-- 네비게이션 바 -->
-<nav class="navbar navbar-expand-lg fixed-top">
+<nav class="navbar navbar-expand-lg shadow-sm">
     <div class="container-fluid px-4">
-        <a class="navbar-brand" href="/routines">🏋️ FitnessWeb</a>
+        <a class="navbar-brand" th:href="@{/routines}">🏋️ FitnessWeb</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
@@ -178,8 +183,12 @@
                 <li class="nav-item"><a class="nav-link" href="/routines">내 루틴</a></li>
                 <li class="nav-item"><a class="nav-link" href="/chat">운동 질문하기</a></li>
                 <li class="nav-item"><a class="nav-link" href="/exercise-records">운동 기록 보기</a></li>
+                <li class="nav-item"><a class="nav-link" href="/workoutVideos">운동 영상 보기</a></li>
+                <li class="nav-item"><a class="nav-link" href="/analysis">운동 기록 분석</a></li>
             </ul>
-            <ul class="navbar-nav" id="authMenu"></ul>
+            <ul class="navbar-nav" id="authMenu">
+                <!-- JS로 로그인 상태 삽입 -->
+            </ul>
         </div>
     </div>
 </nav>

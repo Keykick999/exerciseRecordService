@@ -7,6 +7,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Duration;
 import java.util.Random;
@@ -18,59 +19,86 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     private final StringRedisTemplate redis;
     private final JavaMailSender mailSender;
     private final Random random = new Random();
-    // TTL 정책
-    private static final Duration CODE_TTL = Duration.ofMinutes(5);
-    private static final Duration VERIFIED_TTL = Duration.ofMinutes(15);
 
+    @Value("${email.verification.code-length}")
+    private int codeLength;
 
+    @Value("${email.verification.code-ttl:5}")
+    private long codeTtlMinutes;
+
+    @Value("${email.verification.verified-ttl:15}")
+    private long verifiedTtlMinutes;
+
+    // ===================== 인증 코드 발송 =====================
     @Override
     public void sendVerificationCode(String email, String purpose) {
-        String code = generate6Digit();
+        String code = generateCode();
 
-        // Redis에 저장 (5분 유효)
-        redis.opsForValue().set(codeKey(email, purpose), code, CODE_TTL);
+        // Redis에 저장 (TTL)
+        redis.opsForValue().set(codeKey(email, purpose), code, Duration.ofMinutes(codeTtlMinutes));
 
-        // 메일 전송
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(email);
-        message.setSubject("[FilterFacts] " + purpose + " 이메일 인증 코드");
-        message.setText("안녕하세요!\n\n요청하신 인증 코드는 " + code + " 입니다.\n5분 내에 입력해주세요.");
-        mailSender.send(message);
+        // 이메일 전송
+        String subject = "[FilterFacts] " + purpose + " 이메일 인증 코드";
+        String text = "안녕하세요!\n\n요청하신 인증 코드는 " + code + " 입니다.\n" + codeTtlMinutes + "분 내에 입력해주세요.";
+        sendEmail(email, subject, text);
 
         System.out.println("[EMAIL] send code " + code + " to " + email + " for " + purpose);
     }
 
-
+    // ===================== 인증 코드 검증 =====================
     @Override
     public void verifyAndMarkAsVerified(String email, String purpose, String code) {
         String saved = redis.opsForValue().get(codeKey(email, purpose));
         if (saved == null || !saved.equals(code)) {
             throw new InvalidVerificationCodeException("인증 코드가 올바르지 않거나 만료되었습니다.");
         }
-        // 사용 후 즉시 코드 삭제
+
+        // 사용 후 코드 삭제
         redis.delete(codeKey(email, purpose));
-        // 인증 완료 마크(15분 동안 유효)
-        redis.opsForValue().set(verifiedKey(email, purpose), "1", VERIFIED_TTL);
+
+        // 인증 완료 마크 (TTL)
+        redis.opsForValue().set(verifiedKey(email, purpose), "1", Duration.ofMinutes(verifiedTtlMinutes));
     }
 
-
+    // ===================== 인증 상태 확인 =====================
     @Override
     public void ensureVerified(String email, String purpose) {
+        ensureVerified(email, purpose, true); // 기본: 일회성 사용
+    }
+
+    public void ensureVerified(String email, String purpose, boolean oneTimeUse) {
         String v = redis.opsForValue().get(verifiedKey(email, purpose));
         if (v == null) {
-            throw new EmailNotVerifiedException(email, "signup");
+            throw new EmailNotVerifiedException(email, purpose);
         }
-        // 사용 직후 바로 지워 ‘일회성’으로 만들고 싶으면 아래 주석 해제
-         redis.delete(verifiedKey(email, purpose));
+        if (oneTimeUse) redis.delete(verifiedKey(email, purpose));
+    }
+
+    // ===================== Redis Key 생성 =====================
+    private String redisKey(String type, String email, String purpose) {
+        return "ev:" + type + ":" + purpose + ":" + email;
     }
 
     private String codeKey(String email, String purpose) {
-        return "ev:code:" + purpose + ":" + email;
+        return redisKey("code", email, purpose);
     }
+
     private String verifiedKey(String email, String purpose) {
-        return "ev:verified:" + purpose + ":" + email;
+        return redisKey("verified", email, purpose);
     }
-    private String generate6Digit() {
-        return String.format("%06d", random.nextInt(1_000_000));
+
+    // ===================== 인증 코드 생성 =====================
+    private String generateCode() {
+        int max = (int) Math.pow(10, codeLength);
+        return String.format("%0" + codeLength + "d", random.nextInt(max));
+    }
+
+    // ===================== 이메일 전송 =====================
+    private void sendEmail(String to, String subject, String text) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(to);
+        message.setSubject(subject);
+        message.setText(text);
+        mailSender.send(message);
     }
 }
