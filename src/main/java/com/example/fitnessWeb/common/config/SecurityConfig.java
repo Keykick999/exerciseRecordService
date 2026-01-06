@@ -33,6 +33,10 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((request, response, authException) ->
+                                response.sendRedirect("/login"))
+                )
                 .authorizeHttpRequests(reg -> reg
                         // 1. 로그인 및 회원가입 API만 허용
                         .requestMatchers("/api/users/login", "/api/users/register").permitAll()
