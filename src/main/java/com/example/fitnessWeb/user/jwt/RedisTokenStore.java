@@ -26,10 +26,4 @@ public class RedisTokenStore implements TokenStore {
     @Override public void revokeRefresh(String username, String refreshToken) {
         redis.delete(key(username, refreshToken));
     }
-    @Override
-    public void revokeAll(String username) {
-        // 패턴 삭제 (주의: 대량 키에선 SCAN 사용)
-        Set<String> keys = redis.keys("rt:" + username + ":*");
-        if (keys != null && !keys.isEmpty()) redis.delete(keys);
-    }
 }

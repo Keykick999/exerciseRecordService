@@ -142,9 +142,4 @@ public class ExerciseAnalyticsService {
                 ))
                 .toList();
     }
-
-    private int yearWeekIso(LocalDate date) {
-        WeekFields wf = WeekFields.ISO;
-        return date.get(wf.weekBasedYear()) * 100 + date.get(wf.weekOfWeekBasedYear());
-    }
 }

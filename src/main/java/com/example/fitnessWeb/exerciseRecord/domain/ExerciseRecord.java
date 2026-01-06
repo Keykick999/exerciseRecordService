@@ -12,7 +12,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(indexes = {
-        @Index(name = "idx_exerciserecord_user_id_created_at", columnList = "user_id, created_at")
+        @Index(name = "idx_exerciserecord_user_id_created_at", columnList = "user_user_id, created_at")
 })
 public class ExerciseRecord {
 

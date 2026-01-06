@@ -2,6 +2,7 @@ package com.example.fitnessWeb.email.service;
 
 import com.example.fitnessWeb.common.exception.EmailNotVerifiedException;
 import com.example.fitnessWeb.common.exception.InvalidVerificationCodeException;
+import com.example.fitnessWeb.email.util.EmailSender;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
@@ -17,7 +18,7 @@ import java.util.Random;
 public class EmailVerificationServiceImpl implements EmailVerificationService {
 
     private final StringRedisTemplate redis;
-    private final JavaMailSender mailSender;
+    private final EmailSender mailSender;
     private final Random random = new Random();
 
     @Value("${email.verification.code-length}")
@@ -40,7 +41,8 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
         // 이메일 전송
         String subject = "[FilterFacts] " + purpose + " 이메일 인증 코드";
         String text = "안녕하세요!\n\n요청하신 인증 코드는 " + code + " 입니다.\n" + codeTtlMinutes + "분 내에 입력해주세요.";
-        sendEmail(email, subject, text);
+
+        mailSender.send(email, subject, text);
 
         System.out.println("[EMAIL] send code " + code + " to " + email + " for " + purpose);
     }
@@ -91,14 +93,5 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     private String generateCode() {
         int max = (int) Math.pow(10, codeLength);
         return String.format("%0" + codeLength + "d", random.nextInt(max));
-    }
-
-    // ===================== 이메일 전송 =====================
-    private void sendEmail(String to, String subject, String text) {
-        SimpleMailMessage message = new SimpleMailMessage();
-        message.setTo(to);
-        message.setSubject(subject);
-        message.setText(text);
-        mailSender.send(message);
     }
 }

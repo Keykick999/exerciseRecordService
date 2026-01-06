@@ -67,6 +67,7 @@ public class ExerciseTypeSearchRepositoryImpl implements ExerciseTypeSearchRepos
         return boolQuery.build();
     }
 
+
     private SearchRequest buildSearchRequest(BoolQuery boolQuery, Pageable pageable) {
         return SearchRequest.of(s -> s
                 .index("exercise-type")

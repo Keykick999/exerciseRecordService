@@ -46,7 +46,7 @@ public class ExerciseRecordService {
         record.setSets(sets);
         exerciseRecordRepository.save(record);
 
-        processUserLevel(user, dto);
+        levelService.processLevel(user, dto);
     }
 
     /**
@@ -121,13 +121,6 @@ public class ExerciseRecordService {
                 .exerciseRecord(record)
                 .exerciseType(type)
                 .build();
-    }
-
-    /**
-     * 레벨 처리
-     */
-    private void processUserLevel(User user, List<ExerciseSetDto> dto) {
-        levelService.processLevel(user, dto);
     }
 
     // ========================= 단일 책임 헬퍼 (추상화 수준 낮음) =========================

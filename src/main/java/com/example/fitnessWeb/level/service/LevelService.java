@@ -36,8 +36,6 @@ public class LevelService {
         }
 
         userRepository.save(user);
-
-        System.out.println("이번 세션 경험치: " + xpGained + ", 누적 XP: " + user.getXp());
     }
 
     /**
