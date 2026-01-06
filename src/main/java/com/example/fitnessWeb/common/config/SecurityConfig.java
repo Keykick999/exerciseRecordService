@@ -34,35 +34,28 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(reg -> reg
-                        // permitAll 목록 (두 번째 코드 기준)
+                        // 1. 로그인 및 회원가입 API만 허용
+                        .requestMatchers("/api/users/login", "/api/users/register").permitAll()
+
+                        // 2. View: ViewController에 설정된 모든 경로 허용
                         .requestMatchers(
-                                "/api/users/**",
-                                "/home",
+                                "/",
                                 "/login",
                                 "/routine",
                                 "/routines",
+                                "/chat",
                                 "/exercise-records",
                                 "/exercise-record-detail/**",
-                                "/routine-detail.html",
-                                "/exercise-session.html",
-                                "/api/exercise-types/sync-to-es",
-                                "/images/**",
-                                "/css/**",
-                                "/js/**",
-                                "/favicon.ico",
                                 "/routineChat",
                                 "/speech",
-                                "/chat",
                                 "/workoutVideos",
                                 "/analysis"
                         ).permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/exercise-types").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/exercise-types/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/analytics/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/exercise-types/sync-to-es").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/email").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/email/verify").permitAll()
-                        // 나머지는 인증 필요
+
+                        // 3. Static Resources: CSS, JS, Images 등 정적 파일 허용
+                        .requestMatchers("/favicon.ico").permitAll()
+
+                        // 4. 나머지는 전부 인증 필요
                         .anyRequest().authenticated()
                 );
 
