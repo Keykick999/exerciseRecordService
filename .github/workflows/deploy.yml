@@ -60,8 +60,8 @@ jobs:
             sudo docker pull ${{ secrets.DOCKERHUB_USERNAME }}/fitnessapp:latest
             
             # 2. 기존 컨테이너들 중지 및 삭제 (Spring & Nginx)
-            sudo docker stop fitnessapp-container nginx-container || true
-            sudo docker rm fitnessapp-container nginx-container || true
+            sudo docker stop fitnessapp-container || true
+            sudo docker rm fitnessapp-container || true
             
             # 3. Spring Boot 컨테이너 실행
             sudo docker run -d \
@@ -69,14 +69,5 @@ jobs:
               --network host \
               ${{ secrets.DOCKERHUB_USERNAME }}/fitnessapp:latest
             
-            # 4. Nginx 컨테이너 실행
-            sudo docker run -d \
-              --name nginx-container \
-              -p 80:80 -p 443:443 \
-              --network host \
-              -v /home/${{ secrets.GCE_USERNAME }}/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro \
-              -v /etc/letsencrypt:/etc/letsencrypt:ro \
-              nginx:latest
-            
-            # 5. 정리
+            # 4. 정리
             sudo docker image prune -f
