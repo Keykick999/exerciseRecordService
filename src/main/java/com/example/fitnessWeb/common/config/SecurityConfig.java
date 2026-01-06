@@ -57,7 +57,13 @@ public class SecurityConfig {
                         ).permitAll()
 
                         // 3. Static Resources: CSS, JS, Images 등 정적 파일 허용
-                        .requestMatchers("/favicon.ico").permitAll()
+                        .requestMatchers(
+                                "/favicon.ico",
+                                "/error",        // 에러 페이지 접근 시 리다이렉트 방지
+                                "/css/**",
+                                "/js/**",
+                                "/images/**"
+                        ).permitAll()
 
                         // 4. 나머지는 전부 인증 필요
                         .anyRequest().authenticated()
