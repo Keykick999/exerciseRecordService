@@ -13,3 +13,4 @@ public class QueryDslConfig {
         return new JPAQueryFactory(em);
     }
 }
+
