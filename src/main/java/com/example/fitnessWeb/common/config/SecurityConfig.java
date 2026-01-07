@@ -4,7 +4,6 @@ import com.example.fitnessWeb.user.jwt.JwtAuthenticationFilter;
 import com.example.fitnessWeb.user.jwt.JwtService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -39,7 +38,8 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(reg -> reg
                         // 1. 로그인 및 회원가입 API만 허용
-                        .requestMatchers("/api/users/login", "/api/users/register").permitAll()
+                        .requestMatchers("/api/users/login", "/api/users/register", "/api/email/**")
+                        .permitAll()
 
                         // 2. View: ViewController에 설정된 모든 경로 허용
                         .requestMatchers(
