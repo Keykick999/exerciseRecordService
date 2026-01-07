@@ -451,6 +451,29 @@
         $('#registerEmailSuccess').hide();
     });
 
+    /* ================= 비밀번호 일치 확인 (Blur 이벤트) ================= */
+    $('#registerPasswordConfirm').on('blur', function() {
+        const password = $('#registerPassword').val();
+        const confirm = $(this).val();
+        const errorDiv = $('#registerPasswordConfirmError');
+
+        if (!confirm) {
+            errorDiv.text('비밀번호 확인을 입력해주세요.').css('color', '#ff6b6b').show();
+            return;
+        }
+
+        if (password === confirm) {
+            errorDiv.text('비밀번호가 일치합니다.').css('color', '#00ff88').show();
+        } else {
+            errorDiv.text('비밀번호가 일치하지 않습니다. 다시 확인해주세요.').css('color', '#ff6b6b').show();
+        }
+    });
+
+    // 비밀번호 원본 칸 값이 바뀌면 확인 칸 에러 메시지도 초기화 (사용자 편의성)
+    $('#registerPassword').on('input', function() {
+        $('#registerPasswordConfirmError').hide();
+    });
+
     /* ========= 엔터키 & 버튼 바인딩 ========= */
     $('#loginUsername, #loginPassword').on('keypress', function(e){ if (e.which === 13) login(); });
     $('#registerUserId, #registerUserName, #registerPassword, #registerPasswordConfirm, #registerEmail').on('keypress', function(e){ if (e.which === 13) register(); });
