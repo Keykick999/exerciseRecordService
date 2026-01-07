@@ -20,6 +20,12 @@ public class AuthController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/check-username")
+    public ResponseEntity<Void> checkUserName(@RequestParam String userName) {
+        auth.checkDuplicateUserName(userName); // 중복이면 예외 발생, 아니면 200 OK
+        return ResponseEntity.ok().build();
+    }
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody @Valid RegisterRequest req) {
         String userId = auth.register(req);

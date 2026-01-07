@@ -128,13 +128,13 @@ public class AuthService {
         }
     }
 
-    // ========================= private 단일 책임 헬퍼 (검증) =========================
-    private void checkDuplicateUserName(String userName) {
+    public void checkDuplicateUserName(String userName) {
         if (userRepository.existsByUserName(userName)) {
             throw new DuplicateUserNameException(userName);
         }
     }
 
+    // ========================= private 단일 책임 헬퍼 (검증) =========================
     private void checkDuplicateEmail(String email) {
         if (userRepository.existsByEmail(email)) {
             throw new DuplicateEmailException(email);

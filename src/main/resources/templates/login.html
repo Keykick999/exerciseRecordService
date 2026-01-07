@@ -474,6 +474,33 @@
         $('#registerPasswordConfirmError').hide();
     });
 
+    /* ================= 사용자명(닉네임) 중복 체크 (Blur 이벤트) ================= */
+    $('#registerUserName').on('blur', function() {
+        const userName = $(this).val().trim();
+        const errorDiv = $('#registerUserNameError');
+
+        if (!userName) {
+            errorDiv.text('사용자명을 입력해주세요.').css('color', '#ff6b6b').show();
+            return;
+        }
+
+        $.ajax({
+            url: '/api/users/check-username', // 백엔드에 새로 만든 엔드포인트
+            method: 'GET',
+            data: { userName: userName },
+            success: function() {
+                errorDiv.text('사용 가능한 사용자명입니다.').css('color', '#00ff88').show();
+            },
+            error: function(xhr) {
+                if (xhr.status === 409) {
+                    errorDiv.text('이미 사용 중인 사용자명입니다.').css('color', '#ff6b6b').show();
+                } else {
+                    errorDiv.text('중복 확인 중 오류가 발생했습니다.').css('color', '#ff6b6b').show();
+                }
+            }
+        });
+    });
+
     /* ========= 엔터키 & 버튼 바인딩 ========= */
     $('#loginUsername, #loginPassword').on('keypress', function(e){ if (e.which === 13) login(); });
     $('#registerUserId, #registerUserName, #registerPassword, #registerPasswordConfirm, #registerEmail').on('keypress', function(e){ if (e.which === 13) register(); });
