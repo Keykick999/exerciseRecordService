@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Routine Detail</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: url('https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=1350&q=80') no-repeat center center fixed;
+            background-size: cover;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 브랜드 컬러/두께 */
+        .navbar .navbar-brand{
+            font-weight: 700;
+            color: #0d6efd !important;
+        }
+
+        /* 링크 색상 & 호버 */
+        .navbar .nav-link{
+            color: #ffffff !important;
+        }
+        .navbar .nav-link:hover{
+            color: #ccccff !important;
+        }
+
+        /* 모바일 토글 버튼(어두운 배경에서 보이도록) */
+        .navbar .navbar-toggler{
+            border-color: rgba(255,255,255,.25);
+        }
+        .navbar .navbar-toggler-icon{
+            filter: invert(1) brightness(1.6); /* 밝게 */
+            opacity: .9;
+        }
+
+
+        .container {
+            background-color: rgba(0, 0, 0, 0.75);
+            padding: 2rem;
+            border-radius: 1rem;
+            margin-top: 40px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        h2 {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #ffffff;
+        }
+
+        .exercise-group {
+            position: relative;
+            margin-bottom: 30px;
+            padding-top: 2.5rem;
+        }
+
+        .remove-exercise-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            z-index: 10;
+        }
+
+        .exercise-group h5 {
+            margin-bottom: 15px;
+            color: #ffffff;
+        }
+
+        .exercise {
+            background-color: rgba(255, 255, 255, 0.08);
+            padding: 15px;
+            border-radius: 0.75rem;
+            margin-bottom: 10px;
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+
+        .exercise-wrapper {
+            margin-bottom: 30px;
+        }
+
+        .exercise-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 30px;
+            margin-bottom: 5px;
+            margin-left: 5px;
+            color: #ffffff;
+        }
+
+        label {
+            color: #cccccc;
+        }
+
+        .btn-outline-success,
+        .btn-outline-secondary,
+        .btn-danger {
+            border-radius: 0.5rem;
+            font-weight: 500;
+            color: #ffffff;
+            border-color: #888;
+            transition: 0.2s ease;
+        }
+
+        .btn-outline-success:hover {
+            background-color: #198754;
+            color: #fff;
+            border-color: #198754;
+        }
+
+        .btn-outline-secondary:hover {
+            background-color: #6c757d;
+            color: #fff;
+            border-color: #6c757d;
+        }
+
+        .btn-danger:hover {
+            background-color: #dc3545;
+            color: #fff;
+            border-color: #dc3545;
+        }
+
+        .fixed-bottom-buttons {
+            position: fixed;
+            bottom: 20px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .modal-content {
+            border-radius: 1rem;
+            background-color: #1e1e1e;
+            color: white;
+        }
+
+        .modal-body {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .list-group-item {
+            border-radius: 0.4rem;
+            transition: background-color 0.2s;
+            background-color: #2b2b2b;
+            color: white;
+            border: 1px solid #444;
+        }
+
+        .list-group-item:hover {
+            background-color: #3a3a3a;
+        }
+
+        .form-check-label {
+            color: #e0e0e0;
+        }
+
+        .form-check-input:checked {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg shadow-sm">
+    <div class="container-fluid px-4">
+        <a class="navbar-brand" th:href="@{/routines}">🏋️ FitnessWeb</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="/routine">루틴 생성</a></li>
+                <li class="nav-item"><a class="nav-link" href="/routines">내 루틴</a></li>
+                <li class="nav-item"><a class="nav-link" href="/chat">운동 질문하기</a></li>
+                <li class="nav-item"><a class="nav-link" href="/exercise-records">운동 기록 보기</a></li>
+                <li class="nav-item"><a class="nav-link" href="/workoutVideos">운동 영상 보기</a></li>
+                <li class="nav-item"><a class="nav-link" href="/analysis">운동 기록 분석</a></li>
+            </ul>
+            <ul class="navbar-nav" id="authMenu">
+                <!-- JS로 로그인 상태 삽입 -->
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<div class="container my-5">
+    <h2 id="routineTitle">루틴 상세 정보</h2>
+    <div class="text-end mb-3">
+        <button class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#exerciseModal">운동 추가</button>
+    </div>
+    <div id="detailContainer">로딩 중...</div>
+</div>
+
+<div class="fixed-bottom-buttons">
+    <button class="btn btn-outline-secondary" id="saveBtn">저장</button>
+    <button class="btn btn-outline-success" id="startBtn">운동 시작</button>
+</div>
+
+<!-- 운동 선택 모달 -->
+<div class="modal fade" id="exerciseModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">운동 선택</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="닫기"></button>
+            </div>
+            <div class="modal-body">
+                <!-- 검색 필드 -->
+                <input type="text" class="form-control mb-2" id="exerciseSearchInput" placeholder="운동명 검색">
+
+                <!-- 근육 그룹 체크박스 -->
+                <div id="muscleGroupCheckboxes" class="d-flex flex-wrap gap-2 mb-2"></div>
+
+                <!-- 검색 버튼 -->
+                <button id="searchExerciseBtn" class="btn btn-outline-primary mb-3">검색</button>
+
+                <!-- 운동 리스트 -->
+                <div class="list-group" id="exerciseList"></div>
+                <div id="scrollSentinel" class="my-3 text-center">🔄 불러오는 중...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/auth.js"></script>
+<script th:inline="javascript">
+    const params = new URLSearchParams(window.location.search);
+    const routineName = params.get('name');
+    const routineId = params.get('routineId');
+    const API_BASE_URL = '/api/routines';
+
+
+    let currentPage = 0;
+    let isLoading = false;
+    let hasNext = true;
+
+    if (!routineName) {
+        alert('루틴을 선택해주세요!');
+        window.location.href = '/routines';
+    } else {
+        $('#routineTitle').text(`${routineName}`);
+        loadRoutineDetail();
+    }
+
+    function loadRoutineDetail() {
+        const token = localStorage.getItem('accessToken');
+
+        $.ajax({
+            url: `${API_BASE_URL}/${routineId}`,
+            type: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` },
+            success: function (data) {
+                window.originalRoutineData = data;
+                const $container = $('#detailContainer');
+                $container.empty();
+
+                if (data.length === 0) {
+                    $container.text('해당 루틴의 상세정보가 없습니다.');
+                } else {
+                    const grouped = {};
+                    data.forEach(item => {
+                        if (!grouped[item.exerciseTypeId]) {
+                            grouped[item.exerciseTypeId] = {
+                                exerciseType: item.exerciseType,
+                                sets: []
+                            };
+                        }
+                        grouped[item.exerciseTypeId].sets.push(item);
+                    });
+
+                    Object.entries(grouped).forEach(([id, { exerciseType, sets }]) => {
+                        const $group = $(`
+                            <div class="exercise-wrapper">
+                                <h5 class="exercise-title">${exerciseType}</h5>
+                                <div class="exercise-group" data-exercise-type-id="${id}" data-exercise-type-name="${exerciseType}">
+                                    <button class="btn btn-sm btn-outline-danger remove-exercise-btn">종목 삭제</button>
+                                    <div class="exercise-sets mt-2"></div>
+                                    <button class="btn btn-sm btn-outline-success add-set-btn mt-2">세트 추가</button>
+                                    <hr>
+                                </div>
+                            </div>
+                        `);
+                        sets.forEach(set => {
+                            $group.find('.exercise-sets').append(createSetRow(set.weight, set.repetitions));
+                        });
+                        $container.append($group);
+                    });
+                }
+            },
+            error: function (xhr) {
+                if (xhr.status === 401) {
+                    alert("로그인이 필요합니다.");
+                    window.location.href = "/login";
+                } else if (xhr.status === 403) {
+                    alert("잘못된 요청입니다.");
+                    window.location.href = "/login";
+                } else {
+                    alert("예기치 못한 에러가 발생했습니다.");
+                }
+            }
+        });
+    }
+
+    function createSetRow(weight = 0, reps = 0) {
+        return `
+            <div class="exercise row g-3 mb-2">
+                <div class="col-md-5"><label class="form-label">중량 (kg)</label><input type="number" class="form-control weight-input" value="${weight}"></div>
+                <div class="col-md-5"><label class="form-label">반복 횟수</label><input type="number" class="form-control reps-input" value="${reps}"></div>
+                <div class="col-md-2 d-flex align-items-end"><button class="btn btn-danger remove-set-btn">삭제</button></div>
+            </div>`;
+    }
+
+    $(document).on('click', '.add-set-btn', function () {
+        $(this).siblings('.exercise-sets').append(createSetRow());
+    });
+
+    $(document).on('click', '.remove-set-btn', function () {
+        $(this).closest('.exercise').remove();
+    });
+
+    $(document).on('click', '.remove-exercise-btn', function () {
+        $(this).closest('.exercise-group').remove();
+    });
+
+    $('#saveBtn').on('click', function () {
+        const token = localStorage.getItem('accessToken');
+        const routineSets = [];
+        let isValid = true;
+
+        $('.exercise-group').each(function () {
+            const exerciseTypeId = $(this).data('exercise-type-id');
+            const setRows = $(this).find('.exercise');
+
+            if (setRows.length === 0) {
+                // ✅ 세트가 없으면 기본 세트 1개 추가
+                routineSets.push({
+                    exerciseTypeId: parseInt(exerciseTypeId),
+                    setNumber: 1,
+                    weight: 0,
+                    repetitions: 0
+                });
+            } else {
+                setRows.each(function (i) {
+                    const weight = parseFloat($(this).find('.weight-input').val());
+                    const reps = parseInt($(this).find('.reps-input').val());
+
+                    if (isNaN(weight) || isNaN(reps)) {
+                        alert("❗ 모든 세트에 중량과 반복 횟수를 입력해주세요.");
+                        isValid = false;
+                        return false;
+                    }
+
+                    routineSets.push({
+                        exerciseTypeId: parseInt(exerciseTypeId),
+                        setNumber: i + 1,
+                        weight,
+                        repetitions: reps
+                    });
+                });
+
+                if (!isValid) return false;
+            }
+        });
+
+        if (!isValid || routineSets.length === 0) return;
+
+        $.ajax({
+            url: `/api/routines/${routineId}`,
+            type: 'PUT',
+            contentType: 'application/json',
+            headers: { 'Authorization': `Bearer ${token}` },
+            data: JSON.stringify({ routineName, routineSets }),
+            success: () => alert("✅ 루틴이 성공적으로 저장되었습니다."),
+            error: function (xhr) {
+                if (xhr.status === 401) {
+                    alert("로그인이 필요합니다.");
+                    window.location.href = "/login";
+                } else if (xhr.status === 403) {
+                    alert("잘못된 요청입니다.");
+                    window.location.href = "/login";
+                }
+                else {
+                    alert("예기치 못한 에러가 발생했습니다.");
+                }
+            }
+        });
+    });
+
+
+    $('#startBtn').on('click', function () {
+        const sessionData = [];
+        $('.exercise-group').each(function () {
+            const exerciseType = $(this).data('exercise-type-name');
+            const exerciseTypeId = $(this).data('exercise-type-id');
+            const sets = $(this).find('.exercise');
+
+            if (sets.length === 0) {
+                // 세트가 없으면 기본 세트 추가
+                sessionData.push({
+                    exerciseType,
+                    exerciseTypeId,
+                    weight: 0,
+                    repetitions: 0
+                });
+            } else {
+                sets.each(function () {
+                    const weight = parseFloat($(this).find('.weight-input').val());
+                    const reps = parseInt($(this).find('.reps-input').val());
+                    sessionData.push({ exerciseType, exerciseTypeId, weight, repetitions: reps });
+                });
+            }
+        });
+
+        localStorage.setItem('activeRoutine', JSON.stringify(sessionData));
+        localStorage.setItem('activeRoutineName', routineName);
+        window.location.href = '/exercise-session.html';
+    });
+
+
+    const muscleGroupOptions = ["가슴", "등", "어깨", "하체", "복근", "이두", "삼두"];
+
+    function createMuscleCheckboxes() {
+        const container = $('#muscleGroupCheckboxes');
+        container.empty();
+        muscleGroupOptions.forEach(muscle => {
+            container.append(`
+                <div class="form-check">
+                    <input class="form-check-input muscle-checkbox" type="checkbox" value="${muscle}" id="muscle-${muscle}">
+                    <label class="form-check-label" for="muscle-${muscle}">${muscle}</label>
+                </div>`);
+        });
+    }
+
+    function fetchExercises() {
+        if (isLoading || !hasNext) return;
+        isLoading = true;
+
+        const name = $('#exerciseSearchInput').val();
+        const muscles = $('.muscle-checkbox:checked').map(function () {
+            return $(this).val();
+        }).get();
+
+        const requestData = {
+            name,
+            muscleGroup: muscles,
+            page: currentPage,
+            size: 10
+        };
+
+        console.log('🔍 요청 데이터:', requestData);  // 요청 확인용 로그
+
+        $.ajax({
+            url: '/api/exercise-types',
+            method: 'GET',
+            traditional: true,
+            data: requestData,
+            success: function (res) {
+                const list = $('#exerciseList');
+                res.content.forEach(ex => {
+                    list.append(`
+                    <button type="button" class="list-group-item list-group-item-action"
+                        data-id="${ex.id}" data-name="${ex.name}">
+                        ${ex.name} (${ex.muscleGroups.join(', ')})
+                    </button>
+                `);
+                });
+                hasNext = !res.last;
+                if (!hasNext) {
+                    $('#scrollSentinel').hide();
+                }
+                currentPage++;
+            },
+            complete: function () {
+                isLoading = false;
+            }
+        });
+    }
+
+    function createExerciseGroup(exerciseId, exerciseName) {
+        if ($(`[data-exercise-type-id="${exerciseId}"]`).length > 0) {
+            alert("이미 추가된 운동입니다.");
+            return;
+        }
+
+        const $group = $(`
+            <div class="exercise-wrapper">
+                <h5 class="exercise-title">${exerciseName}</h5>
+                <div class="exercise-group" data-exercise-type-id="${exerciseId}" data-exercise-type-name="${exerciseName}">
+                    <button class="btn btn-sm btn-outline-danger remove-exercise-btn">종목 삭제</button>
+                    <div class="exercise-sets mt-2"></div>
+                    <button class="btn btn-sm btn-outline-success add-set-btn mt-2">세트 추가</button>
+                    <hr>
+                </div>
+            </div>
+        `);
+        $group.find('.exercise-sets').append(createSetRow());
+        $('#detailContainer').append($group);
+    }
+
+
+    $(document).ready(function () {
+        renderAuthMenu();  // 로그인/로그아웃 버튼 렌더링
+        createMuscleCheckboxes();
+
+        const observer = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting) {
+                fetchExercises();
+            }
+        }, {
+            root: document.querySelector('.modal-body'),
+            threshold: 1.0
+        });
+
+        observer.observe(document.getElementById('scrollSentinel'));
+
+        // Enter 키로 검색 가능하게
+        $('#exerciseSearchInput').on('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                $('#searchExerciseBtn').trigger('click');
+            }
+        });
+
+        // ✅ 중복 이벤트 방지 + reset 초기화 명확히
+        $('#searchExerciseBtn').off('click').on('click', function () {
+            currentPage = 0;
+            hasNext = true;
+            $('#exerciseList').empty();
+            $('#scrollSentinel').show();
+            fetchExercises();
+        });
+
+        $('#exerciseList').on('click', 'button', function () {
+            const exerciseId = $(this).data('id');
+            const exerciseName = $(this).data('name');
+
+            // 이미 있는 운동이면 모달 닫지 않음
+            if ($(`[data-exercise-type-id="${exerciseId}"]`).length > 0) {
+                alert("이미 추가된 운동입니다.");
+                return;
+            }
+
+            createExerciseGroup(exerciseId, exerciseName);
+
+
+            $('#exerciseModal').on('hidden.bs.modal', function () {
+                $('#saveBtn').trigger('focus'); // 닫힌 후 저장 버튼으로 포커스 이동
+            });
+        });
+    });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

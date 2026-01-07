@@ -46,6 +46,7 @@ public class SecurityConfig {
                                 "/",
                                 "/login",
                                 "/routine",
+                                "/routine/detail",
                                 "/routines",
                                 "/chat",
                                 "/exercise-records",

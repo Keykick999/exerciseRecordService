@@ -209,7 +209,7 @@
 
     function goToDetail(name, id) {
         const encodedName = encodeURIComponent(name);
-        window.location.href = `routine-detail.html?name=${encodedName}&routineId=${id}`;
+        window.location.href = `/routine/detail?name=${encodedName}&routineId=${id}`;
     }
 
     function logout() {

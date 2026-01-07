@@ -64,4 +64,9 @@ public class ViewController {
     public String analysis() {
         return "analytics";
     }
+
+    @GetMapping("/routine/detail")
+    public String routineDetail() {
+        return "routine-detail";
+    }
 }
