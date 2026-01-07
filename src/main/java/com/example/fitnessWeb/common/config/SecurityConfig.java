@@ -38,7 +38,7 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(reg -> reg
                         // 1. 로그인 및 회원가입 API만 허용
-                        .requestMatchers("/api/users/login", "/api/users/register", "/api/users/check-id/**", "/api/users//check-username/**", "/api/email/**")
+                        .requestMatchers("/api/users/login", "/api/users/register", "/api/users/check-id/**", "/api/users/check-username/**", "/api/email/**")
                         .permitAll()
 
                         // 2. View: ViewController에 설정된 모든 경로 허용
