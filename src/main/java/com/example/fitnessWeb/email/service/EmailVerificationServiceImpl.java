@@ -1,8 +1,10 @@
 package com.example.fitnessWeb.email.service;
 
+import com.example.fitnessWeb.common.exception.DuplicateEmailException;
 import com.example.fitnessWeb.common.exception.EmailNotVerifiedException;
 import com.example.fitnessWeb.common.exception.InvalidVerificationCodeException;
 import com.example.fitnessWeb.email.util.EmailSender;
+import com.example.fitnessWeb.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.SimpleMailMessage;
@@ -20,6 +22,7 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
     private final StringRedisTemplate redis;
     private final EmailSender mailSender;
     private final Random random = new Random();
+    private final UserRepository userRepository;
 
     @Value("${email.verification.code-length}")
     private int codeLength;
@@ -74,6 +77,14 @@ public class EmailVerificationServiceImpl implements EmailVerificationService {
             throw new EmailNotVerifiedException(email, purpose);
         }
         if (oneTimeUse) redis.delete(verifiedKey(email, purpose));
+    }
+
+    @Override
+    public void checkEmailDuplicate(String email) {
+        if (userRepository.existsByEmail(email)) {
+            // 중복 시 예외 발생 (기존에 정의하신 DuplicateEmailException 사용)
+            throw new DuplicateEmailException(email);
+        }
     }
 
     // ===================== Redis Key 생성 =====================

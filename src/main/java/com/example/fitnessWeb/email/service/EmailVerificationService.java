@@ -6,4 +6,5 @@ public interface EmailVerificationService {
 
     /** 회원가입 등 사전에 인증이 끝났는지 확인 (미인증이면 IllegalStateException) */
     void ensureVerified(String email, String purpose);
+    void checkEmailDuplicate(String email);
 }

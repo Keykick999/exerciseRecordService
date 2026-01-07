@@ -122,14 +122,13 @@ public class AuthService {
         }
     }
 
-    // ========================= private 단일 책임 헬퍼 (검증) =========================
-
-    private void checkDuplicateUserId(String userId) {
+    public void checkDuplicateUserId(String userId) {
         if (userRepository.existsByUserId(userId)) {
             throw new DuplicateUserIdException(userId);
         }
     }
 
+    // ========================= private 단일 책임 헬퍼 (검증) =========================
     private void checkDuplicateUserName(String userName) {
         if (userRepository.existsByUserName(userName)) {
             throw new DuplicateUserNameException(userName);

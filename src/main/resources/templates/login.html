@@ -105,8 +105,12 @@
                 <label for="registerEmail">이메일</label>
             </div>
             <div id="registerEmailError" class="error-message"></div>
+            <div id="registerEmailSuccess" class="helper" style="color: #00ff88;"></div>
+            <div class="d-flex gap-2 mt-2">
+                <button class="btn btn-secondary w-50" id="checkEmailBtn" type="button">이메일 중복 확인</button>
+                <button class="btn btn-primary w-50" id="sendCodeBtn" type="button" disabled>인증 코드 전송</button>
+            </div>
             <div id="emailSendHelper" class="helper">이메일로 인증 코드를 전송했습니다. 메일함을 확인하세요.</div>
-            <button class="btn btn-primary mt-2" id="sendCodeBtn" type="button">인증 코드 전송</button>
         </div>
 
         <!-- 인증 코드 입력 / 확인 -->
@@ -266,6 +270,13 @@
                 emailVerified = true;
                 $('#emailVerifyHelper').text('이메일 인증이 완료되었습니다.').show();
                 $('#registerBtn').prop('disabled', false);
+
+                // [보안 추가] 인증 완료 시 이메일 입력창과 버튼들 잠금
+                $('#registerEmail').prop('readonly', true);
+                $('#checkEmailBtn').prop('disabled', true);
+                $('#sendCodeBtn').prop('disabled', true);
+                $('#verifyCodeBtn').prop('disabled', true);
+                $('#registerEmailCode').prop('readonly', true);
             },
             error: function(xhr) {
                 emailVerified = false;
@@ -370,6 +381,75 @@
             }
         });
     }
+
+    /* ================= 아이디 중복 체크 (Blur 이벤트) ================= */
+    $('#registerUserId').on('blur', function() {
+        const userId = $(this).val().trim();
+        const errorDiv = $('#registerUserIdError');
+
+        if (!userId) {
+            errorDiv.text('아이디를 입력해주세요.').css('color', '#ff6b6b').show();
+            return;
+        }
+
+        $.ajax({
+            url: '/api/users/check-id',
+            method: 'GET',
+            data: { userId: userId },
+            success: function() {
+                errorDiv.text('사용 가능한 아이디입니다.').css('color', '#00ff88').show();
+            },
+            error: function(xhr) {
+                if (xhr.status === 409) {
+                    errorDiv.text('이미 사용 중인 아이디입니다.').css('color', '#ff6b6b').show();
+                } else {
+                    errorDiv.text('중복 확인 중 오류가 발생했습니다.').css('color', '#ff6b6b').show();
+                }
+            }
+        });
+    });
+
+    /* ================= 이메일 중복 체크 ================= */
+    let emailCheckDone = false; // 이메일 중복 체크 완료 여부
+
+    $('#checkEmailBtn').on('click', function() {
+        const email = $('#registerEmail').val().trim();
+        const errorDiv = $('#registerEmailError');
+        const successDiv = $('#registerEmailSuccess');
+
+        if (!email) {
+            errorDiv.text('이메일을 입력해주세요.').show();
+            return;
+        }
+
+        $.ajax({
+            url: '/api/email/check-email',
+            method: 'GET',
+            data: { email: email },
+            success: function() {
+                errorDiv.hide();
+                successDiv.text('사용 가능한 이메일입니다.').show();
+                $('#sendCodeBtn').prop('disabled', false); // 중복이 아닐 때만 전송 버튼 활성화
+                emailCheckDone = true;
+            },
+            error: function(xhr) {
+                emailCheckDone = false;
+                $('#sendCodeBtn').prop('disabled', true);
+                if (xhr.status === 409) {
+                    errorDiv.text('이미 등록된 이메일입니다.').show();
+                } else {
+                    errorDiv.text('중복 확인 중 오류가 발생했습니다.').show();
+                }
+            }
+        });
+    });
+
+    // 이메일 입력값이 바뀌면 다시 중복 체크를 하도록 초기화
+    $('#registerEmail').on('input', function() {
+        emailCheckDone = false;
+        $('#sendCodeBtn').prop('disabled', true);
+        $('#registerEmailSuccess').hide();
+    });
 
     /* ========= 엔터키 & 버튼 바인딩 ========= */
     $('#loginUsername, #loginPassword').on('keypress', function(e){ if (e.which === 13) login(); });

@@ -5,10 +5,7 @@ import com.example.fitnessWeb.email.dto.VerifyCodeRequest;
 import com.example.fitnessWeb.email.service.EmailVerificationService;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/email")
@@ -18,6 +15,12 @@ public class EmailVerificationController {
 
     public EmailVerificationController(EmailVerificationService service) {
         this.service = service;
+    }
+
+    @GetMapping("/check-email")
+    public ResponseEntity<Void> checkEmail(@RequestParam String email) {
+        service.checkEmailDuplicate(email);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping
