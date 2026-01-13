@@ -2,6 +2,7 @@ package com.example.fitnessWeb.exerciseRecord.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -9,6 +10,7 @@ import java.util.Set;
 
 @Getter
 @AllArgsConstructor
+@Setter
 public class ExerciseRecordResponseDto {
     private LocalDateTime createdAt;
     private String muscleGroups;
