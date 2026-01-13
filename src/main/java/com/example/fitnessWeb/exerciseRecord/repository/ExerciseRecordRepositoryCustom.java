@@ -3,11 +3,13 @@ import com.example.fitnessWeb.exerciseRecord.dto.ExerciseRecordResponseDto;
 import com.example.fitnessWeb.exerciseRecord.dto.ExerciseSetDetailDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
 public interface ExerciseRecordRepositoryCustom {
-    Page<ExerciseRecordResponseDto> searchRecords(
+    Slice<ExerciseRecordResponseDto> searchRecords(
             String userId,
             LocalDateTime startDate,
             LocalDateTime endDate,

@@ -14,9 +14,7 @@ import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -28,7 +26,7 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
     private final JPAQueryFactory queryFactory;
 
     @Override
-    public Page<ExerciseRecordResponseDto> searchRecords(
+    public Slice<ExerciseRecordResponseDto> searchRecords(
             String userId,
             LocalDateTime startDate,
             LocalDateTime endDate,
@@ -72,28 +70,35 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
                 muscleGroupIn(muscleGroupList)
         );
 
-        // 페이징 적용 (distinct()는 조인 시 중복 제거를 위해 필요)
+        // 요청한 크기보다 1개 더 가져옴 (다음 페이지 존재 여부 확인용)
+        int pageSize = pageable.getPageSize();
+
         List<ExerciseRecordResponseDto> content = paginationQuery
                 .orderBy(record.createdAt.desc())
                 .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .distinct() // 1:N 조인 시 뻥튀기 방지 (ID 기준)
+                .limit(pageSize + 1)
+                .distinct()
                 .fetch();
 
-        // 조회된 결과가 없으면 바로 빈 페이지 반환 (불필요한 추가 쿼리 방지)
+        boolean hasNext = false;
+        if (content.size() > pageSize) {
+            content.remove(pageSize);
+            hasNext = true;
+        }
+
+        // 결과 없으면 바로 빈 Slice 반환
         if (content.isEmpty()) {
-            return new PageImpl<>(Collections.emptyList(), pageable, 0);
+            return new SliceImpl<>(Collections.emptyList(), pageable, false);
         }
 
         // =================================================================================
-        // STEP 2. 근육 정보 조회 (IN 절 활용)
-        // -> 위에서 찾은 20개의 ID에 대해서만 근육 정보를 가져옴 (배치 사이즈 효과)
+        // STEP 2. 근육 정보 조회
+        // (content에는 이제 딱 요청한 개수만큼만 들어있으므로 이대로 진행하면 됨)
         // =================================================================================
         List<Long> recordIds = content.stream()
                 .map(ExerciseRecordResponseDto::getExerciseRecordId)
                 .toList();
 
-        // 20개에 대한 근육 정보만 싹 긁어옴
         List<Tuple> muscleData = queryFactory
                 .select(record.id, m.name)
                 .from(record)
@@ -101,57 +106,29 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
                 .join(set.exerciseType, type)
                 .join(type.exerciseMuscles, em)
                 .join(em.muscle, m)
-                .where(record.id.in(recordIds)) // 👈 핵심: ID 20개만 검색
+                .where(record.id.in(recordIds))
                 .distinct()
                 .fetch();
 
         // =================================================================================
-        // STEP 3. 메모리에서 조립 (Java가 DB보다 잘함)
+        // STEP 3. 메모리 조립
         // =================================================================================
-        // Map<RecordId, "가슴, 등"> 형태로 변환
         Map<Long, String> muscleMap = muscleData.stream()
                 .collect(Collectors.groupingBy(
                         tuple -> tuple.get(record.id),
                         Collectors.mapping(tuple -> tuple.get(m.name), Collectors.joining(", "))
                 ));
 
-        // 결과 DTO에 근육 문자열 채워 넣기
         content.forEach(dto -> {
             String muscles = muscleMap.getOrDefault(dto.getExerciseRecordId(), "");
-            // DTO에 setMuscleGroups 메서드가 없으면 생성자나 필드로 처리해야 함
-            // 여기서는 DTO 구조상 새로운 객체를 만들거나 setter 사용 (아래 설명 참조)
-            dto.setMuscleGroups(muscles); // DTO에 @Setter가 있거나 메서드 추가 필요
+            dto.setMuscleGroups(muscles);
         });
 
-        // =================================================================================
-        // STEP 4. Total Count 쿼리
-        // =================================================================================
-        JPAQuery<Long> countQuery = queryFactory
-                .select(record.id.countDistinct())
-                .from(record);
-
-        if (needJoin) {
-            countQuery
-                    .join(record.sets, set)
-                    .join(set.exerciseType, type)
-                    .join(type.exerciseMuscles, em)
-                    .join(em.muscle, m);
-        }
-
-        Long total = countQuery
-                .where(
-                        userIdEq(userId),
-                        dateBetween(startDate, endDate),
-                        exerciseNameEq(exerciseName),
-                        muscleGroupIn(muscleGroupList)
-                )
-                .fetchOne();
-
-        return new PageImpl<>(content, pageable, total == null ? 0 : total);
+        return new SliceImpl<>(content, pageable, hasNext);
     }
 
-    // --- 조건 메서드 분리 (가독성 향상) ---
 
+    // --- 조건 메서드 ---
     private BooleanExpression userIdEq(String userId) {
         return QExerciseRecord.exerciseRecord.user.userId.eq(userId);
     }

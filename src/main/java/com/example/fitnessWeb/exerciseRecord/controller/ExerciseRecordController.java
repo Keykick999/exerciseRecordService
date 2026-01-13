@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -37,7 +38,7 @@ public class ExerciseRecordController {
 
     // 운동 기록 조회
     @GetMapping
-    public ResponseEntity<Page<ExerciseRecordResponseDto>> getExerciseRecord(
+    public ResponseEntity<Slice<ExerciseRecordResponseDto>> getExerciseRecord(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(required = false) String exerciseName,
@@ -45,7 +46,7 @@ public class ExerciseRecordController {
             Authentication auth,
             Pageable pageable) {
 
-        Page<ExerciseRecordResponseDto> result = service.getRecords(
+        Slice<ExerciseRecordResponseDto> result = service.getRecords(
                 auth.getName(),
                 startDate,
                 endDate,

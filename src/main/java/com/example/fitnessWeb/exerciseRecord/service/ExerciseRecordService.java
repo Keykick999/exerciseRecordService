@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -52,12 +53,12 @@ public class ExerciseRecordService {
     /**
      * 운동 기록 전체 조회
      */
-    public Page<ExerciseRecordResponseDto> getRecords(String userId,
-                                                      LocalDateTime startDate,
-                                                      LocalDateTime endDate,
-                                                      String exerciseName,
-                                                      List<String> muscleGroup,
-                                                      Pageable pageable) {
+    public Slice<ExerciseRecordResponseDto> getRecords(String userId,
+                                                       LocalDateTime startDate,
+                                                       LocalDateTime endDate,
+                                                       String exerciseName,
+                                                       List<String> muscleGroup,
+                                                       Pageable pageable) {
         User user = userService.findUserOrThrow(userId);
         return exerciseRecordRepository.searchRecords(user.getUserId(), startDate, endDate, exerciseName, muscleGroup, pageable);
     }
