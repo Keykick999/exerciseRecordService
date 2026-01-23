@@ -28,7 +28,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         // 권한 없이(빈 리스트) 반환. 비밀번호는 DB에 저장된 해시 그대로.
         return new CustomUserDetails(
-            user.getUserName(),
+            user.getUserId(),
             user.getPassword(),
             user.getEmail(),
             List.of()
