@@ -12,6 +12,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.CacheControl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -80,6 +81,7 @@ public class ExerciseRecordController {
         );
 
         ResponseEntity.BodyBuilder responseBuilder = ResponseEntity.ok();
+        responseBuilder.cacheControl(CacheControl.noCache().cachePrivate().mustRevalidate());
         eTagOptional.ifPresent(responseBuilder::eTag);  // Etag가 있을 때만 헤더 추가
 
         return responseBuilder.body(result);
