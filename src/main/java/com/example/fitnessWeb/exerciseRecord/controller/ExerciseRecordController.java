@@ -104,3 +104,5 @@ public class ExerciseRecordController {
         return Optional.of(DigestUtils.md5DigestAsHex(rawString.getBytes(StandardCharsets.UTF_8)));
     }
 }
+
+
