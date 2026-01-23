@@ -250,8 +250,15 @@
 
         try {
             const res = await fetch(`/api/exercise-records?${params.toString()}`, {
+                method: 'GET',
                 headers: { 'Authorization': `Bearer ${token}` }
             });
+
+            // 304면 캐시 그대로 사용
+            if (res.status === 304) {
+                console.log("캐시된 데이터 그대로 사용")
+                return;
+            }
 
             if (!res.ok) throw new Error("검색 실패");
 
