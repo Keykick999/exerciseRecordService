@@ -59,8 +59,9 @@ export default function (data) {
         },
     };
 
-    // 조회 요청 (최신순 정렬)
-    const res = http.get(`${BASE_URL}/api/exercise-records?page=0&size=20&sort=createdAt,desc`, params);
+    // DB 캐시 타지 않게 Path Variable, Query Parameter 다르게 설정
+    const randomPage = Math.floor(Math.random() * 100); // 0~99페이지 랜덤 조회
+    const res = http.get(`${BASE_URL}/api/exercise-records?page=${randomPage}&size=20&sort=createdAt,desc`, params);
 
     check(res, {
         'status is 200': (r) => r.status === 200,

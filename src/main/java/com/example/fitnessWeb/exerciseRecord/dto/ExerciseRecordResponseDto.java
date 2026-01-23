@@ -12,21 +12,21 @@ import java.util.Set;
 @AllArgsConstructor
 @Setter
 public class ExerciseRecordResponseDto {
-    private LocalDateTime createdAt;
+    private LocalDateTime modifiedAt;
     private String muscleGroups;
     private Long exerciseRecordId;
 
     private transient Set<String> muscleGroupSet = new HashSet<>();
 
-    public ExerciseRecordResponseDto(LocalDateTime createdAt, String muscleGroups, Long exerciseRecordId) {
-        this.createdAt = createdAt;
+    public ExerciseRecordResponseDto(LocalDateTime modifiedAt, String muscleGroups, Long exerciseRecordId) {
+        this.modifiedAt = modifiedAt;
         this.muscleGroups = muscleGroups;
         this.exerciseRecordId = exerciseRecordId;
     }
 
     // 중간 가공용 생성자
-    public ExerciseRecordResponseDto(Long id, LocalDateTime createdAt) {
+    public ExerciseRecordResponseDto(Long id, LocalDateTime modifiedAt) {
         this.exerciseRecordId = id;
-        this.createdAt = createdAt;
+        this.modifiedAt = modifiedAt;
     }
 }

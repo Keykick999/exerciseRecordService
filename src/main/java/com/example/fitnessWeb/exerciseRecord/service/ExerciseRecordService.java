@@ -20,6 +20,7 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -84,6 +85,7 @@ public class ExerciseRecordService {
     private ExerciseRecord createExerciseRecord(User user) {
         ExerciseRecord record = ExerciseRecord.builder()
                 .createdAt(LocalDateTime.now())
+                .modifiedAt(LocalDateTime.now())
                 .user(user)
                 .build();
         exerciseRecordRepository.save(record);
@@ -124,6 +126,10 @@ public class ExerciseRecordService {
                 .build();
     }
 
+    public Optional<LocalDateTime> getLastModified(String userId) {
+        return exerciseRecordRepository.findMaxModifiedAtByUserId(userId);
+    }
+
     // ========================= 단일 책임 헬퍼 (추상화 수준 낮음) =========================
 
     /**
@@ -143,5 +149,4 @@ public class ExerciseRecordService {
             throw new InvalidRoutineSetException("세트 정보가 유효하지 않습니다.");
         }
     }
-
 }

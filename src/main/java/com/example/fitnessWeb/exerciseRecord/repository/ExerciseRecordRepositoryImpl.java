@@ -42,12 +42,12 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
 
         // =================================================================================
         // STEP 1. 페이징 쿼리 (가장 중요)
-        // -> 조건에 맞는 ID와 CreatedAt만 먼저 가져옴 (커버링 인덱스 효과)
+        // -> 조건에 맞는 ID와 modifiedAt만 먼저 가져옴 (커버링 인덱스 효과)
         // =================================================================================
         JPAQuery<ExerciseRecordResponseDto> paginationQuery = queryFactory
                 .select(Projections.constructor(ExerciseRecordResponseDto.class,
                         record.id,
-                        record.createdAt
+                        record.modifiedAt
                 ))
                 .from(record);
 
@@ -74,7 +74,7 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
         int pageSize = pageable.getPageSize();
 
         List<ExerciseRecordResponseDto> content = paginationQuery
-                .orderBy(record.createdAt.desc())
+                .orderBy(record.modifiedAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageSize + 1)
                 .distinct()
@@ -136,9 +136,9 @@ public class ExerciseRecordRepositoryImpl implements ExerciseRecordRepositoryCus
     private BooleanExpression dateBetween(LocalDateTime startDate, LocalDateTime endDate) {
         QExerciseRecord record = QExerciseRecord.exerciseRecord;
         if (startDate == null && endDate == null) return null;
-        if (startDate != null && endDate != null) return record.createdAt.between(startDate, endDate);
-        if (startDate != null) return record.createdAt.goe(startDate);
-        return record.createdAt.loe(endDate);
+        if (startDate != null && endDate != null) return record.modifiedAt.between(startDate, endDate);
+        if (startDate != null) return record.modifiedAt.goe(startDate);
+        return record.modifiedAt.loe(endDate);
     }
 
     private BooleanExpression exerciseNameEq(String exerciseName) {
