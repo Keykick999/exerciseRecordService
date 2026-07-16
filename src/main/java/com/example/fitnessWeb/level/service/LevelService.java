@@ -1,7 +1,8 @@
 package com.example.fitnessWeb.level.service;
 
-import com.example.fitnessWeb.exerciseRecord.dto.ExerciseSetDto;
+import com.example.fitnessWeb.level.dto.ExerciseSetCommand;
 import com.example.fitnessWeb.level.policy.ExperiencePolicy;
+import com.example.fitnessWeb.level.policy.ExperiencePolicyFactory;
 import com.example.fitnessWeb.user.entity.User;
 import com.example.fitnessWeb.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,7 +16,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LevelService {
 
-    private final ExperiencePolicy experiencePolicy;
+    private final ExperiencePolicyFactory experiencePolicyFactory;
     private final UserRepository userRepository;
 
     @Value("${level.base-xp}")
@@ -26,13 +27,23 @@ public class LevelService {
 
 
     @Transactional
-    public void processLevel(User user, List<ExerciseSetDto> exercises) {
-        int xpGained = experiencePolicy.calculateXp(exercises);
+    public void processLevel(User user, List<ExerciseSetCommand> exercises) {
+        ExperiencePolicy policy = experiencePolicyFactory.getExperiencePolicy(user.getWorkoutGoal());
+
+        // TODO 나중에 customException으로 수정하기
+        if (policy == null) {
+            throw new IllegalStateException(
+                    "No ExperiencePolicy found for goal: " + user.getWorkoutGoal());
+        }
+
+
+
+        int xpGained = policy.calculateXp(exercises);
         user.addXp(xpGained);
 
         // 레벨업 처리
         while (user.getXp() >= getXpForNextLevel(user.getLevel())) {
-            user.setLevel(user.getLevel() + 1);
+            user.increaseLevel(1);
         }
 
         userRepository.save(user);

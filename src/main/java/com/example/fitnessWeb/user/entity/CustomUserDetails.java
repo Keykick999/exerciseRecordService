@@ -5,7 +5,8 @@ import org.springframework.security.core.userdetails.User;
 
 import java.util.Collection;
 
-public class CustomUserDetails extends User {
+
+public final class CustomUserDetails extends User {
     private final String email;
 
     public CustomUserDetails(String username, String password, String email,

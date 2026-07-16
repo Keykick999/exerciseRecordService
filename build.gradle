@@ -36,7 +36,7 @@ dependencies {
 
 	implementation 'jakarta.json:jakarta.json-api:2.1.1'
 
-	// ✅ Jackson 버전 충돌 방지용 버전 통일
+	// Jackson 버전 충돌 방지용 버전 통일
 	implementation 'com.fasterxml.jackson.core:jackson-core:2.15.2'
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
 	implementation 'com.fasterxml.jackson.core:jackson-annotations:2.15.2'

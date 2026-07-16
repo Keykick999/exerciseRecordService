@@ -37,7 +37,6 @@ export function setup() {
     });
 
     // 응답 JSON에서 accessToken 추출
-    // (만약 응답 구조가 다르다면 이 부분을 수정해야 해)
     const body = res.json();
     const token = body.accessToken;
 

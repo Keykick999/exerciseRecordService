@@ -4,6 +4,7 @@ import com.example.fitnessWeb.chat.dto.ChatMessageDto;
 import com.example.fitnessWeb.chat.dto.ChatRequest;
 import com.example.fitnessWeb.chat.dto.ChatResponse;
 import com.example.fitnessWeb.chat.service.ChatService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -11,13 +12,10 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/chat")
+@RequiredArgsConstructor
 public class ChatController {
 
     private final ChatService chatService;
-
-    public ChatController(ChatService chatService) {
-        this.chatService = chatService;
-    }
 
     @PostMapping
     public ResponseEntity<ChatResponse> askCoach(Authentication auth, @RequestBody ChatRequest request) {

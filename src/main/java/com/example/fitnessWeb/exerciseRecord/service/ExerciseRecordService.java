@@ -1,23 +1,26 @@
 package com.example.fitnessWeb.exerciseRecord.service;
 
-import com.example.fitnessWeb.common.exception.*;
+import com.example.fitnessWeb.common.exception.EmptyExerciseSetListException;
+import com.example.fitnessWeb.common.exception.ExerciseRecordNotFoundException;
+import com.example.fitnessWeb.common.exception.ExerciseTypeNotFoundException;
+import com.example.fitnessWeb.common.exception.InvalidRoutineSetException;
 import com.example.fitnessWeb.exerciseRecord.domain.ExerciseRecord;
 import com.example.fitnessWeb.exerciseRecord.domain.ExerciseSet;
 import com.example.fitnessWeb.exerciseRecord.dto.ExerciseRecordResponseDto;
 import com.example.fitnessWeb.exerciseRecord.dto.ExerciseSetDetailDto;
-import com.example.fitnessWeb.exerciseRecord.dto.ExerciseSetDto;
+import com.example.fitnessWeb.exerciseRecord.repository.ExerciseRecordRepository;
 import com.example.fitnessWeb.exerciseType.domain.ExerciseType;
+import com.example.fitnessWeb.exerciseType.repository.ExerciseTypeRepository;
+import com.example.fitnessWeb.level.dto.ExerciseSetCommand;
 import com.example.fitnessWeb.level.service.LevelService;
 import com.example.fitnessWeb.user.entity.User;
-import com.example.fitnessWeb.exerciseRecord.repository.ExerciseRecordRepository;
-import com.example.fitnessWeb.exerciseType.repository.ExerciseTypeRepository;
 import com.example.fitnessWeb.user.service.AuthService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -32,23 +35,29 @@ public class ExerciseRecordService {
     private final AuthService userService;
     private final LevelService levelService;
 
-    // ========================= 핵심 기능 (Controller에서 직접 호출) =========================
-
     /**
      * 운동 기록 저장
      */
     @Transactional
-    public void saveRecord(String userId, List<ExerciseSetDto> dto) {
+    public void saveRecord(String userId, List<SaveExerciseSetCommand> saveCommands) {
         User user = userService.findUserOrThrow(userId);
-        validateExerciseSetList(dto);
+        validateExerciseSetList(saveCommands);
 
         ExerciseRecord record = createExerciseRecord(user);
-        List<ExerciseSet> sets = createExerciseSets(dto, record);
+        List<ExerciseSet> sets = createExerciseSets(saveCommands, record);
 
         record.setSets(sets);
         exerciseRecordRepository.save(record);
 
-        levelService.processLevel(user, dto);
+
+        List<ExerciseSetCommand> levelCommands = saveCommands.stream()
+                        .map(command -> new ExerciseSetCommand(
+                                command.weight(),
+                                command.reps()
+                        ))
+                        .toList();
+
+        levelService.processLevel(user, levelCommands);
     }
 
     /**
@@ -95,11 +104,11 @@ public class ExerciseRecordService {
     /**
      * DTO 리스트를 ExerciseSet 리스트로 변환
      */
-    private List<ExerciseSet> createExerciseSets(List<ExerciseSetDto> dto, ExerciseRecord record) {
-        return dto.stream()
+    private List<ExerciseSet> createExerciseSets(List<SaveExerciseSetCommand> commands, ExerciseRecord record) {
+        return commands.stream()
                 .map(s -> {
                     validateExerciseSet(s);
-                    ExerciseType type = findExerciseTypeOrThrow(s.getExerciseTypeId());
+                    ExerciseType type = findExerciseTypeOrThrow(s.exerciseTypeId());
                     return buildExerciseSet(s, record, type);
                 })
                 .collect(Collectors.toList());
@@ -116,11 +125,11 @@ public class ExerciseRecordService {
     /**
      * ExerciseSet 생성
      */
-    private ExerciseSet buildExerciseSet(ExerciseSetDto s, ExerciseRecord record, ExerciseType type) {
+    private ExerciseSet buildExerciseSet(SaveExerciseSetCommand s, ExerciseRecord record, ExerciseType type) {
         return ExerciseSet.builder()
-                .setOrder(s.getSetOrder())
-                .weight(s.getWeight())
-                .reps(s.getReps())
+                .setOrder(s.setOrder())
+                .weight(s.weight())
+                .reps(s.reps())
                 .exerciseRecord(record)
                 .exerciseType(type)
                 .build();
@@ -135,8 +144,8 @@ public class ExerciseRecordService {
     /**
      * DTO 유효성 검사
      */
-    private void validateExerciseSetList(List<ExerciseSetDto> dto) {
-        if (dto == null || dto.isEmpty()) {
+    private void validateExerciseSetList(List<SaveExerciseSetCommand> commands) {
+        if (commands == null || commands.isEmpty()) {
             throw new EmptyExerciseSetListException("운동 세트 목록이 비어있습니다.");
         }
     }
@@ -144,8 +153,8 @@ public class ExerciseRecordService {
     /**
      * 단일 ExerciseSet 검증
      */
-    private void validateExerciseSet(ExerciseSetDto s) {
-        if (s.getSetOrder() <= 0 || s.getWeight() < 0 || s.getReps() < 0) {
+    private void validateExerciseSet(SaveExerciseSetCommand s) {
+        if (s.setOrder() <= 0 || s.weight() < 0 || s.reps() < 0) {
             throw new InvalidRoutineSetException("세트 정보가 유효하지 않습니다.");
         }
     }

@@ -1,10 +1,13 @@
 HELP.md
 
-# ===== 환경/비밀값(민감) =====
-src/main/resources/application.properties
-src/main/resources/application.yml
-src/test/resources/application.properties
-src/test/resources/application.yml
+# Spring 설정 파일
+src/main/resources/application*.properties
+src/main/resources/application*.yml
+src/main/resources/application*.yaml
+
+src/test/resources/application*.properties
+src/test/resources/application*.yml
+src/test/resources/application*.yaml
 
 .gradle
 build/

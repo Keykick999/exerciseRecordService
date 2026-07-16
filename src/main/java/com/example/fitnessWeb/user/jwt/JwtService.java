@@ -1,5 +1,6 @@
 package com.example.fitnessWeb.user.jwt;
 
+import com.example.fitnessWeb.common.exception.InvalidRefreshTokenException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -31,7 +32,7 @@ public class JwtService {
     public String generateAccessToken(UserDetails user) {
         Instant now = Instant.now();
         return Jwts.builder()
-                .setId(UUID.randomUUID().toString())              // jti (추후 로그아웃 블랙리스트용 확장 가능)
+                .setId(UUID.randomUUID().toString())
                 .setSubject(user.getUsername())
                 .addClaims(Map.of("roles", user.getAuthorities()))
                 .setIssuedAt(Date.from(now))
@@ -67,6 +68,33 @@ public class JwtService {
         } catch (JwtException | IllegalArgumentException e) {
             return false;
         }
+    }
+
+    public void validateRefreshToken(String refreshToken) {
+        try {
+            Claims claims = parse(refreshToken).getBody();
+
+            if (!"refresh".equals(claims.get("typ"))) {
+                throw new InvalidRefreshTokenException();
+            }
+
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new InvalidRefreshTokenException();
+        }
+    }
+
+    public JwtTokens generateTokens(UserDetails user) {
+        String accessToken = generateAccessToken(user);
+        String refreshToken = generateRefreshToken(user);
+
+        return new JwtTokens(
+                accessToken,
+                refreshToken
+        );
+    }
+
+    public long getExpiresIn(String token) {
+        return getExpiration(token).getTime() - System.currentTimeMillis();
     }
 
     public String getUsername(String token) {

@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ChatAiService {
 
-    private final AiModel aiModel;  // 이제 인터페이스에만 의존
+    private final AiModel aiModel;
 
     public String ask(String prompt) {
         return aiModel.ask(prompt);

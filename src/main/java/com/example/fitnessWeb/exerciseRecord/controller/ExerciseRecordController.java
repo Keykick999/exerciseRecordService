@@ -4,11 +4,10 @@ import com.example.fitnessWeb.exerciseRecord.dto.ExerciseRecordResponseDto;
 import com.example.fitnessWeb.exerciseRecord.dto.ExerciseSetDetailDto;
 import com.example.fitnessWeb.exerciseRecord.dto.ExerciseSetDto;
 import com.example.fitnessWeb.exerciseRecord.service.ExerciseRecordService;
+import com.example.fitnessWeb.exerciseRecord.service.SaveExerciseSetCommand;
 import com.example.fitnessWeb.user.entity.CustomUserDetails;
-import com.example.fitnessWeb.user.entity.User;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -24,7 +23,6 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,7 +39,11 @@ public class ExerciseRecordController {
     @PostMapping
     public ResponseEntity<String> save(@RequestBody @Valid List<ExerciseSetDto> dto,
                                        @AuthenticationPrincipal UserDetails userDetails) {
-        service.saveRecord(userDetails.getUsername(), dto);
+        List<SaveExerciseSetCommand> commands = dto.stream()
+                        .map(ExerciseSetDto::toCommand)
+                        .toList();
+
+        service.saveRecord(userDetails.getUsername(), commands);
         return ResponseEntity.ok("운동 기록 저장 완료");
     }
 

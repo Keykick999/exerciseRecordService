@@ -1,15 +1,14 @@
 package com.example.fitnessWeb.user.entity;
 
+import com.example.fitnessWeb.user.service.RegisterCommand;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
-@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Table(name = "users")
@@ -36,6 +35,9 @@ public class User {
     @Column(name = "xp", nullable = false)
     private int xp = 0;
 
+    @Enumerated(EnumType.STRING)
+    private WorkoutGoal workoutGoal;
+
     public void addXp(int amount) {
         this.xp += amount;
     }
@@ -43,5 +45,22 @@ public class User {
     @PrePersist
     protected void onCreate() {
         this.createdAt = LocalDateTime.now();
+    }
+
+    public static User createUser(RegisterCommand command, String encodedPassword) {
+        return new User(
+                command.userId(),
+                encodedPassword,
+                command.userName(),
+                command.email(),
+                LocalDateTime.now(),
+                1,
+                0,
+                WorkoutGoal.ENDURANCE   // TODO 운동 목적 받도록 dto, command, 프론트 수정은 나중에
+        );
+    }
+
+    public void increaseLevel(int value) {
+        this.level += value;
     }
 }

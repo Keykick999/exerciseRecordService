@@ -1,9 +1,10 @@
 package com.example.fitnessWeb.level.policy;
 
-import com.example.fitnessWeb.exerciseRecord.dto.ExerciseSetDto;
-
+import com.example.fitnessWeb.user.entity.WorkoutGoal;
+import com.example.fitnessWeb.level.dto.ExerciseSetCommand;
 import java.util.List;
 
 public interface ExperiencePolicy {
-    int calculateXp(List<ExerciseSetDto> exercises);
+    WorkoutGoal getWorkoutGoal();
+    int calculateXp(List<ExerciseSetCommand> exercises);
 }
