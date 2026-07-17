@@ -7,7 +7,7 @@ import com.example.fitnessWeb.analytics.dto.MuscleBalanceDto;
 import com.example.fitnessWeb.exerciseRecord.domain.ExerciseSet;
 import com.example.fitnessWeb.exerciseRecord.domain.QExerciseRecord;
 import com.example.fitnessWeb.exerciseRecord.domain.QExerciseSet;
-import com.example.fitnessWeb.exerciseRecord.projection.WeeklyVolumeDto;
+import com.example.fitnessWeb.exerciseRecord.dto.WeeklyVolumeDto;
 import com.example.fitnessWeb.exerciseType.domain.QExerciseMuscle;
 import com.example.fitnessWeb.exerciseType.domain.QExerciseType;
 import com.example.fitnessWeb.exerciseType.domain.QMuscle;

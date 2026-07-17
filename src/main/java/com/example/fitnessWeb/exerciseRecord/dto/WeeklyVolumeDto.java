@@ -1,4 +1,4 @@
-package com.example.fitnessWeb.exerciseRecord.projection;
+package com.example.fitnessWeb.exerciseRecord.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

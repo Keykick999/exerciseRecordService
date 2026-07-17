@@ -12,9 +12,9 @@ import java.util.Set;
 @AllArgsConstructor
 @Setter
 public class ExerciseRecordResponseDto {
+    private Long exerciseRecordId;
     private LocalDateTime modifiedAt;
     private String muscleGroups;
-    private Long exerciseRecordId;
 
     private transient Set<String> muscleGroupSet = new HashSet<>();
 

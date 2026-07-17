@@ -6,7 +6,7 @@ import com.example.fitnessWeb.analytics.projection.MaxWeightRepsRow;
 import com.example.fitnessWeb.analytics.repository.AnalyticsNativeRepository;
 import com.example.fitnessWeb.analytics.repository.AnalyticsRepository;
 import com.example.fitnessWeb.common.exception.SizeOutOfRangeException;
-import com.example.fitnessWeb.exerciseRecord.projection.WeeklyVolumeDto;
+import com.example.fitnessWeb.exerciseRecord.dto.WeeklyVolumeDto;
 import com.example.fitnessWeb.exerciseRecord.repository.ExerciseRecordRepository;
 import com.example.fitnessWeb.user.entity.User;
 import com.example.fitnessWeb.user.service.AuthService;
