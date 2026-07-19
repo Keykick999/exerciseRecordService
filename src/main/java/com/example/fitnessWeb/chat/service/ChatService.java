@@ -3,10 +3,10 @@ package com.example.fitnessWeb.chat.service;
 import com.example.fitnessWeb.ai.service.ChatAiService;
 import com.example.fitnessWeb.chat.domain.Chat;
 import com.example.fitnessWeb.chat.domain.ChatMessage;
-import com.example.fitnessWeb.chat.enums.Role;
 import com.example.fitnessWeb.chat.dto.ChatDto;
 import com.example.fitnessWeb.chat.dto.ChatMessageDto;
 import com.example.fitnessWeb.chat.dto.ChatResponse;
+import com.example.fitnessWeb.chat.enums.Role;
 import com.example.fitnessWeb.chat.repository.ChatMessageRepository;
 import com.example.fitnessWeb.chat.repository.ChatRepository;
 import com.example.fitnessWeb.common.exception.ChatNotFoundException;
@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 
 @Service
@@ -32,17 +33,17 @@ public class ChatService {
     private final ChatAiService chatAiService;
 
     /** 새로운 채팅 시작 */
-    public ChatResponse askModel(String userId, String userMessage) {
+    public ChatResponse startChat(String userId, String userMessage) {
         User user = findUserOrThrow(userId);
 
         String title = chatAiService.generateTitle(userMessage);
         if (title == null || title.isBlank()) title = "새 채팅";
 
-        Chat chat = createChat(user, title);
+        Chat chat = Chat.createChat(user, title);
 
         saveChatMessage(chat, Role.USER, userMessage, 1);
 
-        String aiResponse = chatAiService.ask(chatAiService.generatePrompt(userMessage));
+        String aiResponse = chatAiService.generateStartResponse(userMessage);
         saveChatMessage(chat, Role.GPT, aiResponse, 2);
 
         return new ChatResponse(chat.getId(), aiResponse);
@@ -55,7 +56,7 @@ public class ChatService {
         int nextOrder = (int) (chatMessageRepository.countByChat(chat) + 1);
         saveChatMessage(chat, Role.USER, userMessage, nextOrder);
 
-        String aiResponse = chatAiService.ask(chatAiService.generateContinuePrompt(userMessage));
+        String aiResponse = chatAiService.generateContinueResponse(userMessage);
         saveChatMessage(chat, Role.GPT, aiResponse, nextOrder + 1);
 
         return new ChatResponse(chat.getId(), aiResponse);
@@ -82,8 +83,7 @@ public class ChatService {
 
         if (!chat.getUser().equals(user)) throw new UnAuthorizedAccessException("본인의 채팅만 삭제할 수 있습니다.");
 
-        chat.setIsDeleted(true);
-        chat.setDeletedAt(LocalDateTime.now());
+        chat.delete();
 
         chat.getMessages().forEach(message -> {
             message.setIsDeleted(true);
@@ -101,16 +101,6 @@ public class ChatService {
 
     private Chat findChatOrThrow(Long chatId) {
         return chatRepository.findById(chatId).orElseThrow(() -> new ChatNotFoundException("채팅이 존재하지 않습니다."));
-    }
-
-    private Chat createChat(User user, String title) {
-        Chat chat = Chat.builder()
-                .user(user)
-                .title(title)
-                .isDeleted(false)
-                .lastAccessedAt(LocalDateTime.now())
-                .build();
-        return chatRepository.save(chat);
     }
 
     private ChatMessage saveChatMessage(Chat chat, Role role, String content, int orderNo) {

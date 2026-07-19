@@ -19,7 +19,7 @@ public class ChatController {
 
     @PostMapping
     public ResponseEntity<ChatResponse> askCoach(Authentication auth, @RequestBody ChatRequest request) {
-        return ResponseEntity.ok(chatService.askModel(auth.getName(), request.getMessage()));
+        return ResponseEntity.ok(chatService.startChat(auth.getName(), request.message()));
     }
 
     @PostMapping("/{chatId}/message")
@@ -27,7 +27,7 @@ public class ChatController {
             @PathVariable Long chatId,
             @RequestBody ChatRequest request
     ) {
-        return ResponseEntity.ok(chatService.continueChat(chatId, request.getMessage()));
+        return ResponseEntity.ok(chatService.continueChat(chatId, request.message()));
     }
 
 

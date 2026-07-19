@@ -1,6 +1,7 @@
 package com.example.fitnessWeb.ai.service;
 
-import com.example.fitnessWeb.ai.model.AiModel;
+import com.example.fitnessWeb.ai.client.AiClient;
+import com.example.fitnessWeb.ai.prompt.PromptBuilder;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -8,21 +9,24 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ChatAiService {
 
-    private final AiModel aiModel;
+    private final AiClient aiClient;
+    private final PromptBuilder promptBuilder;
 
-    public String ask(String prompt) {
-        return aiModel.ask(prompt);
+    /** 새로운 채팅 시작 시 AI 응답 생성 */
+    public String generateStartResponse(String userMessage) {
+        String prompt = promptBuilder.buildChatStartPrompt(userMessage);
+        return aiClient.generateResponse(prompt);
     }
 
+    /** 채팅 이어가기 */
+    public String generateContinueResponse(String userMessage) {
+        String prompt = promptBuilder.buildChatContinuePrompt(userMessage);
+        return aiClient.generateResponse(prompt);
+    }
+
+    /** 채팅 제목 생성 */
     public String generateTitle(String userMessage) {
-        return aiModel.generateTitle(userMessage);
-    }
-
-    public String generatePrompt(String userMessage) {
-        return aiModel.generatePrompt(userMessage);
-    }
-
-    public String generateContinuePrompt(String userMessage) {
-        return aiModel.generateContinuePrompt(userMessage);
+        String prompt = promptBuilder.buildTitlePrompt(userMessage);
+        return aiClient.generateResponse(prompt);
     }
 }

@@ -8,17 +8,15 @@ import java.util.List;
 
 @Entity
 @Table(name = "chat")
-@NoArgsConstructor
-@Getter @Setter
-@AllArgsConstructor
-@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
 public class Chat {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 255, nullable = false)
+    @Column(nullable = false)
     private String title;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -44,5 +42,26 @@ public class Chat {
     @PrePersist
     public void onCreate() {
         this.createdAt = LocalDateTime.now();
+        this.lastAccessedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    public void onUpdate() {
+        this.lastAccessedAt = LocalDateTime.now();
+    }
+
+    public void delete() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    private Chat(String title, User user) {
+        this.title = title;
+        this.user = user;
+        this.isDeleted = false;
+    }
+
+    public static Chat createChat(User user, String title) {
+        return new Chat(title, user);
     }
 }
