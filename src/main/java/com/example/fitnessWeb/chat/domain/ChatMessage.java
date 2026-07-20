@@ -35,7 +35,7 @@ public class ChatMessage {
     private LocalDateTime createdAt;
 
     @Column(name = "is_deleted")
-    private Boolean isDeleted = false;
+    private Boolean isDeleted;
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
@@ -43,5 +43,18 @@ public class ChatMessage {
     @PrePersist
     public void onCreate() {
         this.createdAt = LocalDateTime.now();
+        this.isDeleted = false;
+    }
+
+    private ChatMessage(Chat chat, Role role, String content, int orderNo) {
+        this.chat = chat;
+        this.role = role;
+        this.content = content;
+        this.orderNo = orderNo;
+        this.isDeleted = false;
+    }
+
+    public static ChatMessage createChatMessage(Chat chat, Role role, String content, int orderNo) {
+        return new ChatMessage(chat, role, content, orderNo);
     }
 }

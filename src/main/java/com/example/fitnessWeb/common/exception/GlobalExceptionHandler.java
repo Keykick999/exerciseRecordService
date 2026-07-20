@@ -101,4 +101,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleDuplicateEmailException(DuplicateEmailException ex) {
         return ResponseEntity.status(409).body(ex.getMessage());
     }
+
+    @ExceptionHandler(AiApiException.class)
+    public ResponseEntity<String> handleAiApiException(AiApiException ex) {
+        return ResponseEntity.status(503).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(AiResponseParseException.class)
+    public ResponseEntity<String> handleAiResponseParseException(AiResponseParseException ex) {
+        return ResponseEntity.status(500).body(ex.getMessage());
+    }
 }

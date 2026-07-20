@@ -108,6 +108,10 @@ public class AuthService {
                 .orElseThrow(UserNotFoundException::new);
     }
 
+    public User getUserReference(String userId) {
+        return userRepository.getReferenceById(userId);
+    }
+
     // ========================= private 헬퍼 메서드 =========================
     private TokenResponse generateTokens(UserDetails user) {
         JwtTokens jwtTokens = jwtService.generateTokens(user);
