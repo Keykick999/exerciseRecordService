@@ -45,7 +45,7 @@ public class ChatController {
             Authentication auth,
             @RequestParam(defaultValue = "0") int page
     ) {
-        Page<ChatDto> chats = chatService.getChats(auth.getName(), page);
+        Page<ChatDto> chats = chatService.getUserChats(auth.getName(), page);
         return ResponseEntity.ok(chats);
     }
 

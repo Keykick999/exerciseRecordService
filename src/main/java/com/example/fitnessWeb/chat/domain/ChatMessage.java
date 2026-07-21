@@ -57,4 +57,9 @@ public class ChatMessage {
     public static ChatMessage createChatMessage(Chat chat, Role role, String content, int orderNo) {
         return new ChatMessage(chat, role, content, orderNo);
     }
+
+    public void delete() {
+        this.isDeleted = true;
+        this.deletedAt = LocalDateTime.now();
+    }
 }

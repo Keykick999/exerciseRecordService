@@ -31,7 +31,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     );
 
     @Query("SELECT COUNT(cm) FROM ChatMessage cm WHERE cm.chat = :chat")
-    int countByChat(@Param("chat") Chat chat);
+    int countMessagesByChat(@Param("chat") Chat chat);
 }
 
 

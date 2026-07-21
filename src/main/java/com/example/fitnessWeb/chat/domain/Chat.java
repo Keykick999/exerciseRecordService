@@ -53,6 +53,8 @@ public class Chat {
     public void delete() {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
+
+        this.messages.forEach(ChatMessage::delete);
     }
 
     private Chat(String title, User user) {

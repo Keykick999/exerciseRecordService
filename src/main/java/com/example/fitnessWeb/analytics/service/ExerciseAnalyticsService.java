@@ -28,10 +28,6 @@ public class ExerciseAnalyticsService {
     private final AnalyticsNativeRepository analyticsNativeRepository;
     private final AuthService userService;
 
-    // ==========================
-    // 높은 추상화: 외부에서 호출되는 서비스 메서드
-    // ==========================
-
     public List<WeeklyVolumeResponseDto> getWeeklyVolumesForRange(String userId, LocalDate start, LocalDate end) {
         List<WeeklyVolumeDto> rawData = fetchWeeklyVolumes(userId, start, end);
         return fillMissingWeeks(rawData, start, end);
