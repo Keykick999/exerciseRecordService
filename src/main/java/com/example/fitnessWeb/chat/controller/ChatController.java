@@ -11,23 +11,24 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/chat")
+@RequestMapping("/api/chats")
 @RequiredArgsConstructor
 public class ChatController {
 
     private final ChatService chatService;
 
     @PostMapping
-    public ResponseEntity<ChatResponse> askCoach(Authentication auth, @RequestBody ChatRequest request) {
+    public ResponseEntity<ChatResponse> startChat(Authentication auth, @RequestBody ChatRequest request) {
         return ResponseEntity.ok(chatService.startChat(auth.getName(), request.message()));
     }
 
     @PostMapping("/{chatId}/message")
     public ResponseEntity<ChatResponse> continueChat(
+            Authentication auth,
             @PathVariable Long chatId,
             @RequestBody ChatRequest request
     ) {
-        return ResponseEntity.ok(chatService.continueChat(chatId, request.message()));
+        return ResponseEntity.ok(chatService.continueChat(auth.getName(), chatId, request.message()));
     }
 
 
@@ -36,8 +37,7 @@ public class ChatController {
             @PathVariable Long chatId,
             @RequestParam(defaultValue = "0") int page
     ) {
-        Page<ChatMessageDto> messages = chatService.getChatMessages(chatId, page);
-        return ResponseEntity.ok(messages);
+        return ResponseEntity.ok(chatService.getChatMessages(chatId, page));
     }
 
     @GetMapping
@@ -45,8 +45,7 @@ public class ChatController {
             Authentication auth,
             @RequestParam(defaultValue = "0") int page
     ) {
-        Page<ChatDto> chats = chatService.getUserChats(auth.getName(), page);
-        return ResponseEntity.ok(chats);
+        return ResponseEntity.ok(chatService.getUserChats(auth.getName(), page));
     }
 
     @DeleteMapping("/{chatId}")

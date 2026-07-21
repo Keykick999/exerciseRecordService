@@ -1,16 +1,13 @@
 package com.example.fitnessWeb.chat.domain;
 
-import com.example.fitnessWeb.chat.enums.Role;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "chat_message")
-@Getter @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Getter
 public class ChatMessage {
 
     @Id
@@ -23,13 +20,13 @@ public class ChatMessage {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private Role role;
+    private SenderType senderType;
 
     @Column(columnDefinition = "TEXT", nullable = false)
     private String content;
 
     @Column(name = "order_no", nullable = false)
-    private Integer orderNo;
+    private Long orderNo;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -46,16 +43,16 @@ public class ChatMessage {
         this.isDeleted = false;
     }
 
-    private ChatMessage(Chat chat, Role role, String content, int orderNo) {
+    private ChatMessage(Chat chat, SenderType senderType, String content, long orderNo) {
         this.chat = chat;
-        this.role = role;
+        this.senderType = senderType;
         this.content = content;
         this.orderNo = orderNo;
         this.isDeleted = false;
     }
 
-    public static ChatMessage createChatMessage(Chat chat, Role role, String content, int orderNo) {
-        return new ChatMessage(chat, role, content, orderNo);
+    public static ChatMessage createChatMessage(Chat chat, SenderType senderType, String content, long orderNo) {
+        return new ChatMessage(chat, senderType, content, orderNo);
     }
 
     public void delete() {

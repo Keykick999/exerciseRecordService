@@ -1234,7 +1234,7 @@ Periodic native trim disabled
 OS:
  Windows 11 , 64 bit Build 26100 (10.0.26100.4768)
 OS uptime: 17 days 3:50 hours
-Hyper-V role detected
+Hyper-V senderType detected
 
 CPU: total 12 (initial active 12) (6 cores per cpu, 2 threads per core) family 6 model 154 stepping 4 microcode 0x423, cx8, cmov, fxsr, ht, mmx, 3dnowpref, sse, sse2, sse3, ssse3, sse4.1, sse4.2, popcnt, lzcnt, tsc, tscinvbit, avx, avx2, aes, erms, clmul, bmi1, bmi2, adx, sha, fma, vzeroupper, clflush, clflushopt, clwb, hv, serialize, rdtscp, rdpid, fsrm, f16c, cet_ibt, cet_ss
 Processor Information for processor 0

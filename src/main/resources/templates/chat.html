@@ -290,7 +290,7 @@
             </div>
         </div>
 
-        <ul class="chat-list" id="chatList" role="listbox" aria-label="저장된 채팅"></ul>
+        <ul class="chat-list" id="chatList" senderType="listbox" aria-label="저장된 채팅"></ul>
     </aside>
 
     <!-- Main -->
@@ -436,7 +436,7 @@
     function toast(msg, type = 'info') {
         const id = 't' + (crypto?.randomUUID ? crypto.randomUUID() : Math.random().toString(36).slice(2));
         const bg = type === 'error' ? 'bg-danger' : (type === 'success' ? 'bg-success' : 'bg-dark');
-        const html = `<div id="${id}" class="toast align-items-center text-white ${bg} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">\n        <div class="d-flex"><div class="toast-body">${msg}</div>\n        <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="document.getElementById('${id}').remove()" aria-label="Close"></button></div></div>`;
+        const html = `<div id="${id}" class="toast align-items-center text-white ${bg} border-0 show" senderType="alert" aria-live="assertive" aria-atomic="true">\n        <div class="d-flex"><div class="toast-body">${msg}</div>\n        <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="document.getElementById('${id}').remove()" aria-label="Close"></button></div></div>`;
         document.getElementById('toastContainer').insertAdjacentHTML('beforeend', html);
         setTimeout(() => document.getElementById(id)?.remove(), 4000);
     }
@@ -483,7 +483,7 @@
     async function loadChats() {
         const token = localStorage.getItem('accessToken');
         try {
-            const res = await fetch('/api/chat', { headers: { 'Authorization': 'Bearer ' + token } });
+            const res = await fetch('/api/chats', { headers: { 'Authorization': 'Bearer ' + token } });
             if (!res.ok) {
                 alert(res.status);
                 throw new Error('채팅 목록 로딩 실패');
@@ -501,7 +501,7 @@
 
                 // 🔹 전체 아이템을 클릭 타겟으로
                 li.tabIndex = 0;                 // 키보드 포커스
-                li.setAttribute('role', 'button');
+                li.setAttribute('senderType', 'button');
                 li.setAttribute('aria-label', (chat.title || '새 채팅') + ' 열기');
 
                 // 제목
@@ -566,7 +566,7 @@
         if (!confirm('이 채팅을 삭제하시겠습니까?')) return;
         const token = localStorage.getItem('accessToken');
         try {
-            const res = await fetch(`/api/chat/${chatId}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
+            const res = await fetch(`/api/chats/${chatId}`, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + token } });
             if (!res.ok) throw new Error('삭제 실패');
             if (currentChatId === chatId) {
                 currentChatId = null;
@@ -654,7 +654,7 @@
         const token = localStorage.getItem('accessToken');
         const previousScrollHeight = chatBox.scrollHeight;
 
-        const res = await fetch(`/api/chat/${chatId}/messages?page=${pageNo}`, {
+        const res = await fetch(`/api/chats/${chatId}/messages?page=${pageNo}`, {
             headers: { 'Authorization': 'Bearer ' + token }
         });
         if (!res.ok) throw new Error('메시지 로딩 실패');
@@ -675,9 +675,9 @@
         // 렌더링
         const fragment = document.createDocumentFragment();
         data.content.forEach(msg => {
-            const role = String(msg.role || '').toUpperCase();
+            const senderType = String(msg.senderType || '').toUpperCase();
             const div = document.createElement('div');
-            div.className = 'chat-message ' + (role === 'USER' ? 'user-message' : 'ai-message');
+            div.className = 'chat-message ' + (senderType === 'USER' ? 'user-message' : 'ai-message');
             div.textContent = msg.content;
             fragment.appendChild(div);
         });
@@ -772,7 +772,7 @@
         stopTyping = false;
 
         const isNewChat = !currentChatId;
-        const url = isNewChat ? '/api/chat' : `/api/chat/${currentChatId}/message`;
+        const url = isNewChat ? '/api/chats' : `/api/chats/${currentChatId}/message`;
 
         // Placeholder AI bubble with typing dots
         const aiDiv = document.createElement('div');

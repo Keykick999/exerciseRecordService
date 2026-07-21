@@ -1,7 +1,7 @@
 package com.example.fitnessWeb.chat.repository;
 
-import com.example.fitnessWeb.chat.dto.ChatDto;
 import com.example.fitnessWeb.chat.domain.Chat;
+import com.example.fitnessWeb.chat.dto.ChatDto;
 import com.example.fitnessWeb.user.entity.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,8 +28,4 @@ public interface ChatRepository extends JpaRepository<Chat, Long> {
             @Param("user") User user,
             Pageable pageable
     );
-
-
-    @Query("SELECT COUNT(cm) FROM ChatMessage cm WHERE cm.chat = :chat")
-    long countByChat(@Param("chat") Chat chat);
 }

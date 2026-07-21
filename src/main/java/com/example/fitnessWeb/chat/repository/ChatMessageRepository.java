@@ -15,7 +15,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Query("""
         select new com.example.fitnessWeb.chat.dto.ChatMessageDto(
             m.id,
-            m.role,
+            m.senderType,
             m.content,
             m.createdAt,
             m.orderNo
@@ -30,8 +30,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             Pageable pageable
     );
 
-    @Query("SELECT COUNT(cm) FROM ChatMessage cm WHERE cm.chat = :chat")
-    int countMessagesByChat(@Param("chat") Chat chat);
+    long countByChat(Chat chat);
 }
 
 

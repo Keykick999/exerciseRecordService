@@ -6,7 +6,7 @@ import com.example.fitnessWeb.chat.domain.ChatMessage;
 import com.example.fitnessWeb.chat.dto.ChatDto;
 import com.example.fitnessWeb.chat.dto.ChatMessageDto;
 import com.example.fitnessWeb.chat.dto.ChatResponse;
-import com.example.fitnessWeb.chat.enums.Role;
+import com.example.fitnessWeb.chat.domain.SenderType;
 import com.example.fitnessWeb.chat.repository.ChatMessageRepository;
 import com.example.fitnessWeb.chat.repository.ChatRepository;
 import com.example.fitnessWeb.common.exception.ChatNotFoundException;
@@ -42,11 +42,11 @@ public class ChatService {
 
         int messageOrder = 1;
 
-        ChatMessage userChatMessage = ChatMessage.createChatMessage(chat, Role.USER, userMessage, messageOrder);
+        ChatMessage userChatMessage = ChatMessage.createChatMessage(chat, SenderType.USER, userMessage, messageOrder);
         chatMessageRepository.save(userChatMessage);
 
         String aiResponse = chatAiService.generateStartResponse(userMessage);
-        ChatMessage aiChatMessage = ChatMessage.createChatMessage(chat, Role.GPT, aiResponse, messageOrder + 1);
+        ChatMessage aiChatMessage = ChatMessage.createChatMessage(chat, SenderType.AI, aiResponse, messageOrder + 1);
         chatMessageRepository.save(aiChatMessage);
 
         return new ChatResponse(chat.getId(), aiResponse);
@@ -54,15 +54,19 @@ public class ChatService {
 
     /** 채팅 이어서 진행 */
     @Transactional
-    public ChatResponse continueChat(Long chatId, String userMessage) {
+    public ChatResponse continueChat(String userId, Long chatId, String userMessage) {
         Chat chat = findChatOrThrow(chatId);
 
-        int messageOrder = chatMessageRepository.countMessagesByChat(chat) + 1;
-        ChatMessage userChatMessage = ChatMessage.createChatMessage(chat, Role.USER, userMessage, messageOrder);
+        if (!chat.getUser().getUserId().equals(userId)) {
+            throw new UnAuthorizedAccessException("해당 채팅에 접근할 권한이 없습니다.");
+        }
+
+        long messageOrder = chatMessageRepository.countByChat(chat) + 1;
+        ChatMessage userChatMessage = ChatMessage.createChatMessage(chat, SenderType.USER, userMessage, messageOrder);
         chatMessageRepository.save(userChatMessage);
 
         String aiResponse = chatAiService.generateContinueResponse(userMessage);
-        ChatMessage aiChatMessage = ChatMessage.createChatMessage(chat, Role.GPT, aiResponse, messageOrder + 1);
+        ChatMessage aiChatMessage = ChatMessage.createChatMessage(chat, SenderType.AI, aiResponse, messageOrder + 1);
         chatMessageRepository.save(aiChatMessage);
 
         return new ChatResponse(chat.getId(), aiResponse);
