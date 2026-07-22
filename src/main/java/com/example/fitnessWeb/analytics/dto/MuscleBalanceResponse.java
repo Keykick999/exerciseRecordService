@@ -1,6 +1,6 @@
 package com.example.fitnessWeb.analytics.dto;
 
-import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -9,7 +9,7 @@ import java.util.List;
  * @param end         ISO yyyy-MM-dd
  * @param totalVolume 전체 볼륨 합
  */
-public record MuscleBalanceResponse(String username, String start, String end, Double totalVolume, List<Item> byMuscle) {
+public record MuscleBalanceResponse(String username, LocalDate start, LocalDate end, Double totalVolume, List<Item> byMuscle) {
 
     /**
      * @param pct 0~100, 소수1자리

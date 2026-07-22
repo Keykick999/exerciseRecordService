@@ -3,7 +3,8 @@ package com.example.fitnessWeb.analytics.repository;
 import com.example.fitnessWeb.analytics.dto.ExerciseTypeVolumeDto;
 import com.example.fitnessWeb.analytics.projection.MaxRepsRow;
 import com.example.fitnessWeb.analytics.projection.MaxVolumeSetRow;
-import com.example.fitnessWeb.analytics.dto.MuscleBalanceDto;
+import com.example.fitnessWeb.analytics.dto.MuscleVolumeRatioDto;
+import com.example.fitnessWeb.analytics.projection.MuscleVolume;
 import com.example.fitnessWeb.exerciseRecord.domain.ExerciseSet;
 import com.example.fitnessWeb.exerciseRecord.domain.QExerciseRecord;
 import com.example.fitnessWeb.exerciseRecord.domain.QExerciseSet;
@@ -69,12 +70,17 @@ public class AnalyticsRepository {
     }
 
     /** 근육별 볼륨 비율 조회 */
-    public List<MuscleBalanceDto> findMuscleBalance(String userId, LocalDateTime start, LocalDateTime end) {
+    public List<MuscleVolumeRatioDto> findMuscleBalance(
+            String userId,
+            LocalDateTime start,
+            LocalDateTime end
+    ) {
 
-        List<MuscleBalanceDto> volumes = queryFactory
-                .select(Projections.bean(MuscleBalanceDto.class,
-                        m.name.as("muscle"),
-                        es.weight.multiply(es.reps).sum().as("volume")
+        List<MuscleVolume> volumes = queryFactory
+                .select(Projections.constructor(
+                        MuscleVolume.class,
+                        m.name,
+                        es.weight.multiply(es.reps).sum()
                 ))
                 .from(er)
                 .join(er.sets, es)
@@ -82,29 +88,35 @@ public class AnalyticsRepository {
                 .join(et.exerciseMuscles, em)
                 .join(em.muscle, m)
                 .join(er.user, u)
-                .where(u.userId.eq(userId)
-                        .and(er.createdAt.goe(start))
-                        .and(er.createdAt.lt(end)))
+                .where(
+                        u.userId.eq(userId),
+                        er.createdAt.goe(start),
+                        er.createdAt.lt(end)
+                )
                 .groupBy(m.name)
                 .fetch();
 
         // 전체 볼륨
         double totalVolume = volumes.stream()
-                .mapToDouble(v -> v.getVolume() == null ? 0L : v.getVolume())
+                .mapToDouble(v -> v.volume() == null ? 0.0 : v.volume())
                 .sum();
 
-        // pct / totalVolume 후처리
-        volumes.forEach(v -> {
-            v.setTotalVolume(totalVolume);
-            double volume = v.getVolume() == null ? 0L : v.getVolume();
-            v.setPct(totalVolume > 0
-                    ? Math.round(1000.0 * volume / totalVolume) / 10.0
-                    : 0.0);
-        });
+        // 기존 구조 유지
+        return volumes.stream()
+                .map(v -> {
+                    double volume = v.volume() == null ? 0.0 : v.volume();
 
-        return volumes;
+                    return new MuscleVolumeRatioDto(
+                            v.muscle(),
+                            volume,
+                            totalVolume,
+                            totalVolume > 0
+                                    ? Math.round(1000.0 * volume / totalVolume) / 10.0
+                                    : 0.0
+                    );
+                })
+                .toList();
     }
-
 
 
     /** 특정 중량에서 최대 반복수 최근 기록 조회 */

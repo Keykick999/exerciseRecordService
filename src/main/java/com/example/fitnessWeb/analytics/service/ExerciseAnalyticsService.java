@@ -1,6 +1,9 @@
 package com.example.fitnessWeb.analytics.service;
 
-import com.example.fitnessWeb.analytics.dto.*;
+import com.example.fitnessWeb.analytics.dto.ExerciseTypeVolumeDto;
+import com.example.fitnessWeb.analytics.dto.MuscleBalanceResponse;
+import com.example.fitnessWeb.analytics.dto.MuscleVolumeRatioDto;
+import com.example.fitnessWeb.analytics.dto.WeeklyVolumeResponseDto;
 import com.example.fitnessWeb.analytics.projection.MaxRepsRow;
 import com.example.fitnessWeb.analytics.projection.MaxWeightRepsRow;
 import com.example.fitnessWeb.analytics.repository.AnalyticsNativeRepository;
@@ -13,10 +16,13 @@ import com.example.fitnessWeb.user.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.WeekFields;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,7 +45,7 @@ public class ExerciseAnalyticsService {
         LocalDate effectiveStart = start != null ? start : LocalDate.now().minusWeeks(4);
         LocalDate effectiveEndEx = endExclusive != null ? endExclusive : LocalDate.now().plusDays(1);
 
-        List<MuscleBalanceDto> rows = analyticsRepository.findMuscleBalance(
+        List<MuscleVolumeRatioDto> rows = analyticsRepository.findMuscleBalance(
                 userId,
                 effectiveStart.atStartOfDay(),
                 effectiveEndEx.atStartOfDay()
@@ -50,8 +56,8 @@ public class ExerciseAnalyticsService {
 
         return new MuscleBalanceResponse(
                 user.getUserName(),
-                effectiveStart.toString(),
-                effectiveEndEx.toString(),
+                effectiveStart,
+                effectiveEndEx,
                 totalVolume,
                 items
         );
@@ -121,20 +127,20 @@ public class ExerciseAnalyticsService {
         return result;
     }
 
-    private double calculateTotalVolume(List<MuscleBalanceDto> rows) {
+    private double calculateTotalVolume(List<MuscleVolumeRatioDto> rows) {
         return rows.stream()
-                .mapToDouble(r -> r.getTotalVolume() != null ? r.getTotalVolume() : 0.0)
+                .mapToDouble(r -> r.totalVolume() != null ? r.totalVolume() : 0.0)
                 .findFirst()
                 .orElse(0.0);
     }
 
-    private List<MuscleBalanceResponse.Item> buildMuscleBalanceItems(List<MuscleBalanceDto> rows, double totalVolume) {
+    private List<MuscleBalanceResponse.Item> buildMuscleBalanceItems(List<MuscleVolumeRatioDto> rows, double totalVolume) {
         return rows.stream()
                 .map(r -> new MuscleBalanceResponse.Item(
-                        r.getMuscle(),
-                        r.getVolume() != null ? r.getVolume() : 0.0,
+                        r.muscle(),
+                        r.volume() != null ? r.volume() : 0.0,
                         totalVolume,
-                        r.getPct()
+                        r.pct()
                 ))
                 .toList();
     }

@@ -55,7 +55,7 @@ public class ChatService {
     /** 채팅 이어서 진행 */
     @Transactional
     public ChatResponse continueChat(String userId, Long chatId, String userMessage) {
-        Chat chat = findChatOrThrow(chatId);
+        Chat chat = findChatForUpdateOrThrow(chatId);
 
         if (!chat.getUser().getUserId().equals(userId)) {
             throw new UnAuthorizedAccessException("해당 채팅에 접근할 권한이 없습니다.");
@@ -104,5 +104,10 @@ public class ChatService {
 
     private Chat findChatOrThrow(Long chatId) {
         return chatRepository.findById(chatId).orElseThrow(() -> new ChatNotFoundException("채팅이 존재하지 않습니다."));
+    }
+
+    private Chat findChatForUpdateOrThrow(Long chatId) {
+        return chatRepository.findByIdForUpdate(chatId)
+                .orElseThrow(() -> new ChatNotFoundException("채팅이 존재하지 않습니다."));
     }
 }

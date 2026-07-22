@@ -55,14 +55,20 @@ public class AnalyticsController {
 
     // 부위별 몰륨 밸런스
     @GetMapping("/muscle-balance")
-    public MuscleBalanceResponse muscleBalance(
+    public ResponseEntity<MuscleBalanceResponse> muscleBalance(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end,
             @AuthenticationPrincipal UserDetails userDetails
     ) {
-        return analyticsService.getMuscleBalance(userDetails.getUsername(), start, end);
+        return ResponseEntity.ok(
+                analyticsService.getMuscleBalance(
+                        userDetails.getUsername(),
+                        start,
+                        end
+                )
+        );
     }
 
 
