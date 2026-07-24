@@ -223,7 +223,7 @@
             url: '/api/email',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ email, purpose: 'signup' }),
+            data: JSON.stringify({ email, purpose: 'SIGNUP' }),
             success: function() {
                 $('#emailSendHelper').text('이메일로 인증 코드를 전송했습니다. 메일함을 확인하세요.').show();
             },
@@ -265,7 +265,7 @@
             url: '/api/email/verify',
             method: 'POST',
             contentType: 'application/json',
-            data: JSON.stringify({ email, purpose: 'signup', code }),
+            data: JSON.stringify({ email, purpose: 'SIGNUP', code }),
             success: function() {
                 emailVerified = true;
                 $('#emailVerifyHelper').text('이메일 인증이 완료되었습니다.').show();

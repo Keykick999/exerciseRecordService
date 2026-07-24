@@ -1,11 +1,12 @@
 package com.example.fitnessWeb.email.dto;
 
+import com.example.fitnessWeb.email.EmailVerificationPurpose;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 
 public record VerifyCodeRequest(
         @Email @NotBlank String email,
-        @NotBlank String purpose,
-        @NotBlank @Size(min = 6, max = 6) String code
+        @NotBlank EmailVerificationPurpose purpose,
+        @NotBlank @Pattern(regexp = "\\d{6}") String code
 ) {}

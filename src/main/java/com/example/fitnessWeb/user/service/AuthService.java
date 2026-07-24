@@ -1,6 +1,7 @@
 package com.example.fitnessWeb.user.service;
 
 import com.example.fitnessWeb.common.exception.*;
+import com.example.fitnessWeb.email.EmailVerificationPurpose;
 import com.example.fitnessWeb.email.service.EmailVerificationService;
 import com.example.fitnessWeb.user.dto.TokenResponse;
 import com.example.fitnessWeb.user.entity.User;
@@ -15,6 +16,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
 import static org.springframework.security.core.userdetails.User.withUsername;
 
 @Service
@@ -35,7 +37,7 @@ public class AuthService {
         checkDuplicateUserId(command.userId());
         checkDuplicateUserName(command.userName());
         checkDuplicateEmail(command.email());
-        emailVerificationService.ensureVerified(command.email(), "signup");
+        emailVerificationService.ensureVerified(command.email(), EmailVerificationPurpose.SIGNUP);
 
         String encodedPassword = passwordEncoder.encode(command.password());
         User u = User.createUser(command, encodedPassword);
